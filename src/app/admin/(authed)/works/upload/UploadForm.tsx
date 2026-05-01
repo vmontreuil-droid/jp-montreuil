@@ -16,11 +16,17 @@ function formatBytes(b: number): string {
   return `${(b / 1024 / 1024).toFixed(1)} MB`
 }
 
-export default function UploadForm({ categories }: { categories: Category[] }) {
+export default function UploadForm({
+  categories,
+  preselectedId,
+}: {
+  categories: Category[]
+  preselectedId?: string
+}) {
   const router = useRouter()
   const [files, setFiles] = useState<File[]>([])
   const [dragOver, setDragOver] = useState(false)
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? '')
+  const [categoryId, setCategoryId] = useState(preselectedId ?? categories[0]?.id ?? '')
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<UploadResult | null>(null)
   const [pending, startTransition] = useTransition()

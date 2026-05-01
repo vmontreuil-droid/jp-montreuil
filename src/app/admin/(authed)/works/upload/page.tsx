@@ -5,7 +5,12 @@ import UploadForm from './UploadForm'
 
 export const dynamic = 'force-dynamic'
 
-export default async function UploadPage() {
+type Props = {
+  searchParams: Promise<{ cat?: string }>
+}
+
+export default async function UploadPage({ searchParams }: Props) {
+  const { cat: preselectSlug } = await searchParams
   const supabase = await createClient()
   const { data } = await supabase
     .from('categories')
@@ -13,6 +18,9 @@ export default async function UploadPage() {
     .order('sort_order', { ascending: true })
 
   const categories = data ?? []
+  const preselectedId = preselectSlug
+    ? categories.find((c) => c.slug === preselectSlug)?.id
+    : undefined
 
   return (
     <div className="p-8 md:p-12 max-w-3xl">
@@ -36,7 +44,7 @@ export default async function UploadPage() {
         </p>
       </header>
 
-      <UploadForm categories={categories} />
+      <UploadForm categories={categories} preselectedId={preselectedId} />
     </div>
   )
 }

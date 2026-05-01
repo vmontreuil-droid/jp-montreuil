@@ -35,10 +35,10 @@ export default async function WorksAdminPage({ searchParams }: Props) {
   const { cat: catSlug } = await searchParams
   const supabase = await createClient()
 
-  // Categories met work-count
+  // Categories met work-count (specificeer FK om ambiguiteit met cover_work_id te vermijden)
   const { data: catsRaw } = await supabase
     .from('categories')
-    .select('id, slug, label_fr, label_nl, works(id)')
+    .select('id, slug, label_fr, label_nl, works:works!works_category_id_fkey(id)')
     .order('sort_order', { ascending: true })
 
   const categories: Category[] = (catsRaw ?? []).map((c) => ({

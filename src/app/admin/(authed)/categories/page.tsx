@@ -3,6 +3,7 @@ import { ArrowUp, ArrowDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { workImageUrl } from '@/lib/links'
 import CategoryRow from './CategoryRow'
+import NewCategoryButton from './NewCategoryButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,7 +34,7 @@ export default async function CategoriesAdminPage() {
     .select(`
       id, slug, sort_order, label_fr, label_nl, description_fr, description_nl, cover_work_id,
       cover:works!categories_cover_work_id_fkey(storage_path),
-      works(id, storage_path, title_fr, sort_order)
+      works:works!works_category_id_fkey(id, storage_path, title_fr, sort_order)
     `)
     .order('sort_order', { ascending: true })
     .returns<CategoryWithWorks[]>()
@@ -45,16 +46,19 @@ export default async function CategoriesAdminPage() {
 
   return (
     <div className="p-8 md:p-12 max-w-5xl">
-      <header className="mb-10">
-        <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-2">
-          Atelier Montreuil
-        </p>
-        <h1 className="text-4xl text-(--color-ink) font-[family-name:var(--font-display)]">
-          Catégories
-        </h1>
-        <p className="mt-2 text-sm text-(--color-stone)">
-          Renomme les catégories, ajuste l&apos;ordre, choisis la photo de couverture.
-        </p>
+      <header className="mb-10 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-2">
+            Atelier Montreuil
+          </p>
+          <h1 className="text-4xl text-(--color-ink) font-[family-name:var(--font-display)]">
+            Catégories
+          </h1>
+          <p className="mt-2 text-sm text-(--color-stone)">
+            Crée, renomme, réordonne, choisis la photo de couverture.
+          </p>
+        </div>
+        <NewCategoryButton />
       </header>
 
       <div className="space-y-3">

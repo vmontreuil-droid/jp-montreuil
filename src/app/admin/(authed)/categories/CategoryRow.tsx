@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from 'react'
 import Image from 'next/image'
-import { ArrowUp, ArrowDown, ChevronDown, Save, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowUp, ArrowDown, ChevronDown, Save, Loader2, Trash2, Image as ImageIcon, Plus } from 'lucide-react'
 import { workImageUrl } from '@/lib/links'
-import { updateCategory, moveCategory } from './actions'
+import { updateCategory, moveCategory, deleteCategory } from './actions'
 import type { CategoryWithWorks } from './page'
 
 type Props = {
@@ -17,6 +18,8 @@ export default function CategoryRow({ cat, isFirst, isLast }: Props) {
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const [saving, startSave] = useTransition()
+  const [deleting, startDelete] = useTransition()
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const coverPath = cat.cover?.storage_path
 
   function move(dir: 'up' | 'down') {
@@ -31,6 +34,21 @@ export default function CategoryRow({ cat, isFirst, isLast }: Props) {
     fd.set('id', cat.id)
     startSave(() => {
       void updateCategory(fd)
+    })
+  }
+
+  function onDelete() {
+    const count = cat.works.length
+    const confirmMsg = count > 0
+      ? `Supprimer "${cat.label_fr}" ? Cette action supprimera aussi les ${count} œuvre(s) et leurs photos.\n\nIRRÉVERSIBLE.`
+      : `Supprimer "${cat.label_fr}" ?`
+    if (!confirm(confirmMsg)) return
+    setDeleteError(null)
+    startDelete(() => {
+      void (async () => {
+        const r = await deleteCategory(cat.id)
+        if (!r.ok) setDeleteError(r.error ?? 'Erreur')
+      })()
     })
   }
 
@@ -173,14 +191,48 @@ export default function CategoryRow({ cat, isFirst, isLast }: Props) {
             </select>
           </div>
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm uppercase tracking-[0.15em] disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Enregistrer
-          </button>
+          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-(--color-frame)">
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-5 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm uppercase tracking-[0.15em] disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Enregistrer
+            </button>
+
+            <Link
+              href={`/admin/works?cat=${cat.slug}`}
+              className="inline-flex items-center gap-2 px-4 py-2 border border-(--color-frame) text-(--color-charcoal) hover:text-(--color-ink) hover:border-(--color-stone) text-sm uppercase tracking-[0.15em]"
+            >
+              <ImageIcon className="w-4 h-4" />
+              Gérer les photos ({cat.works.length})
+            </Link>
+
+            <Link
+              href={`/admin/works/upload?cat=${cat.slug}`}
+              className="inline-flex items-center gap-2 px-4 py-2 border border-(--color-frame) text-(--color-charcoal) hover:text-(--color-ink) hover:border-(--color-stone) text-sm uppercase tracking-[0.15em]"
+            >
+              <Plus className="w-4 h-4" />
+              Ajouter
+            </Link>
+
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={deleting}
+              className="ml-auto inline-flex items-center gap-2 px-4 py-2 border border-red-900/40 text-red-300 hover:bg-red-950/40 text-sm uppercase tracking-[0.15em] disabled:opacity-50"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              Supprimer
+            </button>
+          </div>
+
+          {deleteError && (
+            <p className="text-sm text-red-300 bg-red-950/40 border border-red-900 px-3 py-2">
+              {deleteError}
+            </p>
+          )}
         </form>
       )}
     </div>
