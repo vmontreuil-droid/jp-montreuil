@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Mail, Phone, MapPin } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
@@ -22,9 +23,13 @@ export default function Footer({ locale, t }: Props) {
     <footer className="mt-24 border-t border-(--color-frame) bg-(--color-paper)">
       <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
-          <p className="font-[family-name:var(--font-display)] text-2xl text-(--color-ink) mb-2">
-            Atelier Montreuil
-          </p>
+          <Image
+            src="/logo.png"
+            alt="Atelier Montreuil"
+            width={743}
+            height={258}
+            className="h-12 w-auto mb-3"
+          />
           <p className="italic text-(--color-charcoal)">{t.tagline}</p>
         </div>
 

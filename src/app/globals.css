@@ -47,4 +47,21 @@
     font-weight: 400;
     letter-spacing: -0.01em;
   }
+
+  /* Anti-copy bescherming voor galerij-foto's. Geen 100%-bescherming
+     (dev-tools / screenshot blijven mogelijk) maar weert casual save/drag/
+     long-press iOS-callout. Toepassen op container met klasse `.no-save`. */
+  .no-save,
+  .no-save * {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+  }
+  .no-save img {
+    pointer-events: none;
+  }
 }

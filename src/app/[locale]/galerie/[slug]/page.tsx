@@ -7,6 +7,8 @@ import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { localePath, workImageUrl } from '@/lib/links'
 import { createClient } from '@/lib/supabase/server'
+import CategoryGallery from '@/components/site/CategoryGallery'
+import type { LightboxWork } from '@/components/site/Lightbox'
 
 type Props = {
   params: Promise<{ locale: string; slug: string }>
@@ -110,34 +112,15 @@ export default async function CategoryDetailPage({ params }: Props) {
           {t.nav.collection}
         </Link>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-        {works.map((work) => {
-          const title = locale === 'fr' ? work.title_fr : work.title_nl
-          return (
-            <a
-              key={work.id}
-              href={workImageUrl(work.storage_path)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative aspect-square bg-(--color-paper) overflow-hidden"
-            >
-              <Image
-                src={workImageUrl(work.storage_path)}
-                alt={title || ''}
-                fill
-                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              {title && (
-                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/70 to-transparent text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                  {title}
-                  {work.year ? ` · ${work.year}` : ''}
-                </div>
-              )}
-            </a>
-          )
-        })}
-        </div>
+        <CategoryGallery
+          works={works.map<LightboxWork>((w) => ({
+            id: w.id,
+            storage_path: w.storage_path,
+            title: locale === 'fr' ? w.title_fr : w.title_nl,
+            year: w.year,
+          }))}
+          locale={locale as 'fr' | 'nl'}
+        />
       </div>
     </>
   )
