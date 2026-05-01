@@ -19,7 +19,7 @@ export default async function Header({ locale, t }: Props) {
   const navItems = [
     { href: localePath(locale, '/'), label: t.nav.home },
     { href: localePath(locale, '/galerie'), label: t.nav.collection },
-    { href: localePath(locale, '/a-propos'), label: t.nav.about },
+    { href: localePath(locale, '/social'), label: t.nav.about },
     { href: localePath(locale, '/contact'), label: t.nav.contact },
   ]
 

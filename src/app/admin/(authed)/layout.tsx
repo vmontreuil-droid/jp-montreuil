@@ -37,7 +37,6 @@ export default async function AuthedAdminLayout({
     { href: '/admin', label: 'Dashboard', icon: LayoutGrid },
     { href: '/admin/categories', label: 'Catégories', icon: FolderTree },
     { href: '/admin/works', label: 'Œuvres', icon: ImageIcon },
-    { href: '/admin/about', label: 'À Propos', icon: FileText },
     { href: '/admin/messages', label: 'Messages', icon: Inbox },
   ]
 

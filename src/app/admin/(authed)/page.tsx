@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { FolderTree, Image as ImageIcon, FileText, Inbox } from 'lucide-react'
+import { FolderTree, Image as ImageIcon, Inbox } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -34,12 +34,6 @@ export default async function AdminDashboardPage() {
       hint: unreadCount ? `${unreadCount} non lu${unreadCount > 1 ? 's' : ''}` : undefined,
       icon: Inbox,
     },
-    {
-      href: '/admin/about',
-      label: 'À Propos',
-      value: '—',
-      icon: FileText,
-    },
   ]
 
   return (
@@ -53,7 +47,7 @@ export default async function AdminDashboardPage() {
         </h1>
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {cards.map((c) => {
           const Icon = c.icon
           return (

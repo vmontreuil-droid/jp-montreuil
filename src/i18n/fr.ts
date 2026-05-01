@@ -5,7 +5,7 @@ const dict = {
   nav: {
     home: 'Accueil',
     collection: 'Collection',
-    about: 'À propos',
+    about: 'Réseaux sociaux',
     contact: 'Contact',
   },
 
