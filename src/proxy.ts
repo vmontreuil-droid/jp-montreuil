@@ -10,8 +10,22 @@ import { defaultLocale, isLocale } from '@/i18n/config'
  * rewrite zodat de URL onaangeroerd blijft maar Next de juiste route vindt.
  * De gedetecteerde locale wordt via header `x-locale` doorgegeven.
  */
+// Canoniek host voor productie. Niet-canonieke productie-hosts
+// (www.montreuil.be, jp.montreuil.be) krijgen 308-redirect naar apex.
+const CANONICAL_HOST = 'montreuil.be'
+const REDIRECT_HOSTS = new Set([`www.${CANONICAL_HOST}`, `jp.${CANONICAL_HOST}`])
+
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
+  const host = request.headers.get('host')?.toLowerCase() ?? ''
+
+  // 1. Redirect niet-canonieke productie-hosts naar apex
+  if (REDIRECT_HOSTS.has(host)) {
+    const target = new URL(request.url)
+    target.host = CANONICAL_HOST
+    target.protocol = 'https:'
+    return NextResponse.redirect(target, 308)
+  }
 
   const firstSegment = pathname.split('/')[1] ?? ''
   const requestHeaders = new Headers(request.headers)
