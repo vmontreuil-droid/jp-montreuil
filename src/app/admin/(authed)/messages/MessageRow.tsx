@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import {
   Mail,
   Phone,
@@ -15,6 +15,9 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  Upload,
+  ImagePlus,
+  X,
 } from 'lucide-react'
 import { markRead, markUnread, deleteMessage, getAttachmentUrl, sendReply } from './actions'
 
@@ -273,8 +276,28 @@ function ReplyForm({
 
   const [subject, setSubject] = useState(defaultSubject)
   const [body, setBody] = useState('')
+  const [files, setFiles] = useState<File[]>([])
+  const [dragOver, setDragOver] = useState(false)
   const [pending, startTransition] = useTransition()
   const [result, setResult] = useState<'success' | string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const hiddenInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!hiddenInputRef.current) return
+    const dt = new DataTransfer()
+    files.forEach((f) => dt.items.add(f))
+    hiddenInputRef.current.files = dt.files
+  }, [files])
+
+  function addFiles(list: FileList | File[]) {
+    const arr = Array.from(list)
+    setFiles((prev) => [...prev, ...arr].slice(0, 10))
+  }
+
+  function removeFile(idx: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== idx))
+  }
 
   function onSend(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -292,6 +315,7 @@ function ReplyForm({
             onClose()
             setResult(null)
             setBody('')
+            setFiles([])
           }, 2000)
         } else {
           setResult(r.error)
@@ -338,6 +362,83 @@ function ReplyForm({
           <span className="text-(--color-bronze)">noreply@montreuil.be</span>{' '}
           avec retour à <span className="text-(--color-bronze)">jp@montreuil.be</span>
         </p>
+      </div>
+
+      {/* Bijlage drop-zone */}
+      <div>
+        <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1">
+          Pièces jointes (optionnel)
+        </label>
+        <div
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragOver(true)
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragOver(false)
+            if (e.dataTransfer.files) addFiles(e.dataTransfer.files)
+          }}
+          onClick={() => fileInputRef.current?.click()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              fileInputRef.current?.click()
+            }
+          }}
+          className={`flex flex-col items-center justify-center gap-1 border-2 border-dashed cursor-pointer p-4 text-center transition-colors text-xs ${
+            dragOver
+              ? 'border-(--color-bronze) bg-(--color-bronze)/5'
+              : 'border-(--color-frame) hover:border-(--color-stone) bg-(--color-paper)'
+          }`}
+        >
+          <Upload className="w-5 h-5 text-(--color-stone)" />
+          <p className="text-(--color-charcoal)">
+            Glisser-déposer ou cliquer — JPG, PNG, WEBP, PDF
+          </p>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"
+          onChange={(e) => {
+            if (e.target.files) addFiles(e.target.files)
+            e.target.value = ''
+          }}
+          className="hidden"
+        />
+        <input ref={hiddenInputRef} type="file" name="files" multiple className="hidden" />
+
+        {files.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {files.map((f, i) => (
+              <li
+                key={`${f.name}-${i}`}
+                className="flex items-center gap-2 px-2 py-1 bg-(--color-paper) border border-(--color-frame) text-xs"
+              >
+                <ImagePlus className="w-3.5 h-3.5 text-(--color-bronze) shrink-0" />
+                <span className="flex-1 truncate text-(--color-ink)">{f.name}</span>
+                <span className="text-[10px] text-(--color-stone)">
+                  {f.size < 1024 * 1024
+                    ? `${(f.size / 1024).toFixed(0)} KB`
+                    : `${(f.size / 1024 / 1024).toFixed(1)} MB`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeFile(i)}
+                  aria-label="Retirer"
+                  className="text-(--color-stone) hover:text-(--color-ink) p-0.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {result === 'success' && (

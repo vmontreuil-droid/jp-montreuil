@@ -95,6 +95,28 @@ export async function sendReply(formData: FormData): Promise<ReplyResult> {
 
   if (fetchErr || !msg) return { ok: false, error: 'message_not_found' }
 
+  // Optionele bijlagen meesturen
+  const MAX_TOTAL = 30 * 1024 * 1024
+  const ALLOWED = new Set([
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+    'application/pdf',
+  ])
+  const files = formData.getAll('files').filter((f): f is File => f instanceof File && f.size > 0)
+  let total = 0
+  const mailAttachments: { filename: string; content: Buffer; contentType?: string }[] = []
+  for (const f of files) {
+    if (!ALLOWED.has(f.type.toLowerCase())) continue
+    if (total + f.size > MAX_TOTAL) break
+    const buf = Buffer.from(await f.arrayBuffer())
+    mailAttachments.push({ filename: f.name, content: buf, contentType: f.type })
+    total += f.size
+  }
+
   const locale = isLocale(msg.locale ?? '') ? msg.locale : 'fr'
 
   const html = await render(
@@ -115,6 +137,7 @@ export async function sendReply(formData: FormData): Promise<ReplyResult> {
     html,
     text: body,
     replyTo: process.env.RESEND_REPLY_TO || 'jp@montreuil.be',
+    attachments: mailAttachments.length > 0 ? mailAttachments : undefined,
   })
 
   if (!result.ok) {
