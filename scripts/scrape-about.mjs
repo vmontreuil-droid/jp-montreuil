@@ -29,6 +29,20 @@ async function fetchHtml(path) {
 }
 
 /**
+ * Strip footer-residu zoals "© Copyright 2024 - 2026 | Atelier Montreuil | …"
+ * dat soms in de laatste sectie terechtkomt door het ontbreken van een
+ * scheiding tussen sectie-content en site-footer in de Avada-HTML.
+ */
+function stripFooterResidu(text) {
+  return text
+    .replace(/©\s*Copyright[\s\S]*$/i, '')
+    .replace(/Powered by[\s\S]*$/i, '')
+    .replace(/All Rights Reserved[\s\S]*$/i, '')
+    .replace(/Alle rechten voorbehouden[\s\S]*$/i, '')
+    .trim()
+}
+
+/**
  * Strip alle HTML-tags en decode HTML-entities voor leesbare platte tekst.
  * Behoudt alinea-breuken: <br>, <p>, <h5> markeren een nieuwe regel.
  */
@@ -192,8 +206,8 @@ async function main() {
       sort_order: i + 1,
       title_fr: fr[i].title || `(sectie ${i + 1})`,
       title_nl: nl[i].title || `(sectie ${i + 1})`,
-      body_fr: fr[i].body || '',
-      body_nl: nl[i].body || '',
+      body_fr: stripFooterResidu(fr[i].body || ''),
+      body_nl: stripFooterResidu(nl[i].body || ''),
       image_path: imagePaths[i],
     })
   }
