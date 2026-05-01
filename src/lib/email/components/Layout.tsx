@@ -66,43 +66,40 @@ export function Layout({ preheader, lang = 'fr', children }: Props) {
               padding: '40px 16px',
             }}
           >
-            {/* Brand header */}
-            <Section style={{ textAlign: 'center', paddingBottom: 32 }}>
+            {/* Brand header — donkere band zodat het wit-op-transparant logo
+                crisp rendert in alle email-clients (filter wordt vaak gestripped) */}
+            <Section
+              style={{
+                textAlign: 'center',
+                padding: '36px 24px 28px',
+                backgroundColor: '#0a0908',
+                borderRadius: 4,
+                marginBottom: 24,
+              }}
+            >
               <Img
                 src={`${PUBLIC_BASE_URL}/logo.png`}
-                width="180"
-                height="62"
+                width="200"
+                height="69"
                 alt="Atelier Montreuil"
                 style={{
                   display: 'inline-block',
-                  margin: '0 auto 8px',
-                  // logo is wit-op-transparant — brightness(0) maakt elk niet-
-                  // transparant pixel pikzwart (sterker dan invert(1) op cream bg)
-                  filter: 'brightness(0)',
+                  margin: '0 auto 12px',
                 }}
               />
               <Text
                 style={{
                   fontFamily: fonts.sans,
                   fontSize: 11,
-                  letterSpacing: '0.25em',
+                  letterSpacing: '0.3em',
                   textTransform: 'uppercase',
-                  color: colors.charcoal,
+                  color: '#b89668', // brons accent op donker
                   margin: 0,
                   fontWeight: 500,
                 }}
               >
                 {lang === 'nl' ? 'Kunstschilder' : 'Artiste peintre'}
               </Text>
-              <div
-                style={{
-                  display: 'inline-block',
-                  width: 36,
-                  height: 1,
-                  backgroundColor: colors.bronze,
-                  marginTop: 16,
-                }}
-              />
             </Section>
 
             {/* Content card */}

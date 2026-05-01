@@ -46,7 +46,7 @@ export function ReplyToMessage({ recipientName, body, locale, originalMessage }:
         Jean-Pierre Montreuil
       </Text>
       <Text style={{ ...text.small, margin: '0 0 24px' }}>
-        {isFR ? 'Peintre · Atelier Montreuil' : 'Schilder · Atelier Montreuil'}
+        {isFR ? 'Artiste peintre · Atelier Montreuil' : 'Kunstschilder · Atelier Montreuil'}
       </Text>
 
       {originalMessage && (
