@@ -15,6 +15,10 @@ export function proxy(request: NextRequest) {
 
   const firstSegment = pathname.split('/')[1] ?? ''
   const requestHeaders = new Headers(request.headers)
+  // Bewaar de originele (zichtbare) URL — na rewrite is die niet meer leesbaar
+  // via headers/usePathname. Server components hebben dit nodig voor o.a. de
+  // taalswitch-link.
+  requestHeaders.set('x-pathname', pathname)
 
   if (isLocale(firstSegment)) {
     requestHeaders.set('x-locale', firstSegment)

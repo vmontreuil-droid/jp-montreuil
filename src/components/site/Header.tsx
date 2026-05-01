@@ -1,0 +1,69 @@
+import Link from 'next/link'
+import type { Locale } from '@/i18n/config'
+import { type Dictionary } from '@/i18n/dictionaries'
+import { getAltLocaleHref, getRequestPathname } from '@/i18n/server'
+import { localePath } from '@/lib/links'
+
+type Props = {
+  locale: Locale
+  t: Dictionary
+}
+
+export default async function Header({ locale, t }: Props) {
+  const pathname = await getRequestPathname()
+  const altHref = getAltLocaleHref(pathname, locale)
+  const altLabel = locale === 'fr' ? 'NL' : 'FR'
+
+  const navItems = [
+    { href: localePath(locale, '/'), label: t.nav.home },
+    { href: localePath(locale, '/galerie'), label: t.nav.collection },
+    { href: localePath(locale, '/a-propos'), label: t.nav.about },
+    { href: localePath(locale, '/contact'), label: t.nav.contact },
+  ]
+
+  return (
+    <header className="sticky top-0 z-40 bg-(--color-canvas)/90 backdrop-blur-sm border-b border-(--color-frame)">
+      <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between gap-6">
+        <Link
+          href={localePath(locale, '/')}
+          className="font-[family-name:var(--font-display)] text-xl md:text-2xl text-(--color-ink) leading-none whitespace-nowrap"
+        >
+          Atelier Montreuil
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-8 text-sm tracking-wide uppercase">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="text-(--color-charcoal) hover:text-(--color-bronze) transition-colors"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        <a
+          href={altHref}
+          className="text-xs uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink) transition-colors border border-(--color-frame) px-3 py-1.5 rounded-sm"
+          aria-label={`Switch to ${altLabel}`}
+        >
+          {altLabel}
+        </a>
+      </div>
+
+      {/* Mobile nav */}
+      <nav className="md:hidden border-t border-(--color-frame) px-6 py-3 flex items-center justify-around text-xs uppercase tracking-wide">
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="text-(--color-charcoal) hover:text-(--color-bronze) transition-colors"
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+    </header>
+  )
+}
