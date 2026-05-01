@@ -1,13 +1,14 @@
 import './globals.css'
 import type { Metadata, Viewport } from 'next'
-import { Cormorant_Garamond, Montserrat } from 'next/font/google'
+import { Megrim, Montserrat } from 'next/font/google'
 import { getRequestLocale } from '@/i18n/server'
 import { getDictionary } from '@/i18n/dictionaries'
 import { htmlLang } from '@/i18n/config'
 
-const cormorant = Cormorant_Garamond({
+// Megrim — geometrische display-font, zelfde als oude jp.montreuil.be
+const megrim = Megrim({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600'],
+  weight: ['400'],
   variable: '--font-display',
   display: 'swap',
 })
@@ -59,7 +60,7 @@ export default async function RootLayout({
   const locale = await getRequestLocale()
 
   return (
-    <html lang={htmlLang[locale]} className={`${cormorant.variable} ${montserrat.variable}`}>
+    <html lang={htmlLang[locale]} className={`${megrim.variable} ${montserrat.variable}`}>
       <body>{children}</body>
     </html>
   )

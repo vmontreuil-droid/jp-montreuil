@@ -48,7 +48,7 @@ export default async function GaleriePage({ params }: Props) {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       <header className="text-center mb-12">
-        <p className="text-xs uppercase tracking-[0.3em] text-(--color-stone) mb-3">
+        <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-3">
           Atelier Montreuil
         </p>
         <h1 className="text-4xl md:text-5xl text-(--color-ink)">{t.nav.collection}</h1>
@@ -77,9 +77,15 @@ export default async function GaleriePage({ params }: Props) {
               ) : (
                 <div className="absolute inset-0 bg-(--color-frame)" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-                <p className="text-2xl md:text-3xl font-[family-name:var(--font-display)]">
+              <div className="absolute inset-0 bg-black/25 group-hover:bg-black/15 transition-colors" />
+              <div
+                className="absolute left-4 right-4 bottom-4 px-5 py-4 backdrop-blur-md border border-white/15 text-white"
+                style={{ background: 'rgba(10, 9, 8, 0.45)' }}
+              >
+                <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-bronze) mb-1">
+                  Atelier Montreuil
+                </p>
+                <p className="text-2xl md:text-3xl font-[family-name:var(--font-display)] leading-none">
                   {label}
                 </p>
               </div>

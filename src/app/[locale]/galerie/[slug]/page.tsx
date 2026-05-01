@@ -92,29 +92,29 @@ export default async function CategoryDetailPage({ params }: Props) {
             className="max-w-2xl w-full p-8 md:p-12 backdrop-blur-md border border-white/15 text-white"
             style={{ background: 'rgba(10, 9, 8, 0.45)' }}
           >
-            <p className="text-xs uppercase tracking-[0.4em] mb-3 text-(--color-bronze)">
+            <p className="text-xs uppercase tracking-[0.2em] mb-3 text-(--color-bronze)">
               Atelier Montreuil
             </p>
             <h1 className="text-5xl md:text-7xl font-[family-name:var(--font-display)] leading-none">
               {label}
             </h1>
             {description && (
-              <p className="mt-4 italic text-white/85">{description}</p>
+              <p className="mt-4 text-white/85">{description}</p>
             )}
-            <p className="mt-5 text-xs uppercase tracking-wider text-white/70">
+            <p className="mt-5 text-xs uppercase tracking-[0.2em] text-white/70">
               {works.length} {locale === 'fr' ? 'œuvres' : 'werken'}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href={localePath(locale as Locale, '/galerie')}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-(--color-bronze) hover:text-white transition-colors text-sm uppercase tracking-wider"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-(--color-bronze) hover:text-white transition-colors text-sm uppercase tracking-[0.2em]"
               >
                 <LayoutGrid className="w-4 h-4" />
                 {t.nav.collection}
               </Link>
               <Link
                 href={localePath(locale as Locale, '/contact')}
-                className="inline-flex items-center gap-2 px-6 py-3 border border-white/40 text-white hover:bg-white/10 transition-colors text-sm uppercase tracking-wider"
+                className="inline-flex items-center gap-2 px-6 py-3 border border-white/40 text-white hover:bg-white/10 transition-colors text-sm uppercase tracking-[0.2em]"
               >
                 <MessageCircle className="w-4 h-4" />
                 {t.nav.contact}

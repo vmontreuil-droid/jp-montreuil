@@ -83,26 +83,26 @@ export default function HeroSlideshow({
           className="max-w-2xl w-full p-10 md:p-14 backdrop-blur-md border border-white/15 text-white"
           style={{ background: 'rgba(10, 9, 8, 0.45)' }}
         >
-          <p className="text-xs md:text-sm uppercase tracking-[0.4em] mb-6 text-(--color-bronze)">
+          <p className="text-xs md:text-sm uppercase tracking-[0.2em] mb-6 text-(--color-bronze)">
             Atelier Montreuil
           </p>
           <h1 className="text-5xl md:text-7xl font-[family-name:var(--font-display)] mb-6 leading-none">
             {brandName}
           </h1>
-          <p className="text-xl md:text-2xl italic mb-10 text-white/90">
+          <p className="text-xl md:text-2xl mb-10 text-white/90">
             {tagline}
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
               href={ctaHref}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-(--color-bronze) hover:text-white transition-colors text-sm uppercase tracking-wider"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-(--color-bronze) hover:text-white transition-colors text-sm uppercase tracking-[0.2em]"
             >
               {ctaLabel}
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href={contactHref}
-              className="inline-flex items-center gap-2 px-6 py-3 border border-white/40 text-white hover:bg-white/10 transition-colors text-sm uppercase tracking-wider"
+              className="inline-flex items-center gap-2 px-6 py-3 border border-white/40 text-white hover:bg-white/10 transition-colors text-sm uppercase tracking-[0.2em]"
             >
               <MessageCircle className="w-4 h-4" />
               {contactLabel}
@@ -120,7 +120,7 @@ export default function HeroSlideshow({
       >
         <div className="px-5 py-3 backdrop-blur-md bg-white/10 border border-white/20 text-white flex items-center gap-3 hover:bg-white/20 transition-colors">
           <div className="text-right">
-            <div className="text-[10px] uppercase tracking-[0.25em] opacity-70">
+            <div className="text-[10px] uppercase tracking-[0.2em] opacity-70">
               {indicatorLabel}
             </div>
             <div className="text-base font-[family-name:var(--font-display)]">

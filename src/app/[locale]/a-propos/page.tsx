@@ -44,14 +44,14 @@ export default async function AboutPage({ params }: Props) {
   return (
     <article>
       <header className="text-center pt-20 pb-16 px-6">
-        <p className="text-xs uppercase tracking-[0.4em] text-(--color-stone) mb-4">
+        <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-4">
           Atelier Montreuil
         </p>
         <h1 className="text-4xl md:text-6xl text-(--color-ink)">{t.about.title}</h1>
       </header>
 
       {sections.length === 0 ? (
-        <p className="max-w-3xl mx-auto px-6 pb-20 text-center text-(--color-stone) italic">
+        <p className="max-w-3xl mx-auto px-6 pb-20 text-center text-(--color-stone)">
           {locale === 'fr' ? 'Contenu à venir.' : 'Inhoud volgt binnenkort.'}
         </p>
       ) : (
