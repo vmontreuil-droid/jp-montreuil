@@ -13,6 +13,9 @@
   --color-bronze: #b89668;
   --color-bronze-dark: #8b6f47;
 
+  /* Potlood-lijnen overlay — subtiel zichtbaar tegen de canvas-bg */
+  --color-pencil: rgba(245, 240, 232, 0.035);
+
   /* Defaults voor Tailwind background/foreground */
   --color-background: var(--color-canvas);
   --color-foreground: var(--color-ink);
@@ -43,12 +46,34 @@
     --color-bronze: #8b6f47;
     --color-bronze-dark: #6f5736;
 
+    /* Potlood-lijnen subtieler en donkerder in licht-modus */
+    --color-pencil: rgba(28, 25, 22, 0.04);
+
     --color-background: var(--color-canvas);
     --color-foreground: var(--color-ink);
   }
 
   body {
-    background: var(--color-canvas);
+    background-color: var(--color-canvas);
+    /* Crosshatch potlood-overlay — twee diagonale lijn-patronen die elkaar
+       kruisen, geeft een subtiele schets-textuur over heel de body. Werkt
+       zowel licht als donker via de --color-pencil token. */
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        transparent 0,
+        transparent 11px,
+        var(--color-pencil) 11px,
+        var(--color-pencil) 12px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        transparent 0,
+        transparent 17px,
+        var(--color-pencil) 17px,
+        var(--color-pencil) 18px
+      );
+    background-attachment: fixed;
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-weight: 400;
