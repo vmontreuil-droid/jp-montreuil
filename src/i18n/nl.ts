@@ -7,7 +7,8 @@ const dict: Dictionary = {
   nav: {
     home: 'Home',
     collection: 'Gallerij',
-    about: 'Sociale media',
+    about: 'Over mij',
+    social: 'Sociale media',
     contact: 'Contact',
   },
 
