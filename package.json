@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "scrape": "node --env-file=.env.local scripts/scrape-jp-montreuil.mjs",
+    "scrape:dry": "node --env-file=.env.local scripts/scrape-jp-montreuil.mjs --dry-run"
   },
   "dependencies": {
     "@react-email/components": "^1.0.12",
