@@ -81,7 +81,7 @@ export default function HeroSlideshow({
       <div className="relative h-full flex items-center px-6 md:px-12 lg:px-20">
         <div
           className="max-w-2xl w-full p-10 md:p-14 backdrop-blur-md border border-white/15 text-white"
-          style={{ background: 'rgba(10, 9, 8, 0.45)' }}
+          style={{ background: 'rgba(10, 9, 8, 0.28)' }}
         >
           <p className="text-xs md:text-sm uppercase tracking-[0.2em] mb-6 text-(--color-bronze)">
             Atelier Montreuil

@@ -80,7 +80,7 @@ export default async function GaleriePage({ params }: Props) {
               <div className="absolute inset-0 bg-black/25 group-hover:bg-black/15 transition-colors" />
               <div
                 className="absolute left-4 right-4 bottom-4 px-5 py-4 backdrop-blur-md border border-white/15 text-white"
-                style={{ background: 'rgba(10, 9, 8, 0.45)' }}
+                style={{ background: 'rgba(10, 9, 8, 0.28)' }}
               >
                 <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-bronze) mb-1">
                   Atelier Montreuil

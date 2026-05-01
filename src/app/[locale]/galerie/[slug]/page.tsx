@@ -91,7 +91,7 @@ export default async function CategoryDetailPage({ params }: Props) {
         <div className="relative h-full flex items-center px-6 md:px-12 lg:px-20">
           <div
             className="max-w-2xl w-full p-8 md:p-12 backdrop-blur-md border border-white/15 text-white"
-            style={{ background: 'rgba(10, 9, 8, 0.45)' }}
+            style={{ background: 'rgba(10, 9, 8, 0.28)' }}
           >
             <p className="text-xs uppercase tracking-[0.2em] mb-3 text-(--color-bronze)">
               Atelier Montreuil
