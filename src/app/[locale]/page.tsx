@@ -35,29 +35,53 @@ export default async function HomePage({ params }: Props) {
 
   const teaserCategories = data ?? []
 
+  // Eerste category-cover wordt als hero gebruikt — "voitures" staat eerst.
+  const heroPath = teaserCategories[0]?.cover?.storage_path
+
   return (
     <>
-      <section className="max-w-5xl mx-auto px-6 pt-16 pb-20 text-center">
-        <p className="text-xs uppercase tracking-[0.4em] text-(--color-stone) mb-6">
-          Atelier Montreuil
-        </p>
-        <h1 className="text-5xl md:text-7xl text-(--color-ink) mb-6 font-[family-name:var(--font-display)]">
-          Jean-Pierre Montreuil
-        </h1>
-        <p className="text-xl md:text-2xl text-(--color-charcoal) italic max-w-2xl mx-auto mb-8">
-          {t.tagline}
-        </p>
-        <p className="text-(--color-charcoal) max-w-2xl mx-auto mb-10">{t.home.intro}</p>
-        <Link
-          href={localePath(locale as Locale, '/galerie')}
-          className="inline-flex items-center gap-2 px-7 py-3 bg-(--color-bronze) text-(--color-canvas) hover:bg-(--color-bronze-dark) transition-colors text-sm uppercase tracking-wider"
-        >
-          {t.home.seeCollection}
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+      {/* Full-bleed hero met groot kunstwerk */}
+      <section className="relative h-[85vh] min-h-[500px] -mt-[1px] overflow-hidden">
+        {heroPath && (
+          <Image
+            src={workImageUrl(heroPath)}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
+        <div className="relative h-full flex flex-col items-center justify-center text-center px-6 text-(--color-canvas)">
+          <p className="text-xs md:text-sm uppercase tracking-[0.5em] mb-6 opacity-90">
+            Atelier Montreuil
+          </p>
+          <h1 className="text-5xl md:text-8xl mb-8 font-[family-name:var(--font-display)] drop-shadow-lg">
+            Jean-Pierre Montreuil
+          </h1>
+          <p className="text-xl md:text-3xl italic max-w-3xl mb-12 drop-shadow-md">
+            {t.tagline}
+          </p>
+          <Link
+            href={localePath(locale as Locale, '/galerie')}
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-(--color-canvas) text-(--color-ink) hover:bg-(--color-bronze) hover:text-(--color-canvas) transition-colors text-sm uppercase tracking-wider"
+          >
+            {t.home.seeCollection}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-6 pb-20">
+      {/* Intro */}
+      <section className="max-w-3xl mx-auto px-6 py-20 text-center">
+        <p className="text-lg md:text-xl text-(--color-charcoal) leading-relaxed">
+          {t.home.intro}
+        </p>
+      </section>
+
+      {/* Categorie-teasers */}
+      <section className="max-w-7xl mx-auto px-6 pb-24">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
           {teaserCategories.map((cat) => {
             const label = locale === 'fr' ? cat.label_fr : cat.label_nl
@@ -66,7 +90,7 @@ export default async function HomePage({ params }: Props) {
               <Link
                 key={cat.id}
                 href={href}
-                className="group relative aspect-square overflow-hidden bg-(--color-paper)"
+                className="group relative aspect-[4/5] overflow-hidden bg-(--color-paper)"
               >
                 {cat.cover?.storage_path && (
                   <Image
@@ -77,8 +101,8 @@ export default async function HomePage({ params }: Props) {
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <p className="absolute inset-x-0 bottom-0 p-4 text-(--color-canvas) text-lg md:text-xl font-[family-name:var(--font-display)]">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                <p className="absolute inset-x-0 bottom-0 p-5 text-(--color-canvas) text-2xl md:text-3xl font-[family-name:var(--font-display)]">
                   {label}
                 </p>
               </Link>

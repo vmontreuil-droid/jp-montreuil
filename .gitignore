@@ -40,3 +40,5 @@ next-env.d.ts
 
 # scrape artefacten
 /scripts/scrape-cache/
+
+.vercel

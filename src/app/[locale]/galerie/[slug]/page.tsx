@@ -45,9 +45,17 @@ export default async function CategoryDetailPage({ params }: Props) {
   const supabase = await createClient()
   const { data: category } = await supabase
     .from('categories')
-    .select('id, slug, label_fr, label_nl, description_fr, description_nl')
+    .select('id, slug, label_fr, label_nl, description_fr, description_nl, cover:works!categories_cover_work_id_fkey(storage_path)')
     .eq('slug', slug)
-    .single()
+    .single<{
+      id: string
+      slug: string
+      label_fr: string
+      label_nl: string
+      description_fr: string | null
+      description_nl: string | null
+      cover: { storage_path: string } | null
+    }>()
 
   if (!category) notFound()
 
@@ -63,24 +71,46 @@ export default async function CategoryDetailPage({ params }: Props) {
   const description = locale === 'fr' ? category.description_fr : category.description_nl
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-      <Link
-        href={localePath(locale as Locale, '/galerie')}
-        className="inline-flex items-center gap-1 text-sm text-(--color-stone) hover:text-(--color-ink) mb-6"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        {t.nav.collection}
-      </Link>
+    <>
+      {/* Banner-header met cover-foto */}
+      <section className="relative h-[60vh] min-h-[360px] overflow-hidden">
+        {category.cover?.storage_path && (
+          <Image
+            src={workImageUrl(category.cover.storage_path)}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
+        <div className="relative h-full flex flex-col items-center justify-center text-center px-6 text-(--color-canvas)">
+          <p className="text-xs uppercase tracking-[0.4em] mb-4 opacity-90">
+            Atelier Montreuil
+          </p>
+          <h1 className="text-5xl md:text-7xl font-[family-name:var(--font-display)] drop-shadow-lg">
+            {label}
+          </h1>
+          {description && (
+            <p className="mt-4 max-w-2xl italic drop-shadow-md">{description}</p>
+          )}
+          <p className="mt-6 text-xs uppercase tracking-wider opacity-80">
+            {works.length} {locale === 'fr' ? 'œuvres' : 'werken'}
+          </p>
+        </div>
+      </section>
 
-      <header className="mb-10">
-        <h1 className="text-4xl md:text-5xl text-(--color-ink) mb-3">{label}</h1>
-        {description && <p className="text-(--color-charcoal) max-w-2xl">{description}</p>}
-        <p className="text-xs text-(--color-stone) mt-2">
-          {works.length} {locale === 'fr' ? 'œuvres' : 'werken'}
-        </p>
-      </header>
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <Link
+          href={localePath(locale as Locale, '/galerie')}
+          className="inline-flex items-center gap-1 text-sm text-(--color-stone) hover:text-(--color-ink) mb-8"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          {t.nav.collection}
+        </Link>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
         {works.map((work) => {
           const title = locale === 'fr' ? work.title_fr : work.title_nl
           return (
@@ -107,7 +137,8 @@ export default async function CategoryDetailPage({ params }: Props) {
             </a>
           )
         })}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
