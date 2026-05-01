@@ -71,6 +71,69 @@ export type ReplyResult =
   | { ok: false; error: string }
 
 /**
+ * Stuur een nieuwe mail vanuit admin (geen referentie naar bestaand
+ * contact-bericht). JP kan zo bv. een klant terug-mailen die niet via
+ * het formulier kwam, of een opvolg-bericht sturen.
+ */
+export async function sendComposed(formData: FormData): Promise<ReplyResult> {
+  await requireAdmin()
+
+  const to = String(formData.get('to') ?? '').trim()
+  const recipientName = String(formData.get('recipient_name') ?? '').trim() || to.split('@')[0]
+  const subject = String(formData.get('subject') ?? '').trim()
+  const body = String(formData.get('body') ?? '').trim()
+  const localeRaw = String(formData.get('locale') ?? 'fr')
+  const locale = isLocale(localeRaw) ? localeRaw : 'fr'
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return { ok: false, error: 'invalid_email' }
+  if (!subject) return { ok: false, error: 'subject_empty' }
+  if (body.length < 5) return { ok: false, error: 'body_too_short' }
+  if (body.length > 10000) return { ok: false, error: 'body_too_long' }
+
+  // Bijlagen
+  const MAX_TOTAL = 30 * 1024 * 1024
+  const ALLOWED = new Set([
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+    'application/pdf',
+  ])
+  const files = formData.getAll('files').filter((f): f is File => f instanceof File && f.size > 0)
+  let total = 0
+  const mailAttachments: { filename: string; content: Buffer; contentType?: string }[] = []
+  for (const f of files) {
+    if (!ALLOWED.has(f.type.toLowerCase())) continue
+    if (total + f.size > MAX_TOTAL) break
+    const buf = Buffer.from(await f.arrayBuffer())
+    mailAttachments.push({ filename: f.name, content: buf, contentType: f.type })
+    total += f.size
+  }
+
+  const html = await render(
+    ReplyToMessage({
+      recipientName,
+      body,
+      locale: locale as 'fr' | 'nl',
+    })
+  )
+
+  const result = await sendEmail({
+    to,
+    subject,
+    html,
+    text: body,
+    replyTo: process.env.RESEND_REPLY_TO || 'jp@montreuil.be',
+    attachments: mailAttachments.length > 0 ? mailAttachments : undefined,
+  })
+
+  if (!result.ok) return { ok: false, error: result.error ?? 'send_failed' }
+  return { ok: true }
+}
+
+/**
  * Stuur een opgemaakte HTML-mail antwoord naar de afzender van een
  * contact-bericht, en markeer het bericht als gelezen.
  */
