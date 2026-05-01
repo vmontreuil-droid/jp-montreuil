@@ -4,12 +4,14 @@ import { requireAdmin } from '@/lib/admin/auth'
 
 export const runtime = 'nodejs'
 
-const SYSTEM_PROMPT = `You translate short labels and texts for an art-portfolio website (Atelier Montreuil — Jean-Pierre Montreuil, painter).
+const SYSTEM_PROMPT = `You translate texts for an art-portfolio website (Atelier Montreuil — Jean-Pierre Montreuil, painter).
 
 Rules:
-- Translate ONLY between French (fr) and Dutch / Nederlands (nl).
+- Translate to the requested target language (French 'fr' or Dutch 'nl').
+- The source language may not be specified — auto-detect if needed.
+- If the input is ALREADY in the target language, return it unchanged.
 - Output the translated text directly — no quotes, no preamble, no explanation, no labels.
-- Preserve formatting: capitalization style, line breaks, punctuation.
+- Preserve formatting: capitalization style, line breaks, punctuation, paragraphs.
 - Keep proper nouns and names unchanged (Jean-Pierre Montreuil, Atelier Montreuil, Bafra-Art, etc).
 - Use natural Belgian-French / Belgian-Dutch where stylistic choices apply.
 - For uppercase input, return uppercase output.
@@ -47,8 +49,12 @@ export async function POST(request: Request) {
   if (text.length > 5000) {
     return NextResponse.json({ error: 'text_too_long', max: 5000 }, { status: 400 })
   }
-  if (!isLang(from) || !isLang(to) || from === to) {
-    return NextResponse.json({ error: 'invalid_lang_pair' }, { status: 400 })
+  if (!isLang(to)) {
+    return NextResponse.json({ error: 'invalid_target_lang' }, { status: 400 })
+  }
+  // 'from' is optioneel — als gespecificeerd dan moet 't anders zijn dan 'to'
+  if (from !== undefined && (!isLang(from) || from === to)) {
+    return NextResponse.json({ error: 'invalid_source_lang' }, { status: 400 })
   }
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -63,9 +69,11 @@ export async function POST(request: Request) {
       messages: [
         {
           role: 'user',
-          content: `Translate from ${from === 'fr' ? 'French' : 'Dutch'} to ${
-            to === 'fr' ? 'French' : 'Dutch'
-          }:\n\n${text}`,
+          content: from
+            ? `Translate from ${from === 'fr' ? 'French' : 'Dutch'} to ${
+                to === 'fr' ? 'French' : 'Dutch'
+              }:\n\n${text}`
+            : `Translate the following to ${to === 'fr' ? 'French' : 'Dutch'} (auto-detect source — if already in target language, return unchanged):\n\n${text}`,
         },
       ],
     })

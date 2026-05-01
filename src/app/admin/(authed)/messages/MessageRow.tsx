@@ -20,7 +20,7 @@ import {
   X,
 } from 'lucide-react'
 import { markRead, markUnread, deleteMessage, getAttachmentUrl, sendReply } from './actions'
-import TranslateButton from '@/components/admin/TranslateButton'
+import BiTranslate from '@/components/admin/BiTranslate'
 
 type Attachment = {
   id: string
@@ -61,9 +61,25 @@ export default function MessageRow({ message }: { message: Message }) {
   const [replyOpen, setReplyOpen] = useState(false)
   const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({})
   const [translation, setTranslation] = useState<string | null>(null)
+  const [lightbox, setLightbox] = useState<{ url: string; filename: string } | null>(null)
   const isUnread = !message.read_at
   const sourceLang = (message.locale === 'nl' ? 'nl' : 'fr') as 'fr' | 'nl'
   const targetLang = sourceLang === 'fr' ? 'nl' : 'fr'
+
+  // ESC sluit lightbox + body-scroll-lock
+  useEffect(() => {
+    if (!lightbox) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightbox(null)
+    }
+    document.addEventListener('keydown', onKey)
+    const original = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = original
+    }
+  }, [lightbox])
 
   // Lazy: laad signed URLs voor foto-bijlagen wanneer rij openklapt
   useEffect(() => {
@@ -118,13 +134,20 @@ export default function MessageRow({ message }: { message: Message }) {
     })
   }
 
-  async function downloadAttachment(att: Attachment) {
+  async function openAttachment(att: Attachment) {
     const url = await getAttachmentUrl(att.storage_path)
     if (!url) {
       alert('Erreur lors de la génération du lien')
       return
     }
-    window.open(url, '_blank', 'noopener,noreferrer')
+    const isImage = (att.content_type ?? '').startsWith('image/')
+    if (isImage) {
+      // Open in popup lightbox (zelfde tab)
+      setLightbox({ url, filename: att.filename })
+    } else {
+      // Niet-image (PDF etc.): wel nieuwe tab voor download
+      window.open(url, '_blank', 'noopener,noreferrer')
+    }
   }
 
   return (
@@ -248,17 +271,11 @@ export default function MessageRow({ message }: { message: Message }) {
 
           {/* Bericht */}
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
               <h3 className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
                 Message {sourceLang === 'nl' && <span className="ml-1 text-(--color-bronze)">(NL)</span>}
               </h3>
-              <TranslateButton
-                getSource={() => message.message}
-                from={sourceLang}
-                to={targetLang}
-                onTranslated={setTranslation}
-                label={`Traduire → ${targetLang.toUpperCase()}`}
-              />
+              <BiTranslate getSource={() => message.message} onTranslated={setTranslation} />
             </div>
             <p className="bg-(--color-canvas) border border-(--color-frame) p-4 text-(--color-ink) whitespace-pre-wrap text-sm leading-relaxed">
               {message.message}
@@ -304,7 +321,7 @@ export default function MessageRow({ message }: { message: Message }) {
                         <button
                           key={a.id}
                           type="button"
-                          onClick={() => downloadAttachment(a)}
+                          onClick={() => openAttachment(a)}
                           className="group relative aspect-square bg-(--color-canvas) border border-(--color-frame) hover:border-(--color-bronze) overflow-hidden transition-colors"
                           title={`${a.filename} — ${formatBytes(a.size_bytes)}`}
                         >
@@ -336,7 +353,7 @@ export default function MessageRow({ message }: { message: Message }) {
                   <li key={a.id}>
                     <button
                       type="button"
-                      onClick={() => downloadAttachment(a)}
+                      onClick={() => openAttachment(a)}
                       className="w-full flex items-center gap-2 px-3 py-2 bg-(--color-canvas) border border-(--color-frame) hover:border-(--color-bronze) transition-colors text-sm text-left"
                     >
                       <Paperclip className="w-4 h-4 text-(--color-bronze) shrink-0" />
@@ -349,6 +366,55 @@ export default function MessageRow({ message }: { message: Message }) {
               </ul>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Lightbox-popup voor foto-bijlagen (zelfde tab) */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center"
+          onClick={() => setLightbox(null)}
+          onContextMenu={(e) => e.preventDefault()}
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setLightbox(null)
+            }}
+            aria-label="Fermer"
+            className="absolute top-4 right-4 md:top-6 md:right-6 z-10 inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-sm uppercase tracking-[0.2em] transition-colors"
+          >
+            <X className="w-5 h-5" />
+            <span className="hidden sm:inline">Fermer</span>
+          </button>
+          <a
+            href={lightbox.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="absolute top-4 left-4 md:top-6 md:left-6 z-10 inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs uppercase tracking-[0.2em] transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Télécharger</span>
+          </a>
+          <div
+            className="relative w-[92vw] h-[82vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightbox.url}
+              alt={lightbox.filename}
+              draggable={false}
+              className="absolute inset-0 w-full h-full object-contain select-none"
+            />
+          </div>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm">
+            {lightbox.filename}
+          </div>
         </div>
       )}
     </div>
@@ -431,24 +497,11 @@ function ReplyForm({
         </h3>
       </div>
       <div>
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
           <label className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
             Objet
-            {!isFR && (
-              <span className="ml-2 normal-case tracking-normal text-(--color-bronze)">
-                — écrivez en FR puis traduisez
-              </span>
-            )}
           </label>
-          {!isFR && (
-            <TranslateButton
-              getSource={() => subject}
-              from="fr"
-              to="nl"
-              onTranslated={setSubject}
-              label="Traduire → NL"
-            />
-          )}
+          <BiTranslate getSource={() => subject} onTranslated={setSubject} />
         </div>
         <input
           value={subject}
@@ -458,19 +511,11 @@ function ReplyForm({
         />
       </div>
       <div>
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
           <label className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
             Message
           </label>
-          {!isFR && (
-            <TranslateButton
-              getSource={() => body}
-              from="fr"
-              to="nl"
-              onTranslated={setBody}
-              label="Traduire → NL"
-            />
-          )}
+          <BiTranslate getSource={() => body} onTranslated={setBody} />
         </div>
         <textarea
           value={body}

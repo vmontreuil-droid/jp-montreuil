@@ -12,7 +12,7 @@ import {
   ImagePlus,
 } from 'lucide-react'
 import { sendComposed } from './actions'
-import TranslateButton from '@/components/admin/TranslateButton'
+import BiTranslate from '@/components/admin/BiTranslate'
 
 export default function ComposeButton() {
   const [open, setOpen] = useState(false)
@@ -133,17 +133,11 @@ function ComposeModal({ onClose }: { onClose: () => void }) {
 
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-2">
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
               <label className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
                 Objet *
               </label>
-              <TranslateButton
-                getSource={() => subject}
-                from={locale === 'fr' ? 'nl' : 'fr'}
-                to={locale}
-                onTranslated={setSubject}
-                label={`→ ${locale.toUpperCase()}`}
-              />
+              <BiTranslate getSource={() => subject} onTranslated={setSubject} />
             </div>
             <input
               type="text"
@@ -169,17 +163,11 @@ function ComposeModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
             <label className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
               Message *
             </label>
-            <TranslateButton
-              getSource={() => body}
-              from={locale === 'fr' ? 'nl' : 'fr'}
-              to={locale}
-              onTranslated={setBody}
-              label={`Traduire → ${locale.toUpperCase()}`}
-            />
+            <BiTranslate getSource={() => body} onTranslated={setBody} />
           </div>
           <textarea
             value={body}

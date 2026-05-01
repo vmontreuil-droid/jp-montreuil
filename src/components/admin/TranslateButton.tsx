@@ -8,13 +8,13 @@ type Lang = 'fr' | 'nl'
 type Props = {
   /** Lees-hier-vandaan-input (bron-tekst) */
   getSource: () => string
-  /** Bron-taal */
-  from: Lang
+  /** Bron-taal — optioneel, anders auto-detect */
+  from?: Lang
   /** Doel-taal */
   to: Lang
   /** Callback met vertaalde tekst */
   onTranslated: (translated: string) => void
-  /** Optioneel custom label; default = "FR → NL" of omgekeerd */
+  /** Optioneel custom label; default = "→ TARGET" */
   label?: string
   className?: string
 }
@@ -33,7 +33,7 @@ export default function TranslateButton({
   async function translate() {
     const text = getSource().trim()
     if (!text) {
-      setError(from === 'fr' ? 'Champ FR vide' : 'NL veld leeg')
+      setError('Champ vide')
       setTimeout(() => setError(null), 2000)
       return
     }
@@ -43,7 +43,7 @@ export default function TranslateButton({
       const res = await fetch('/api/admin/translate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text, from, to }),
+        body: JSON.stringify({ text, ...(from ? { from } : {}), to }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -72,14 +72,14 @@ export default function TranslateButton({
         onClick={translate}
         disabled={loading}
         className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] uppercase tracking-[0.15em] border border-(--color-frame) text-(--color-stone) hover:text-(--color-bronze) hover:border-(--color-bronze) transition-colors disabled:opacity-50"
-        title={`Traduire ${from.toUpperCase()} → ${to.toUpperCase()}`}
+        title={`Traduire vers ${to.toUpperCase()}`}
       >
         {loading ? (
           <Loader2 className="w-3 h-3 animate-spin" />
         ) : (
           <Languages className="w-3 h-3" />
         )}
-        {label ?? `${from.toUpperCase()} → ${to.toUpperCase()}`}
+        {label ?? `→ ${to.toUpperCase()}`}
       </button>
       {error && (
         <p className="mt-1 inline-flex items-center gap-1 text-[10px] text-red-300">
