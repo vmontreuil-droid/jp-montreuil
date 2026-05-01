@@ -48,7 +48,7 @@ export default function Footer({ locale, t }: Props) {
             alt="Atelier Montreuil"
             width={743}
             height={258}
-            className="h-12 w-auto mb-3"
+            className="h-12 w-auto mb-3 logo-invert"
           />
           <p className="text-(--color-charcoal) text-sm">{t.tagline}</p>
         </div>

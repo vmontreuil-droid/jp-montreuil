@@ -65,6 +65,11 @@
     letter-spacing: -0.01em;
   }
 
+  /* Logo is wit-op-transparant — invert in licht-modus zodat het zwart wordt. */
+  html.light .logo-invert {
+    filter: invert(1);
+  }
+
   /* Anti-copy bescherming voor galerij-foto's. Geen 100%-bescherming
      (dev-tools / screenshot blijven mogelijk) maar weert casual save/drag/
      long-press iOS-callout. Toepassen op container met klasse `.no-save`. */

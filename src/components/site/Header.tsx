@@ -33,7 +33,7 @@ export default async function Header({ locale, t }: Props) {
             width={743}
             height={258}
             priority
-            className="h-10 md:h-12 w-auto"
+            className="h-10 md:h-12 w-auto logo-invert"
           />
         </Link>
 
