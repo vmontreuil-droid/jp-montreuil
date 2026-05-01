@@ -93,7 +93,7 @@ export default function ContactForm({ locale, t }: Props) {
       </div>
 
       {state.status === 'error' && (
-        <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 text-red-800 text-sm">
+        <div className="flex items-start gap-2 p-4 bg-red-950/40 border border-red-900 text-red-200 text-sm">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <p>{state.message}</p>
         </div>

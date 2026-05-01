@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
 import { getAltLocaleHref, getRequestPathname } from '@/i18n/server'
@@ -22,13 +23,17 @@ export default async function Header({ locale, t }: Props) {
   ]
 
   return (
-    <header className="sticky top-0 z-40 bg-(--color-canvas)/90 backdrop-blur-sm border-b border-(--color-frame)">
-      <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between gap-6">
-        <Link
-          href={localePath(locale, '/')}
-          className="font-[family-name:var(--font-display)] text-xl md:text-2xl text-(--color-ink) leading-none whitespace-nowrap"
-        >
-          Atelier Montreuil
+    <header className="sticky top-0 z-40 bg-(--color-canvas)/85 backdrop-blur-sm border-b border-(--color-frame)">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
+        <Link href={localePath(locale, '/')} className="block leading-none">
+          <Image
+            src="/logo.png"
+            alt="Atelier Montreuil"
+            width={743}
+            height={258}
+            priority
+            className="h-10 md:h-12 w-auto"
+          />
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-sm tracking-wide uppercase">

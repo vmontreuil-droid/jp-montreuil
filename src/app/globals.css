@@ -1,17 +1,17 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Brand palette — galerij/atelier: papier, inkt, brons */
-  --color-canvas: #faf8f5;       /* main bg — warm gebroken wit */
-  --color-paper: #f3eee6;        /* card bg */
-  --color-frame: #e3dccf;        /* zachte randen/dividers */
-  --color-stone: #908778;        /* muted tekst */
-  --color-charcoal: #2a2622;     /* secundaire tekst */
-  --color-ink: #1c1916;          /* hoofdtekst — warm zwart */
+  /* Brand palette — galerij/atelier op donker, witte typografie */
+  --color-canvas: #0a0908;       /* main bg — diep zwart, warm */
+  --color-paper: #1a1715;        /* card bg — iets lichter zwart */
+  --color-frame: #2c2825;        /* zachte randen/dividers */
+  --color-stone: #807870;        /* muted tekst (grijs) */
+  --color-charcoal: #c9c0b3;     /* secundaire tekst (zacht beige) */
+  --color-ink: #f5f0e8;          /* hoofdtekst — warm wit */
 
   /* Accent — gepatineerd brons (sluit aan op Bronze categorie) */
-  --color-bronze: #8b6f47;
-  --color-bronze-dark: #6f5736;
+  --color-bronze: #b89668;
+  --color-bronze-dark: #8b6f47;
 
   /* Defaults voor Tailwind background/foreground */
   --color-background: var(--color-canvas);
@@ -27,23 +27,7 @@
 
 @layer base {
   html {
-    color-scheme: light;
-  }
-
-  /* Dark mode — alleen voor admin (.dark op <html>). Publieke site blijft licht. */
-  html.dark {
     color-scheme: dark;
-    --color-canvas: #15130f;
-    --color-paper: #1f1c17;
-    --color-frame: #2a2622;
-    --color-stone: #98907f;
-    --color-charcoal: #e3dccf;
-    --color-ink: #faf8f5;
-    --color-bronze: #b89668;
-    --color-bronze-dark: #8b6f47;
-
-    --color-background: var(--color-canvas);
-    --color-foreground: var(--color-ink);
   }
 
   body {
