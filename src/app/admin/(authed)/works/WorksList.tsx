@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { ArrowUp, ArrowDown, Pencil, Trash2, Save, Loader2, X } from 'lucide-react'
 import { workImageUrl } from '@/lib/links'
 import { updateWork, deleteWork, moveWork } from './actions'
+import TranslateButton from '@/components/admin/TranslateButton'
 
 type Work = {
   id: string
@@ -135,11 +136,19 @@ function EditForm({
   onClose: () => void
 }) {
   const [saving, startSave] = useTransition()
+  const [titleFr, setTitleFr] = useState(work.title_fr ?? '')
+  const [titleNl, setTitleNl] = useState(work.title_nl ?? '')
+  const [techFr, setTechFr] = useState(work.technique_fr ?? '')
+  const [techNl, setTechNl] = useState(work.technique_nl ?? '')
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     fd.set('id', work.id)
+    fd.set('title_fr', titleFr)
+    fd.set('title_nl', titleNl)
+    fd.set('technique_fr', techFr)
+    fd.set('technique_nl', techNl)
     startSave(() => {
       void (async () => {
         await updateWork(fd)
@@ -158,22 +167,24 @@ function EditForm({
       </div>
 
       <div>
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1">
-          Titre FR
-        </label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">Titre FR</label>
+          <TranslateButton getSource={() => titleNl} from="nl" to="fr" onTranslated={setTitleFr} />
+        </div>
         <input
-          name="title_fr"
-          defaultValue={work.title_fr ?? ''}
+          value={titleFr}
+          onChange={(e) => setTitleFr(e.target.value)}
           className="w-full px-2 py-1.5 bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-sm text-(--color-ink)"
         />
       </div>
       <div>
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1">
-          Titel NL
-        </label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">Titel NL</label>
+          <TranslateButton getSource={() => titleFr} from="fr" to="nl" onTranslated={setTitleNl} />
+        </div>
         <input
-          name="title_nl"
-          defaultValue={work.title_nl ?? ''}
+          value={titleNl}
+          onChange={(e) => setTitleNl(e.target.value)}
           className="w-full px-2 py-1.5 bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-sm text-(--color-ink)"
         />
       </div>
@@ -203,22 +214,24 @@ function EditForm({
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1">
-            Technique FR
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">Technique FR</label>
+            <TranslateButton getSource={() => techNl} from="nl" to="fr" onTranslated={setTechFr} />
+          </div>
           <input
-            name="technique_fr"
-            defaultValue={work.technique_fr ?? ''}
+            value={techFr}
+            onChange={(e) => setTechFr(e.target.value)}
             className="w-full px-2 py-1.5 bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-sm text-(--color-ink)"
           />
         </div>
         <div>
-          <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1">
-            Techniek NL
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">Techniek NL</label>
+            <TranslateButton getSource={() => techFr} from="fr" to="nl" onTranslated={setTechNl} />
+          </div>
           <input
-            name="technique_nl"
-            defaultValue={work.technique_nl ?? ''}
+            value={techNl}
+            onChange={(e) => setTechNl(e.target.value)}
             className="w-full px-2 py-1.5 bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-sm text-(--color-ink)"
           />
         </div>
