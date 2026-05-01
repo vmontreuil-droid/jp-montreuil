@@ -7,6 +7,12 @@ import type { Locale } from '@/i18n/config'
 import type { Dictionary } from '@/i18n/dictionaries'
 import { submitContact, type ContactState } from './actions'
 
+function scrollIntoView(el: HTMLElement | null) {
+  if (!el) return
+  const top = el.getBoundingClientRect().top + window.scrollY - 100
+  window.scrollTo({ top, behavior: 'smooth' })
+}
+
 const initial: ContactState = { status: 'idle' }
 const MAX_FILES = 5
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
@@ -44,6 +50,8 @@ export default function ContactForm({ locale, t }: Props) {
   const [localError, setLocalError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const hiddenInputRef = useRef<HTMLInputElement>(null)
+  const successRef = useRef<HTMLDivElement>(null)
+  const errorRef = useRef<HTMLDivElement>(null)
 
   // Sync onze state-files naar het verborgen input field zodat ze meegaan met FormData
   useEffect(() => {
@@ -52,6 +60,15 @@ export default function ContactForm({ locale, t }: Props) {
     files.forEach((f) => dt.items.add(f))
     hiddenInputRef.current.files = dt.files
   }, [files])
+
+  // Scroll naar boven na submit zodat success/error-bericht zichtbaar is
+  useEffect(() => {
+    if (state.status === 'success') {
+      scrollIntoView(successRef.current)
+    } else if (state.status === 'error') {
+      scrollIntoView(errorRef.current)
+    }
+  }, [state.status])
 
   const addFiles = (newFiles: FileList | File[]) => {
     setLocalError(null)
@@ -96,9 +113,20 @@ export default function ContactForm({ locale, t }: Props) {
 
   if (state.status === 'success') {
     return (
-      <div className="flex items-start gap-3 p-6 bg-(--color-paper) border border-(--color-frame)">
-        <CheckCircle2 className="w-5 h-5 text-(--color-bronze) shrink-0 mt-0.5" />
-        <p className="text-(--color-ink)">{t.contact.success}</p>
+      <div
+        ref={successRef}
+        className="flex items-start gap-3 p-6 bg-(--color-paper) border border-(--color-bronze)/40"
+      >
+        <CheckCircle2 className="w-6 h-6 text-(--color-bronze) shrink-0 mt-0.5" />
+        <div>
+          <p className="text-(--color-ink) text-lg font-[family-name:var(--font-display)] mb-2">
+            {locale === 'fr' ? 'Merci pour votre message' : 'Bedankt voor uw bericht'}
+          </p>
+          <p className="text-(--color-charcoal) flex items-center gap-2">
+            <Clock className="w-4 h-4 text-(--color-bronze) shrink-0" />
+            {t.contact.responseTime}
+          </p>
+        </div>
       </div>
     )
   }
@@ -245,7 +273,10 @@ export default function ContactForm({ locale, t }: Props) {
       </div>
 
       {(state.status === 'error' || localError) && (
-        <div className="flex items-start gap-2 p-4 bg-red-950/40 border border-red-900 text-red-200 text-sm">
+        <div
+          ref={errorRef}
+          className="flex items-start gap-2 p-4 bg-red-950/40 border border-red-900 text-red-200 text-sm"
+        >
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <p>{localError ?? (state.status === 'error' ? state.message : '')}</p>
         </div>
