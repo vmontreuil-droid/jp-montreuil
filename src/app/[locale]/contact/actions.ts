@@ -1,9 +1,11 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { Resend } from 'resend'
+import { render } from '@react-email/render'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isLocale, type Locale } from '@/i18n/config'
+import { sendEmail, ADMIN_EMAIL } from '@/lib/email/client'
+import { NewContactMessage } from '@/lib/email/templates/NewContactMessage'
 
 export type ContactState =
   | { status: 'idle' }
@@ -29,15 +31,9 @@ function safeFilename(name: string): string {
     .slice(0, 200)
 }
 
-function formatBytes(b: number): string {
-  if (b < 1024) return `${b} B`
-  if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`
-  return `${(b / 1024 / 1024).toFixed(1)} MB`
-}
-
 /**
- * Stuur notificatie-mail naar JP via Resend. Geen-op als RESEND_API_KEY
- * niet geconfigureerd is — formulier blijft werken (DB-opslag).
+ * Stuur notificatie-mail naar JP via het centrale email-systeem.
+ * Geen-op als RESEND_API_KEY ontbreekt; bericht blijft in DB staan.
  */
 async function sendNotificationEmail(args: {
   name: string
@@ -48,52 +44,39 @@ async function sendNotificationEmail(args: {
   attachments: { filename: string; size: number }[]
   ip: string | null
 }) {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) return // graceful skip
-  const to = process.env.CONTACT_TO_EMAIL || 'jp@montreuil.be'
-  const from = process.env.RESEND_FROM || 'Atelier Montreuil <onboarding@resend.dev>'
+  const isFR = args.locale === 'fr'
+  const subject = isFR
+    ? `Nouveau message via le site — ${args.name}`
+    : `Nieuw bericht via de website — ${args.name}`
 
-  try {
-    const resend = new Resend(apiKey)
-    const isFR = args.locale === 'fr'
-    const subject = isFR
-      ? `Nouveau message via le site — ${args.name}`
-      : `Nieuw bericht via de website — ${args.name}`
-
-    const attachLines = args.attachments.length
-      ? args.attachments.map((a) => `  • ${a.filename} (${formatBytes(a.size)})`).join('\n')
-      : isFR
-      ? '  (aucune)'
-      : '  (geen)'
-
-    const text = [
-      isFR ? `Nom        : ${args.name}` : `Naam       : ${args.name}`,
-      `Email      : ${args.email}`,
-      isFR ? `Téléphone  : ${args.phone}` : `Telefoon   : ${args.phone}`,
-      '',
-      isFR ? 'Message :' : 'Bericht :',
-      args.message,
-      '',
-      isFR ? `Pièces jointes (${args.attachments.length}) :` : `Bijlagen (${args.attachments.length}) :`,
-      attachLines,
-      '',
-      `Locale: ${args.locale} · IP: ${args.ip ?? 'unknown'}`,
-      `Date  : ${new Date().toISOString()}`,
-      '',
-      isFR ? 'Voir l\'admin pour télécharger les pièces jointes.' : 'Open admin om bijlagen te bekijken.',
-    ].join('\n')
-
-    await resend.emails.send({
-      from,
-      to,
-      replyTo: args.email,
-      subject,
-      text,
+  const html = await render(
+    NewContactMessage({
+      name: args.name,
+      email: args.email,
+      phone: args.phone,
+      message: args.message,
+      locale: args.locale,
+      attachments: args.attachments,
+      ip: args.ip,
+      submittedAt: new Date(),
     })
-  } catch (err) {
-    console.error('Resend notify failed', err)
-    // niet fataal — bericht staat al in DB
-  }
+  )
+
+  const fallbackText = [
+    isFR ? `Nom: ${args.name}` : `Naam: ${args.name}`,
+    `Email: ${args.email}`,
+    isFR ? `Téléphone: ${args.phone}` : `Telefoon: ${args.phone}`,
+    '',
+    args.message,
+  ].join('\n')
+
+  await sendEmail({
+    to: ADMIN_EMAIL,
+    subject,
+    html,
+    text: fallbackText,
+    replyTo: args.email,
+  })
 }
 
 export async function submitContact(
