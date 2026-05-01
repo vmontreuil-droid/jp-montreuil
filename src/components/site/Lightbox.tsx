@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { workImageUrl } from '@/lib/links'
+import ShareButtons from './ShareButtons'
 
 export type LightboxWork = {
   id: string
@@ -152,14 +153,22 @@ export default function Lightbox({
         />
       </div>
 
-      {/* Caption */}
-      {(titleText || yearText) && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm">
-          {titleText}
-          {titleText && yearText ? ' · ' : ''}
-          {yearText}
+      {/* Caption + share, onderaan */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2">
+        {(titleText || yearText) && (
+          <div className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm">
+            {titleText}
+            {titleText && yearText ? ' · ' : ''}
+            {yearText}
+          </div>
+        )}
+        <div onClick={(e) => e.stopPropagation()}>
+          <ShareButtons
+            title={titleText || `Atelier Montreuil — ${index + 1} / ${works.length}`}
+            compact
+          />
         </div>
-      )}
+      </div>
     </div>
   )
 }

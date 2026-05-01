@@ -9,6 +9,7 @@ import { localePath, workImageUrl } from '@/lib/links'
 import { createClient } from '@/lib/supabase/server'
 import CategoryGallery from '@/components/site/CategoryGallery'
 import type { LightboxWork } from '@/components/site/Lightbox'
+import ShareButtons from '@/components/site/ShareButtons'
 
 type Props = {
   params: Promise<{ locale: string; slug: string }>
@@ -134,6 +135,10 @@ export default async function CategoryDetailPage({ params }: Props) {
           }))}
           locale={locale as 'fr' | 'nl'}
         />
+
+        <div className="mt-16 pt-8 border-t border-(--color-frame) flex justify-center">
+          <ShareButtons title={`${label} — Atelier Montreuil`} />
+        </div>
       </div>
     </>
   )

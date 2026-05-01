@@ -4,6 +4,7 @@ import { getDictionary } from '@/i18n/dictionaries'
 import { localePath, workImageUrl } from '@/lib/links'
 import { createClient } from '@/lib/supabase/server'
 import HeroSlideshow, { type HeroSlide } from '@/components/site/HeroSlideshow'
+import ShareButtons from '@/components/site/ShareButtons'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -81,9 +82,12 @@ export default async function HomePage({ params }: Props) {
           </p>
           <span className="flex-1 h-px bg-(--color-frame)" />
         </div>
-        <p className="text-base md:text-lg text-(--color-charcoal) leading-relaxed">
+        <p className="text-base md:text-lg text-(--color-charcoal) leading-relaxed mb-10">
           {t.home.intro}
         </p>
+        <div className="flex justify-center">
+          <ShareButtons title="Atelier Montreuil — Jean-Pierre Montreuil" />
+        </div>
       </section>
     </>
   )
