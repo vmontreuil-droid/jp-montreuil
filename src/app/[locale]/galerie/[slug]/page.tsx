@@ -74,7 +74,7 @@ export default async function CategoryDetailPage({ params }: Props) {
 
   return (
     <>
-      {/* Banner-header met cover-foto */}
+      {/* Banner-header met cover-foto + frosted card */}
       <section className="relative h-[60vh] min-h-[360px] overflow-hidden">
         {category.cover?.storage_path && (
           <Image
@@ -86,20 +86,25 @@ export default async function CategoryDetailPage({ params }: Props) {
             className="object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
-        <div className="relative h-full flex flex-col items-center justify-center text-center px-6 text-(--color-canvas)">
-          <p className="text-xs uppercase tracking-[0.4em] mb-4 opacity-90">
-            Atelier Montreuil
-          </p>
-          <h1 className="text-5xl md:text-7xl font-[family-name:var(--font-display)] drop-shadow-lg">
-            {label}
-          </h1>
-          {description && (
-            <p className="mt-4 max-w-2xl italic drop-shadow-md">{description}</p>
-          )}
-          <p className="mt-6 text-xs uppercase tracking-wider opacity-80">
-            {works.length} {locale === 'fr' ? 'œuvres' : 'werken'}
-          </p>
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="relative h-full flex items-center justify-center px-6">
+          <div
+            className="max-w-2xl w-full p-8 md:p-12 backdrop-blur-md border border-white/15 text-center text-white"
+            style={{ background: 'rgba(10, 9, 8, 0.45)' }}
+          >
+            <p className="text-xs uppercase tracking-[0.4em] mb-3 text-(--color-bronze)">
+              Atelier Montreuil
+            </p>
+            <h1 className="text-4xl md:text-6xl font-[family-name:var(--font-display)] leading-none">
+              {label}
+            </h1>
+            {description && (
+              <p className="mt-4 italic text-white/85">{description}</p>
+            )}
+            <p className="mt-5 text-xs uppercase tracking-wider text-white/70">
+              {works.length} {locale === 'fr' ? 'œuvres' : 'werken'}
+            </p>
+          </div>
         </div>
       </section>
 

@@ -73,24 +73,29 @@ export default function HeroSlideshow({
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/85" />
       </div>
 
-      {/* Gecentreerde titel + tagline + CTA */}
-      <div className="relative h-full flex flex-col items-center justify-center text-center px-6 text-white">
-        <p className="text-xs md:text-sm uppercase tracking-[0.5em] mb-6 opacity-90">
-          Atelier Montreuil
-        </p>
-        <h1 className="text-5xl md:text-8xl mb-8 font-[family-name:var(--font-display)] drop-shadow-2xl">
-          {brandName}
-        </h1>
-        <p className="text-xl md:text-3xl italic max-w-3xl mb-12 drop-shadow-md opacity-95">
-          {tagline}
-        </p>
-        <Link
-          href={ctaHref}
-          className="inline-flex items-center gap-2 px-8 py-3.5 bg-white/95 text-black hover:bg-(--color-bronze) hover:text-white transition-colors text-sm uppercase tracking-wider"
+      {/* Frosted-glass card met titel/tagline/CTA — celine-stijl */}
+      <div className="relative h-full flex items-center justify-center px-6">
+        <div
+          className="max-w-3xl w-full p-10 md:p-14 backdrop-blur-md border border-white/15 text-white"
+          style={{ background: 'rgba(10, 9, 8, 0.45)' }}
         >
-          {ctaLabel}
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+          <p className="text-xs md:text-sm uppercase tracking-[0.4em] mb-6 text-(--color-bronze)">
+            Atelier Montreuil
+          </p>
+          <h1 className="text-5xl md:text-7xl font-[family-name:var(--font-display)] mb-6 leading-none">
+            {brandName}
+          </h1>
+          <p className="text-xl md:text-2xl italic mb-10 text-white/90">
+            {tagline}
+          </p>
+          <Link
+            href={ctaHref}
+            className="inline-flex items-center gap-2 px-7 py-3 bg-white text-black hover:bg-(--color-bronze) hover:text-white transition-colors text-sm uppercase tracking-wider"
+          >
+            {ctaLabel}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
 
       {/* Categorie-indicator rechtsonder, met blur backdrop */}
