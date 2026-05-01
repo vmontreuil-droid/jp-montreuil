@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, MessageCircle } from 'lucide-react'
 
 export type HeroSlide = {
   src: string
@@ -17,6 +17,8 @@ type Props = {
   tagline: string
   ctaLabel: string
   ctaHref: string
+  contactLabel: string
+  contactHref: string
   indicatorLabel: string
   intervalMs?: number
   fadeMs?: number
@@ -28,6 +30,8 @@ export default function HeroSlideshow({
   tagline,
   ctaLabel,
   ctaHref,
+  contactLabel,
+  contactHref,
   indicatorLabel,
   intervalMs = 5000,
   fadeMs = 1500,
@@ -73,10 +77,10 @@ export default function HeroSlideshow({
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/85" />
       </div>
 
-      {/* Frosted-glass card met titel/tagline/CTA — celine-stijl */}
-      <div className="relative h-full flex items-center justify-center px-6">
+      {/* Frosted-glass card met titel/tagline/CTA's — celine-stijl, links uitgelijnd */}
+      <div className="relative h-full flex items-center px-6 md:px-12 lg:px-20">
         <div
-          className="max-w-3xl w-full p-10 md:p-14 backdrop-blur-md border border-white/15 text-white"
+          className="max-w-2xl w-full p-10 md:p-14 backdrop-blur-md border border-white/15 text-white"
           style={{ background: 'rgba(10, 9, 8, 0.45)' }}
         >
           <p className="text-xs md:text-sm uppercase tracking-[0.4em] mb-6 text-(--color-bronze)">
@@ -88,13 +92,22 @@ export default function HeroSlideshow({
           <p className="text-xl md:text-2xl italic mb-10 text-white/90">
             {tagline}
           </p>
-          <Link
-            href={ctaHref}
-            className="inline-flex items-center gap-2 px-7 py-3 bg-white text-black hover:bg-(--color-bronze) hover:text-white transition-colors text-sm uppercase tracking-wider"
-          >
-            {ctaLabel}
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={ctaHref}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-(--color-bronze) hover:text-white transition-colors text-sm uppercase tracking-wider"
+            >
+              {ctaLabel}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href={contactHref}
+              className="inline-flex items-center gap-2 px-6 py-3 border border-white/40 text-white hover:bg-white/10 transition-colors text-sm uppercase tracking-wider"
+            >
+              <MessageCircle className="w-4 h-4" />
+              {contactLabel}
+            </Link>
+          </div>
         </div>
       </div>
 

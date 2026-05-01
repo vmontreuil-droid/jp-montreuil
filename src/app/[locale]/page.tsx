@@ -68,6 +68,8 @@ export default async function HomePage({ params }: Props) {
         tagline={t.tagline}
         ctaLabel={t.home.seeCollection}
         ctaHref={localePath(locale as Locale, '/galerie')}
+        contactLabel={t.nav.contact}
+        contactHref={localePath(locale as Locale, '/contact')}
         indicatorLabel={locale === 'fr' ? 'Découvrir' : 'Bekijk'}
       />
 
