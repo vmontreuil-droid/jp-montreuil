@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Mail, Phone, MapPin } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
+import { whatsappHref } from '@/lib/links'
 import ContactForm from './ContactForm'
 
 function FacebookIcon({ className }: { className?: string }) {
@@ -37,7 +38,7 @@ export default async function ContactPage({ params }: Props) {
   if (!isLocale(locale)) notFound()
   const t = getDictionary(locale as Locale)
 
-  const whatsappNumber = t.contact.phone.replace(/[^\d]/g, '')
+  const waHref = whatsappHref(t.contact.phone, locale as Locale)
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -67,7 +68,7 @@ export default async function ContactPage({ params }: Props) {
           <li className="flex items-start gap-3">
             <WhatsAppIcon className="w-5 h-5 text-(--color-bronze) shrink-0 mt-0.5" />
             <a
-              href={`https://wa.me/${whatsappNumber}`}
+              href={waHref}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-(--color-bronze)"

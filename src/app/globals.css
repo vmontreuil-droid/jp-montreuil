@@ -30,6 +30,23 @@
     color-scheme: dark;
   }
 
+  /* Optionele licht-modus — `html.light` swapt de palette tokens.
+     Donker blijft default. Voorkeur wordt opgeslagen in localStorage. */
+  html.light {
+    color-scheme: light;
+    --color-canvas: #faf8f5;
+    --color-paper: #f3eee6;
+    --color-frame: #e3dccf;
+    --color-stone: #908778;
+    --color-charcoal: #2a2622;
+    --color-ink: #1c1916;
+    --color-bronze: #8b6f47;
+    --color-bronze-dark: #6f5736;
+
+    --color-background: var(--color-canvas);
+    --color-foreground: var(--color-ink);
+  }
+
   body {
     background: var(--color-canvas);
     color: var(--color-ink);

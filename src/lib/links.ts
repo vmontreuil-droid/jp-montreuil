@@ -18,3 +18,13 @@ export function workImageUrl(storagePath: string): string {
   if (!base) return ''
   return `${base}/storage/v1/object/public/works/${storagePath}`
 }
+
+/**
+ * Bouw een wa.me URL met taal-specifiek voorgedefinieerd bericht.
+ */
+export function whatsappHref(phone: string, locale: Locale): string {
+  const num = phone.replace(/[^\d]/g, '')
+  const greeting =
+    locale === 'fr' ? 'Bonjour Jean-Pierre, ' : 'Hallo Jean-Pierre, '
+  return `https://wa.me/${num}?text=${encodeURIComponent(greeting)}`
+}

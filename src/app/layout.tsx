@@ -61,6 +61,15 @@ export default async function RootLayout({
 
   return (
     <html lang={htmlLang[locale]} className={`${megrim.variable} ${montserrat.variable}`}>
+      <head>
+        {/* Theme init — donker is default; lees voorkeur uit localStorage
+            vóór paint om flash van verkeerd thema te voorkomen. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   )

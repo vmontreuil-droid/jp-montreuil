@@ -4,6 +4,7 @@ import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
 import { getAltLocaleHref, getRequestPathname } from '@/i18n/server'
 import { localePath } from '@/lib/links'
+import ThemeToggle from './ThemeToggle'
 
 type Props = {
   locale: Locale
@@ -48,13 +49,19 @@ export default async function Header({ locale, t }: Props) {
           ))}
         </nav>
 
-        <a
-          href={altHref}
-          className="text-xs uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink) transition-colors border border-(--color-frame) px-3 py-1.5 rounded-sm"
-          aria-label={`Switch to ${altLabel}`}
-        >
-          {altLabel}
-        </a>
+        <div className="flex items-center gap-2">
+          <ThemeToggle
+            labelLight={locale === 'fr' ? 'Mode clair' : 'Lichte modus'}
+            labelDark={locale === 'fr' ? 'Mode sombre' : 'Donkere modus'}
+          />
+          <a
+            href={altHref}
+            className="inline-flex items-center justify-center text-xs uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink) transition-colors border border-(--color-frame) px-3 h-[34px] rounded-sm"
+            aria-label={`Switch to ${altLabel}`}
+          >
+            {altLabel}
+          </a>
+        </div>
       </div>
 
       {/* Mobile nav */}

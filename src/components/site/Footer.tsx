@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Mail, Phone, MapPin } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
-import { localePath } from '@/lib/links'
+import { localePath, whatsappHref } from '@/lib/links'
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -36,9 +36,7 @@ export default function Footer({ locale, t }: Props) {
     { href: localePath(locale, '/contact'), label: t.nav.contact },
   ]
 
-  // wa.me wil het nummer in internationaal formaat zonder + of spaties
-  const whatsappNumber = t.contact.phone.replace(/[^\d]/g, '')
-  const whatsappHref = `https://wa.me/${whatsappNumber}`
+  const waHref = whatsappHref(t.contact.phone, locale)
 
   return (
     <footer className="mt-24 border-t border-(--color-frame) bg-(--color-paper)">
@@ -123,7 +121,7 @@ export default function Footer({ locale, t }: Props) {
             </li>
             <li>
               <a
-                href={whatsappHref}
+                href={waHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-(--color-charcoal) hover:text-(--color-bronze)"
