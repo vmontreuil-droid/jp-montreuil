@@ -431,9 +431,25 @@ function ReplyForm({
         </h3>
       </div>
       <div>
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1">
-          Objet
-        </label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
+            Objet
+            {!isFR && (
+              <span className="ml-2 normal-case tracking-normal text-(--color-bronze)">
+                — écrivez en FR puis traduisez
+              </span>
+            )}
+          </label>
+          {!isFR && (
+            <TranslateButton
+              getSource={() => subject}
+              from="fr"
+              to="nl"
+              onTranslated={setSubject}
+              label="Traduire → NL"
+            />
+          )}
+        </div>
         <input
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
@@ -442,9 +458,20 @@ function ReplyForm({
         />
       </div>
       <div>
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1">
-          Message
-        </label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
+            Message
+          </label>
+          {!isFR && (
+            <TranslateButton
+              getSource={() => body}
+              from="fr"
+              to="nl"
+              onTranslated={setBody}
+              label="Traduire → NL"
+            />
+          )}
+        </div>
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
