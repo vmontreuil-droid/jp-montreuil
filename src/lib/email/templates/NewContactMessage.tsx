@@ -1,8 +1,14 @@
 import * as React from 'react'
+import { Img } from '@react-email/components'
 import { Layout, Section, Text, Hr, Link, text, colors } from '../components/Layout'
 import { PUBLIC_BASE_URL } from '@/lib/public-url'
 
-type Attachment = { filename: string; size: number }
+type Attachment = {
+  filename: string
+  size: number
+  /** Base64 data URL voor inline-preview (alleen voor afbeeldingen ≤ 500KB) */
+  previewDataUrl?: string
+}
 
 type Props = {
   name: string
@@ -108,19 +114,62 @@ export function NewContactMessage({
                 ? `Pièces jointes (${attachments.length})`
                 : `Bijlagen (${attachments.length})`}
             </Text>
+
+            {/* Inline-previews voor afbeeldingen die niet te groot zijn */}
+            {attachments.some((a) => a.previewDataUrl) && (
+              <div style={{ margin: '0 0 16px' }}>
+                {attachments
+                  .filter((a) => a.previewDataUrl)
+                  .map((a) => (
+                    <div
+                      key={a.filename}
+                      style={{
+                        marginBottom: 12,
+                        border: `1px solid ${colors.border}`,
+                        backgroundColor: colors.canvas,
+                        padding: 8,
+                      }}
+                    >
+                      <Img
+                        src={a.previewDataUrl!}
+                        alt={a.filename}
+                        style={{
+                          maxWidth: '100%',
+                          height: 'auto',
+                          display: 'block',
+                          margin: '0 auto',
+                        }}
+                      />
+                      <Text
+                        style={{
+                          fontFamily: text.body.fontFamily,
+                          fontSize: 11,
+                          color: colors.stone,
+                          textAlign: 'center',
+                          margin: '8px 0 0',
+                        }}
+                      >
+                        {a.filename} · {formatBytes(a.size)}
+                      </Text>
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            {/* Volledige lijst (incl. niet-preview-bare bestanden) */}
             <ul style={{ margin: '0 0 20px', paddingLeft: 20 }}>
               {attachments.map((a) => (
                 <li
                   key={a.filename}
                   style={{
                     fontFamily: text.body.fontFamily,
-                    fontSize: 14,
+                    fontSize: 13,
                     color: colors.charcoal,
                     margin: '0 0 4px',
                   }}
                 >
                   {a.filename}{' '}
-                  <span style={{ color: colors.stone, fontSize: 12 }}>({formatBytes(a.size)})</span>
+                  <span style={{ color: colors.stone, fontSize: 11 }}>({formatBytes(a.size)})</span>
                 </li>
               ))}
             </ul>

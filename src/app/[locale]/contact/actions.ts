@@ -36,6 +36,16 @@ type AttachmentPayload = {
   size: number
   buffer?: Buffer
   contentType?: string
+  /** Inline preview voor afbeeldingen ≤ 500KB */
+  previewDataUrl?: string
+}
+
+const PREVIEW_MAX_BYTES = 500 * 1024 // 500KB inline cap zodat de mail niet enorm wordt
+
+function buildPreviewDataUrl(buf: Buffer, contentType: string): string | undefined {
+  if (!contentType.startsWith('image/')) return undefined
+  if (buf.length > PREVIEW_MAX_BYTES) return undefined
+  return `data:${contentType};base64,${buf.toString('base64')}`
 }
 
 /**
@@ -223,6 +233,7 @@ export async function submitContact(
         size: file.size,
         buffer: buf,
         contentType: file.type,
+        previewDataUrl: buildPreviewDataUrl(buf, file.type),
       })
     } catch (err) {
       console.error('Attachment processing failed', err)

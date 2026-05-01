@@ -58,7 +58,36 @@ export default function MessageRow({ message }: { message: Message }) {
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const [replyOpen, setReplyOpen] = useState(false)
+  const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({})
   const isUnread = !message.read_at
+
+  // Lazy: laad signed URLs voor foto-bijlagen wanneer rij openklapt
+  useEffect(() => {
+    if (!open) return
+    const imageAtts = message.contact_attachments.filter((a) =>
+      (a.content_type ?? '').startsWith('image/')
+    )
+    const missing = imageAtts.filter((a) => !thumbUrls[a.id])
+    if (missing.length === 0) return
+
+    let cancelled = false
+    Promise.all(
+      missing.map(async (a) => {
+        const url = await getAttachmentUrl(a.storage_path)
+        return { id: a.id, url }
+      })
+    ).then((results) => {
+      if (cancelled) return
+      const next: Record<string, string> = {}
+      for (const r of results) {
+        if (r.url) next[r.id] = r.url
+      }
+      setThumbUrls((prev) => ({ ...prev, ...next }))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [open, message.contact_attachments, thumbUrls])
 
   function toggle() {
     const willOpen = !open
@@ -235,6 +264,48 @@ export default function MessageRow({ message }: { message: Message }) {
               <h3 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-2">
                 Pièces jointes ({message.contact_attachments.length})
               </h3>
+
+              {/* Foto-grid met thumbnails (klik = open op volle grootte in nieuw venster) */}
+              {(() => {
+                const images = message.contact_attachments.filter((a) =>
+                  (a.content_type ?? '').startsWith('image/')
+                )
+                if (images.length === 0) return null
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">
+                    {images.map((a) => {
+                      const url = thumbUrls[a.id]
+                      return (
+                        <button
+                          key={a.id}
+                          type="button"
+                          onClick={() => downloadAttachment(a)}
+                          className="group relative aspect-square bg-(--color-canvas) border border-(--color-frame) hover:border-(--color-bronze) overflow-hidden transition-colors"
+                          title={`${a.filename} — ${formatBytes(a.size_bytes)}`}
+                        >
+                          {url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={url}
+                              alt={a.filename}
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-(--color-stone)">
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            </div>
+                          )}
+                          <div className="absolute inset-x-0 bottom-0 p-1.5 bg-gradient-to-t from-black/70 to-transparent text-white text-[10px] truncate text-left">
+                            {a.filename}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+
+              {/* Volledige lijst (alle types, ook PDF/etc) */}
               <ul className="space-y-1">
                 {message.contact_attachments.map((a) => (
                   <li key={a.id}>
