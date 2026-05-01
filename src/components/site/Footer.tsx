@@ -154,7 +154,7 @@ export default function Footer({ locale, t }: Props) {
           </div>
           <div>© {year} Jean-Pierre Montreuil — {t.footer.rights}</div>
           <div>
-            {locale === 'fr' ? 'Site par' : 'Site door'}{' '}
+            {locale === 'fr' ? 'Site créé par' : 'Site gemaakt door'}{' '}
             <a
               href="mailto:vmontreuil@outlook.be"
               className="hover:text-(--color-ink) transition-colors"
