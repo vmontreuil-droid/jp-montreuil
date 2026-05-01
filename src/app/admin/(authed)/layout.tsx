@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { LogOut, LayoutGrid, FolderTree, Image as ImageIcon, FileText, Inbox, Home } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './SignOutButton'
+import ThemeToggle from '@/components/site/ThemeToggle'
 
 export const dynamic = 'force-dynamic'
 
@@ -83,6 +84,12 @@ export default async function AuthedAdminLayout({
             <Home className="w-4 h-4" />
             Retour au site
           </Link>
+          <div className="px-3 py-2 flex items-center justify-between">
+            <span className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
+              Thème
+            </span>
+            <ThemeToggle labelLight="Mode clair" labelDark="Mode sombre" />
+          </div>
           <p className="px-3 pt-3 text-xs text-(--color-stone) truncate">{profile.email}</p>
           <SignOutButton />
         </div>

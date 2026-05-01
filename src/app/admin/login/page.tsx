@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, ArrowRight, Mail, Lock, Unlock, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { workImageUrl } from '@/lib/links'
+import ThemeToggle from '@/components/site/ThemeToggle'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -95,17 +96,20 @@ export default function AdminLoginPage() {
           style={{ background: 'rgba(184, 150, 104, 0.12)' }}
         />
 
-        {/* Terug naar website */}
-        <Link
-          href="/"
-          className="relative z-10 inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink) transition-colors group self-start"
-        >
-          <ArrowLeft
-            className="w-4 h-4 transition-transform group-hover:-translate-x-0.5"
-            aria-hidden="true"
-          />
-          Retour au site
-        </Link>
+        {/* Topbar — terug naar site + theme toggle */}
+        <div className="relative z-10 flex items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink) transition-colors group"
+          >
+            <ArrowLeft
+              className="w-4 h-4 transition-transform group-hover:-translate-x-0.5"
+              aria-hidden="true"
+            />
+            Retour au site
+          </Link>
+          <ThemeToggle labelLight="Mode clair" labelDark="Mode sombre" />
+        </div>
 
         {/* Form gecentreerd */}
         <div className="flex-1 grid place-items-center">
