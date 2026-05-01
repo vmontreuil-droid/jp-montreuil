@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { ChevronLeft } from 'lucide-react'
+import { LayoutGrid, MessageCircle } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { localePath, workImageUrl } from '@/lib/links'
@@ -87,15 +87,15 @@ export default async function CategoryDetailPage({ params }: Props) {
           />
         )}
         <div className="absolute inset-0 bg-black/30" />
-        <div className="relative h-full flex items-center justify-center px-6">
+        <div className="relative h-full flex items-center px-6 md:px-12 lg:px-20">
           <div
-            className="max-w-2xl w-full p-8 md:p-12 backdrop-blur-md border border-white/15 text-center text-white"
+            className="max-w-2xl w-full p-8 md:p-12 backdrop-blur-md border border-white/15 text-white"
             style={{ background: 'rgba(10, 9, 8, 0.45)' }}
           >
             <p className="text-xs uppercase tracking-[0.4em] mb-3 text-(--color-bronze)">
               Atelier Montreuil
             </p>
-            <h1 className="text-4xl md:text-6xl font-[family-name:var(--font-display)] leading-none">
+            <h1 className="text-5xl md:text-7xl font-[family-name:var(--font-display)] leading-none">
               {label}
             </h1>
             {description && (
@@ -104,19 +104,27 @@ export default async function CategoryDetailPage({ params }: Props) {
             <p className="mt-5 text-xs uppercase tracking-wider text-white/70">
               {works.length} {locale === 'fr' ? 'œuvres' : 'werken'}
             </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href={localePath(locale as Locale, '/galerie')}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black hover:bg-(--color-bronze) hover:text-white transition-colors text-sm uppercase tracking-wider"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                {t.nav.collection}
+              </Link>
+              <Link
+                href={localePath(locale as Locale, '/contact')}
+                className="inline-flex items-center gap-2 px-6 py-3 border border-white/40 text-white hover:bg-white/10 transition-colors text-sm uppercase tracking-wider"
+              >
+                <MessageCircle className="w-4 h-4" />
+                {t.nav.contact}
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       <div className="max-w-7xl mx-auto px-6 py-12">
-        <Link
-          href={localePath(locale as Locale, '/galerie')}
-          className="inline-flex items-center gap-1 text-sm text-(--color-stone) hover:text-(--color-ink) mb-8"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          {t.nav.collection}
-        </Link>
-
         <CategoryGallery
           works={works.map<LightboxWork>((w) => ({
             id: w.id,
