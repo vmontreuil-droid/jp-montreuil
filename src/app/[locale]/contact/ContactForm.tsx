@@ -61,6 +61,16 @@ export default function ContactForm({ locale, t }: Props) {
     hiddenInputRef.current.files = dt.files
   }, [files])
 
+  // Object-URL's voor thumbnail previews van image-bestanden; revoke bij wijziging
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+  useEffect(() => {
+    const urls = files.map((f) => (f.type.startsWith('image/') ? URL.createObjectURL(f) : ''))
+    setPreviewUrls(urls)
+    return () => {
+      urls.forEach((u) => u && URL.revokeObjectURL(u))
+    }
+  }, [files])
+
   // Scroll naar boven na submit zodat success/error-bericht zichtbaar is
   useEffect(() => {
     if (state.status === 'success') {
@@ -247,28 +257,46 @@ export default function ContactForm({ locale, t }: Props) {
         {/* Verborgen input gesynced met state — gaat mee in FormData */}
         <input ref={hiddenInputRef} type="file" name="files" multiple className="hidden" />
 
-        {/* Preview-lijst */}
+        {/* Preview-grid met thumbnails */}
         {files.length > 0 && (
-          <ul className="mt-3 space-y-2">
-            {files.map((f, i) => (
-              <li
-                key={`${f.name}-${i}`}
-                className="flex items-center gap-3 px-3 py-2 bg-(--color-paper) border border-(--color-frame) text-sm"
-              >
-                <ImagePlus className="w-4 h-4 text-(--color-bronze) shrink-0" />
-                <span className="flex-1 truncate text-(--color-ink)">{f.name}</span>
-                <span className="text-xs text-(--color-stone)">{formatBytes(f.size)}</span>
-                <button
-                  type="button"
-                  onClick={() => removeFile(i)}
-                  aria-label={t.contact.removeFile}
-                  className="text-(--color-stone) hover:text-(--color-ink) p-1"
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {files.map((f, i) => {
+              const url = previewUrls[i]
+              return (
+                <div
+                  key={`${f.name}-${i}`}
+                  className="relative group bg-(--color-paper) border border-(--color-frame) overflow-hidden"
                 >
-                  <X className="w-4 h-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
+                  <div className="relative aspect-square bg-(--color-canvas)">
+                    {url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={url}
+                        alt={f.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-(--color-stone)">
+                        <ImagePlus className="w-8 h-8" />
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeFile(i)}
+                      aria-label={t.contact.removeFile}
+                      className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-black/80 text-white rounded-full"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="p-2 text-xs">
+                    <p className="truncate text-(--color-ink)">{f.name}</p>
+                    <p className="text-(--color-stone) text-[10px]">{formatBytes(f.size)}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
 
