@@ -76,8 +76,9 @@ export function Layout({ preheader, lang = 'fr', children }: Props) {
                 style={{
                   display: 'inline-block',
                   margin: '0 auto 8px',
-                  // logo is wit-op-transparant; voor email (licht bg) inverteren
-                  filter: 'invert(1)',
+                  // logo is wit-op-transparant — brightness(0) maakt elk niet-
+                  // transparant pixel pikzwart (sterker dan invert(1) op cream bg)
+                  filter: 'brightness(0)',
                 }}
               />
               <Text
@@ -86,11 +87,12 @@ export function Layout({ preheader, lang = 'fr', children }: Props) {
                   fontSize: 11,
                   letterSpacing: '0.25em',
                   textTransform: 'uppercase',
-                  color: colors.stone,
+                  color: colors.charcoal,
                   margin: 0,
+                  fontWeight: 500,
                 }}
               >
-                {lang === 'nl' ? 'Schilder' : 'Peintre'}
+                {lang === 'nl' ? 'Kunstschilder' : 'Artiste peintre'}
               </Text>
               <div
                 style={{
