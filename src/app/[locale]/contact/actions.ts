@@ -31,9 +31,17 @@ function safeFilename(name: string): string {
     .slice(0, 200)
 }
 
+type AttachmentPayload = {
+  filename: string
+  size: number
+  buffer?: Buffer
+  contentType?: string
+}
+
 /**
  * Stuur notificatie-mail naar JP via het centrale email-systeem.
  * Geen-op als RESEND_API_KEY ontbreekt; bericht blijft in DB staan.
+ * Voegt foto's als bijlagen toe (Resend), max ~30MB totaal.
  */
 async function sendNotificationEmail(args: {
   name: string
@@ -41,7 +49,7 @@ async function sendNotificationEmail(args: {
   phone: string
   message: string
   locale: Locale
-  attachments: { filename: string; size: number }[]
+  attachments: AttachmentPayload[]
   ip: string | null
 }) {
   const isFR = args.locale === 'fr'
@@ -70,12 +78,28 @@ async function sendNotificationEmail(args: {
     args.message,
   ].join('\n')
 
+  // Bijlagen meesturen — cap op 30MB totaal om mail-server limieten te respecteren
+  const MAX_TOTAL = 30 * 1024 * 1024
+  let total = 0
+  const mailAttachments = []
+  for (const a of args.attachments) {
+    if (!a.buffer) continue
+    if (total + a.buffer.length > MAX_TOTAL) break
+    total += a.buffer.length
+    mailAttachments.push({
+      filename: a.filename,
+      content: a.buffer,
+      contentType: a.contentType,
+    })
+  }
+
   await sendEmail({
     to: ADMIN_EMAIL,
     subject,
     html,
     text: fallbackText,
     replyTo: args.email,
+    attachments: mailAttachments.length > 0 ? mailAttachments : undefined,
   })
 }
 
@@ -167,7 +191,9 @@ export async function submitContact(
   }
 
   // 2. Upload elke file → contact-attachments bucket → contact_attachments rij
-  const attachmentInfo: { filename: string; size: number }[] = []
+  // Bewaar buffers om door te geven aan notificatie-mail (zodat JP de foto's
+  // direct in zijn mail ziet zonder admin-login te moeten doen).
+  const attachmentInfo: AttachmentPayload[] = []
   for (const file of files) {
     try {
       const safe = safeFilename(file.name)
@@ -192,7 +218,12 @@ export async function submitContact(
         content_type: file.type,
         size_bytes: file.size,
       })
-      attachmentInfo.push({ filename: file.name, size: file.size })
+      attachmentInfo.push({
+        filename: file.name,
+        size: file.size,
+        buffer: buf,
+        contentType: file.type,
+      })
     } catch (err) {
       console.error('Attachment processing failed', err)
     }
