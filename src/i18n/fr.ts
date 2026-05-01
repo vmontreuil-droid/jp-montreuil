@@ -11,7 +11,7 @@ const dict = {
 
   home: {
     intro:
-      "L'artiste Jean-Pierre Montreuil s'inspire surtout du règne animal : les chevaux, les chiens, les chats et les oiseaux constituent les thèmes principaux.",
+      "L'artiste Jean-Pierre Montreuil s'inspire surtout du règne animal : les chevaux, les chiens, les chats et les oiseaux constituent les thèmes principaux. Ils font partie de sa vie de tous les jours et reviennent sous différentes formes artistiques. L'artiste peintre commence le plus souvent avec les yeux avant d'approfondir son œuvre. Tout est fait sur mesure.",
     seeCollection: 'Voir la collection',
   },
 

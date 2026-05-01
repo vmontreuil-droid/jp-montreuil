@@ -73,8 +73,15 @@ export default async function HomePage({ params }: Props) {
         indicatorLabel={locale === 'fr' ? 'Découvrir' : 'Bekijk'}
       />
 
-      <section className="max-w-3xl mx-auto px-6 py-24 text-center">
-        <p className="text-lg md:text-xl text-(--color-charcoal) leading-relaxed">
+      <section className="max-w-3xl mx-auto px-6 py-20 md:py-24 text-center">
+        <div className="flex items-center gap-4 mb-10">
+          <span className="flex-1 h-px bg-(--color-frame)" />
+          <p className="text-sm md:text-base uppercase tracking-[0.2em] text-(--color-ink) whitespace-nowrap">
+            {t.tagline}
+          </p>
+          <span className="flex-1 h-px bg-(--color-frame)" />
+        </div>
+        <p className="text-base md:text-lg text-(--color-charcoal) leading-relaxed">
           {t.home.intro}
         </p>
       </section>

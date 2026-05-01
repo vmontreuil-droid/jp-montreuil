@@ -13,7 +13,7 @@ const dict: Dictionary = {
 
   home: {
     intro:
-      'Kunstenaar Jean-Pierre Montreuil laat zich vooral inspireren door het dierenrijk: paarden, honden, katten en vogels vormen de hoofdthema\'s.',
+      "De kunstenaar Jean-Pierre Montreuil laat zich vooral inspireren door het dierenrijk: paarden, honden, katten en vogels vormen zijn belangrijkste thema's. Ze maken deel uit van zijn dagelijks leven en komen terug in verschillende artistieke vormen. De schilder begint meestal met de ogen voordat hij zijn werk verder uitwerkt. Alles wordt op maat gemaakt.",
     seeCollection: 'Bekijk de gallerij',
   },
 
