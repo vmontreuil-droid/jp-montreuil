@@ -149,6 +149,13 @@ export default function Footer({ locale, t }: Props) {
             >
               {locale === 'fr' ? 'Confidentialité' : 'Privacybeleid'}
             </Link>
+            <span aria-hidden="true">·</span>
+            <Link
+              href="/admin"
+              className="hover:text-(--color-ink) transition-colors"
+            >
+              Admin
+            </Link>
           </div>
           <div>© {year} Jean-Pierre Montreuil — {t.footer.rights}</div>
           <div>
