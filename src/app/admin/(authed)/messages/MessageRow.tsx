@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react'
 import { markRead, markUnread, deleteMessage, getAttachmentUrl, sendReply } from './actions'
+import TranslateButton from '@/components/admin/TranslateButton'
 
 type Attachment = {
   id: string
@@ -59,7 +60,10 @@ export default function MessageRow({ message }: { message: Message }) {
   const [pending, startTransition] = useTransition()
   const [replyOpen, setReplyOpen] = useState(false)
   const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({})
+  const [translation, setTranslation] = useState<string | null>(null)
   const isUnread = !message.read_at
+  const sourceLang = (message.locale === 'nl' ? 'nl' : 'fr') as 'fr' | 'nl'
+  const targetLang = sourceLang === 'fr' ? 'nl' : 'fr'
 
   // Lazy: laad signed URLs voor foto-bijlagen wanneer rij openklapt
   useEffect(() => {
@@ -244,10 +248,31 @@ export default function MessageRow({ message }: { message: Message }) {
 
           {/* Bericht */}
           <div>
-            <h3 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-2">Message</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
+                Message {sourceLang === 'nl' && <span className="ml-1 text-(--color-bronze)">(NL)</span>}
+              </h3>
+              <TranslateButton
+                getSource={() => message.message}
+                from={sourceLang}
+                to={targetLang}
+                onTranslated={setTranslation}
+                label={`Traduire → ${targetLang.toUpperCase()}`}
+              />
+            </div>
             <p className="bg-(--color-canvas) border border-(--color-frame) p-4 text-(--color-ink) whitespace-pre-wrap text-sm leading-relaxed">
               {message.message}
             </p>
+            {translation && (
+              <div className="mt-2 bg-(--color-bronze)/5 border border-(--color-bronze)/30 p-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-bronze) mb-2">
+                  Traduction → {targetLang.toUpperCase()}
+                </p>
+                <p className="text-(--color-ink) whitespace-pre-wrap text-sm leading-relaxed">
+                  {translation}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Reply form */}
