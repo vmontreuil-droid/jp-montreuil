@@ -41,7 +41,11 @@ export default async function AuthedAdminLayout({
   ] = await Promise.all([
     supabase.from('categories').select('*', { count: 'exact', head: true }),
     supabase.from('works').select('*', { count: 'exact', head: true }),
-    supabase.from('contact_messages').select('*', { count: 'exact', head: true }).is('read_at', null),
+    supabase
+      .from('contact_messages')
+      .select('*', { count: 'exact', head: true })
+      .is('read_at', null)
+      .is('deleted_at', null),
   ])
 
   const navItems = [

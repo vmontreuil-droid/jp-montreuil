@@ -19,8 +19,17 @@ import {
   ImagePlus,
   X,
 } from 'lucide-react'
-import { markRead, markUnread, deleteMessage, getAttachmentUrl, sendReply } from './actions'
+import {
+  markRead,
+  markUnread,
+  deleteMessage,
+  getAttachmentUrl,
+  sendReply,
+  restoreMessage,
+  permanentDeleteMessage,
+} from './actions'
 import BiTranslate from '@/components/admin/BiTranslate'
+import { RotateCcw } from 'lucide-react'
 
 type Attachment = {
   id: string
@@ -39,8 +48,18 @@ type Message = {
   locale: string | null
   ip: string | null
   read_at: string | null
+  deleted_at?: string | null
   created_at: string
   contact_attachments: Attachment[]
+}
+
+const TRASH_RETENTION_DAYS = 30
+
+function daysLeft(deletedAt: string): number {
+  const d = new Date(deletedAt).getTime()
+  const purgeDate = d + TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000
+  const ms = purgeDate - Date.now()
+  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)))
 }
 
 function formatBytes(b: number | null): string {
@@ -55,7 +74,13 @@ function formatDate(s: string): string {
   return d.toLocaleString('fr-BE', { dateStyle: 'short', timeStyle: 'short' })
 }
 
-export default function MessageRow({ message }: { message: Message }) {
+export default function MessageRow({
+  message,
+  isTrash = false,
+}: {
+  message: Message
+  isTrash?: boolean
+}) {
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
   const [replyOpen, setReplyOpen] = useState(false)
@@ -128,9 +153,24 @@ export default function MessageRow({ message }: { message: Message }) {
 
   function onDelete(e: React.MouseEvent) {
     e.stopPropagation()
-    if (!confirm(`Supprimer le message de ${message.name} ?`)) return
+    if (!confirm(`Déplacer le message de ${message.name} dans la corbeille ?\n\n(Conservé 30 jours, restaurable)`)) return
     startTransition(() => {
       void deleteMessage(message.id)
+    })
+  }
+
+  function onRestore(e: React.MouseEvent) {
+    e.stopPropagation()
+    startTransition(() => {
+      void restoreMessage(message.id)
+    })
+  }
+
+  function onPermanentDelete(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!confirm(`SUPPRIMER DÉFINITIVEMENT le message de ${message.name} ?\n\nIRRÉVERSIBLE — les pièces jointes seront aussi effacées.`)) return
+    startTransition(() => {
+      void permanentDeleteMessage(message.id)
     })
   }
 
@@ -195,43 +235,75 @@ export default function MessageRow({ message }: { message: Message }) {
 
       {open && (
         <div className="border-t border-(--color-frame) p-5 space-y-4">
+          {isTrash && message.deleted_at && (
+            <div className="px-3 py-2 bg-(--color-bronze)/10 border border-(--color-bronze)/30 text-xs text-(--color-bronze)">
+              Dans la corbeille — suppression définitive dans{' '}
+              <strong>{daysLeft(message.deleted_at)} jour{daysLeft(message.deleted_at) === 1 ? '' : 's'}</strong>
+            </div>
+          )}
+
           {/* Acties */}
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={onToggleRead}
-              disabled={pending}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs uppercase tracking-[0.15em] border border-(--color-frame) text-(--color-stone) hover:text-(--color-ink) hover:border-(--color-stone) transition-colors disabled:opacity-50"
-            >
-              {isUnread ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-              {isUnread ? 'Marquer lu' : 'Marquer non lu'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setReplyOpen(!replyOpen)}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs uppercase tracking-[0.15em] bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors"
-            >
-              <Mail className="w-3.5 h-3.5" />
-              Répondre
-            </button>
-            {message.phone && (
-              <a
-                href={`tel:${message.phone.replace(/\s/g, '')}`}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs uppercase tracking-[0.15em] border border-(--color-frame) text-(--color-stone) hover:text-(--color-ink) hover:border-(--color-stone) transition-colors"
-              >
-                <Phone className="w-3.5 h-3.5" />
-                Appeler
-              </a>
+            {isTrash ? (
+              <>
+                <button
+                  type="button"
+                  onClick={onRestore}
+                  disabled={pending}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs uppercase tracking-[0.15em] bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors disabled:opacity-50"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Restaurer
+                </button>
+                <button
+                  type="button"
+                  onClick={onPermanentDelete}
+                  disabled={pending}
+                  className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs uppercase tracking-[0.15em] border border-red-900/40 text-red-300 hover:bg-red-950/40 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Supprimer définitivement
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={onToggleRead}
+                  disabled={pending}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs uppercase tracking-[0.15em] border border-(--color-frame) text-(--color-stone) hover:text-(--color-ink) hover:border-(--color-stone) transition-colors disabled:opacity-50"
+                >
+                  {isUnread ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  {isUnread ? 'Marquer lu' : 'Marquer non lu'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReplyOpen(!replyOpen)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs uppercase tracking-[0.15em] bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  Répondre
+                </button>
+                {message.phone && (
+                  <a
+                    href={`tel:${message.phone.replace(/\s/g, '')}`}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs uppercase tracking-[0.15em] border border-(--color-frame) text-(--color-stone) hover:text-(--color-ink) hover:border-(--color-stone) transition-colors"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    Appeler
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  disabled={pending}
+                  className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs uppercase tracking-[0.15em] border border-red-900/30 text-red-300 hover:bg-red-950/40 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Supprimer
+                </button>
+              </>
             )}
-            <button
-              type="button"
-              onClick={onDelete}
-              disabled={pending}
-              className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 text-xs uppercase tracking-[0.15em] border border-red-900/30 text-red-300 hover:bg-red-950/40 transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Supprimer
-            </button>
           </div>
 
           {/* Contactgegevens */}

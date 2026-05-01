@@ -68,22 +68,32 @@ export default async function AdminDashboardPage() {
   ] = await Promise.all([
     supabase.from('categories').select('*', { count: 'exact', head: true }),
     supabase.from('works').select('*', { count: 'exact', head: true }),
-    supabase.from('contact_messages').select('*', { count: 'exact', head: true }),
-    supabase.from('contact_messages').select('*', { count: 'exact', head: true }).is('read_at', null),
+    supabase
+      .from('contact_messages')
+      .select('*', { count: 'exact', head: true })
+      .is('deleted_at', null),
+    supabase
+      .from('contact_messages')
+      .select('*', { count: 'exact', head: true })
+      .is('read_at', null)
+      .is('deleted_at', null),
     supabase.from('contact_attachments').select('*', { count: 'exact', head: true }),
     supabase
       .from('contact_messages')
       .select('*', { count: 'exact', head: true })
+      .is('deleted_at', null)
       .gte('created_at', thirtyDaysAgo.toISOString()),
     supabase
       .from('contact_messages')
       .select('id, name, email, message, created_at, read_at')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(5)
       .returns<RecentMessage[]>(),
     supabase
       .from('contact_messages')
       .select('created_at')
+      .is('deleted_at', null)
       .gte('created_at', thirtyDaysAgo.toISOString())
       .order('created_at', { ascending: true }),
     supabase

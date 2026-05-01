@@ -44,12 +44,36 @@ export async function markUnread(messageId: string) {
   revalidatePath('/admin')
 }
 
+/**
+ * Soft-delete: zet deleted_at = now. Bericht verschijnt in "Corbeille"
+ * tab; cron purge'd na 30 dagen automatisch (incl. storage cleanup).
+ */
 export async function deleteMessage(messageId: string) {
+  const supabase = await requireAdmin()
+  await supabase
+    .from('contact_messages')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', messageId)
+  revalidatePath('/admin/messages')
+  revalidatePath('/admin')
+}
+
+/** Herstel uit prullenbak: deleted_at terug naar null. */
+export async function restoreMessage(messageId: string) {
+  const supabase = await requireAdmin()
+  await supabase
+    .from('contact_messages')
+    .update({ deleted_at: null })
+    .eq('id', messageId)
+  revalidatePath('/admin/messages')
+  revalidatePath('/admin')
+}
+
+/** Hard-delete: verwijdert ook attachments uit storage. Onomkeerbaar. */
+export async function permanentDeleteMessage(messageId: string) {
   await requireAdmin()
-  // Service role om bucket-bestanden + DB-rij te wissen (cascade dropt attachments-rijen)
   const admin = createAdminClient()
 
-  // Eerst attachments-paden ophalen om uit storage te wissen
   const { data: atts } = await admin
     .from('contact_attachments')
     .select('storage_path')
