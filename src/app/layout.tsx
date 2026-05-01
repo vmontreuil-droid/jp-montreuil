@@ -1,6 +1,9 @@
 import './globals.css'
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, Montserrat } from 'next/font/google'
+import { getRequestLocale } from '@/i18n/server'
+import { getDictionary } from '@/i18n/dictionaries'
+import { htmlLang } from '@/i18n/config'
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -16,13 +19,29 @@ const montserrat = Montserrat({
   display: 'swap',
 })
 
-export const metadata: Metadata = {
-  title: {
-    default: 'Atelier Montreuil — Jean-Pierre Montreuil',
-    template: '%s — Atelier Montreuil',
-  },
-  description: "L'intermédiaire entre vous et la toile. Peintures, portraits, bronzes — Jean-Pierre Montreuil.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://jp-montreuil.vercel.app'),
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale()
+  const t = getDictionary(locale)
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://jp-montreuil.vercel.app'
+
+  return {
+    title: { default: t.og.title, template: `%s — ${t.brand}` },
+    description: t.og.description,
+    metadataBase: new URL(baseUrl),
+    openGraph: {
+      type: 'website',
+      locale: locale === 'fr' ? 'fr_BE' : 'nl_BE',
+      url: baseUrl,
+      siteName: t.brand,
+      title: t.og.title,
+      description: t.og.description,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t.og.title,
+      description: t.og.description,
+    },
+  }
 }
 
 export const viewport: Viewport = {
@@ -32,13 +51,15 @@ export const viewport: Viewport = {
   themeColor: '#8b6f47',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const locale = await getRequestLocale()
+
   return (
-    <html lang="fr" className={`${cormorant.variable} ${montserrat.variable}`}>
+    <html lang={htmlLang[locale]} className={`${cormorant.variable} ${montserrat.variable}`}>
       <body>{children}</body>
     </html>
   )
