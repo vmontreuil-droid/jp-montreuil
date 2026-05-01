@@ -1,8 +1,9 @@
 'use server'
 
 import { headers } from 'next/headers'
+import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { isLocale } from '@/i18n/config'
+import { isLocale, type Locale } from '@/i18n/config'
 
 export type ContactState =
   | { status: 'idle' }
@@ -26,6 +27,73 @@ function safeFilename(name: string): string {
     .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-zA-Z0-9._-]/g, '_')
     .slice(0, 200)
+}
+
+function formatBytes(b: number): string {
+  if (b < 1024) return `${b} B`
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`
+  return `${(b / 1024 / 1024).toFixed(1)} MB`
+}
+
+/**
+ * Stuur notificatie-mail naar JP via Resend. Geen-op als RESEND_API_KEY
+ * niet geconfigureerd is — formulier blijft werken (DB-opslag).
+ */
+async function sendNotificationEmail(args: {
+  name: string
+  email: string
+  phone: string
+  message: string
+  locale: Locale
+  attachments: { filename: string; size: number }[]
+  ip: string | null
+}) {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) return // graceful skip
+  const to = process.env.CONTACT_TO_EMAIL || 'jp@montreuil.be'
+  const from = process.env.RESEND_FROM || 'Atelier Montreuil <onboarding@resend.dev>'
+
+  try {
+    const resend = new Resend(apiKey)
+    const isFR = args.locale === 'fr'
+    const subject = isFR
+      ? `Nouveau message via le site — ${args.name}`
+      : `Nieuw bericht via de website — ${args.name}`
+
+    const attachLines = args.attachments.length
+      ? args.attachments.map((a) => `  • ${a.filename} (${formatBytes(a.size)})`).join('\n')
+      : isFR
+      ? '  (aucune)'
+      : '  (geen)'
+
+    const text = [
+      isFR ? `Nom        : ${args.name}` : `Naam       : ${args.name}`,
+      `Email      : ${args.email}`,
+      isFR ? `Téléphone  : ${args.phone}` : `Telefoon   : ${args.phone}`,
+      '',
+      isFR ? 'Message :' : 'Bericht :',
+      args.message,
+      '',
+      isFR ? `Pièces jointes (${args.attachments.length}) :` : `Bijlagen (${args.attachments.length}) :`,
+      attachLines,
+      '',
+      `Locale: ${args.locale} · IP: ${args.ip ?? 'unknown'}`,
+      `Date  : ${new Date().toISOString()}`,
+      '',
+      isFR ? 'Voir l\'admin pour télécharger les pièces jointes.' : 'Open admin om bijlagen te bekijken.',
+    ].join('\n')
+
+    await resend.emails.send({
+      from,
+      to,
+      replyTo: args.email,
+      subject,
+      text,
+    })
+  } catch (err) {
+    console.error('Resend notify failed', err)
+    // niet fataal — bericht staat al in DB
+  }
 }
 
 export async function submitContact(
@@ -116,6 +184,7 @@ export async function submitContact(
   }
 
   // 2. Upload elke file → contact-attachments bucket → contact_attachments rij
+  const attachmentInfo: { filename: string; size: number }[] = []
   for (const file of files) {
     try {
       const safe = safeFilename(file.name)
@@ -140,10 +209,22 @@ export async function submitContact(
         content_type: file.type,
         size_bytes: file.size,
       })
+      attachmentInfo.push({ filename: file.name, size: file.size })
     } catch (err) {
       console.error('Attachment processing failed', err)
     }
   }
+
+  // 3. Notificatie-mail naar JP (no-op als RESEND_API_KEY niet gezet)
+  await sendNotificationEmail({
+    name,
+    email,
+    phone,
+    message,
+    locale,
+    attachments: attachmentInfo,
+    ip,
+  })
 
   return { status: 'success' }
 }
