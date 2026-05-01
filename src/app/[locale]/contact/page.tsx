@@ -38,7 +38,7 @@ export default async function ContactPage({ params }: Props) {
   if (!isLocale(locale)) notFound()
   const t = getDictionary(locale as Locale)
 
-  const waHref = whatsappHref(t.contact.phone, locale as Locale)
+  const waHref = whatsappHref(t.contact.phoneValue, locale as Locale)
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -55,8 +55,8 @@ export default async function ContactPage({ params }: Props) {
           </li>
           <li className="flex items-start gap-3">
             <Phone className="w-5 h-5 text-(--color-bronze) shrink-0 mt-0.5" />
-            <a href={`tel:${t.contact.phone.replace(/\s/g, '')}`} className="hover:text-(--color-bronze)">
-              {t.contact.phone}
+            <a href={`tel:${t.contact.phoneValue.replace(/\s/g, '')}`} className="hover:text-(--color-bronze)">
+              {t.contact.phoneValue}
             </a>
           </li>
           <li className="flex items-start gap-3">

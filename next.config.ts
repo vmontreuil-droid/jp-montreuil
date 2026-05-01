@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'usercontent.one' },
     ],
   },
+  experimental: {
+    serverActions: {
+      // Contact-formulier ondersteunt foto-bijlagen tot ~25MB totaal
+      bodySizeLimit: '30mb',
+    },
+  },
 }
 
 export default nextConfig

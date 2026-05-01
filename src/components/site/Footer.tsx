@@ -36,7 +36,7 @@ export default function Footer({ locale, t }: Props) {
     { href: localePath(locale, '/contact'), label: t.nav.contact },
   ]
 
-  const waHref = whatsappHref(t.contact.phone, locale)
+  const waHref = whatsappHref(t.contact.phoneValue, locale)
 
   return (
     <footer className="mt-24 border-t border-(--color-frame) bg-(--color-paper)">
@@ -85,10 +85,10 @@ export default function Footer({ locale, t }: Props) {
             <li className="flex items-start gap-2">
               <Phone className="w-4 h-4 mt-0.5 text-(--color-stone) shrink-0" />
               <a
-                href={`tel:${t.contact.phone.replace(/\s/g, '')}`}
+                href={`tel:${t.contact.phoneValue.replace(/\s/g, '')}`}
                 className="hover:text-(--color-bronze)"
               >
-                {t.contact.phone}
+                {t.contact.phoneValue}
               </a>
             </li>
             <li className="flex items-start gap-2">
