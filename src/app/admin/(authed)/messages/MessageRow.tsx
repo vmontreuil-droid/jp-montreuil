@@ -1,8 +1,22 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Mail, Phone, Clock, Paperclip, Eye, EyeOff, Trash2, Download, ChevronDown } from 'lucide-react'
-import { markRead, markUnread, deleteMessage, getAttachmentUrl } from './actions'
+import {
+  Mail,
+  Phone,
+  Clock,
+  Paperclip,
+  Eye,
+  EyeOff,
+  Trash2,
+  Download,
+  ChevronDown,
+  Send,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react'
+import { markRead, markUnread, deleteMessage, getAttachmentUrl, sendReply } from './actions'
 
 type Attachment = {
   id: string
@@ -40,6 +54,7 @@ function formatDate(s: string): string {
 export default function MessageRow({ message }: { message: Message }) {
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
+  const [replyOpen, setReplyOpen] = useState(false)
   const isUnread = !message.read_at
 
   function toggle() {
@@ -132,13 +147,14 @@ export default function MessageRow({ message }: { message: Message }) {
               {isUnread ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
               {isUnread ? 'Marquer lu' : 'Marquer non lu'}
             </button>
-            <a
-              href={`mailto:${message.email}?subject=Re: votre message`}
+            <button
+              type="button"
+              onClick={() => setReplyOpen(!replyOpen)}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-xs uppercase tracking-[0.15em] bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors"
             >
               <Mail className="w-3.5 h-3.5" />
               Répondre
-            </a>
+            </button>
             {message.phone && (
               <a
                 href={`tel:${message.phone.replace(/\s/g, '')}`}
@@ -202,6 +218,14 @@ export default function MessageRow({ message }: { message: Message }) {
             </p>
           </div>
 
+          {/* Reply form */}
+          {replyOpen && (
+            <ReplyForm
+              message={message}
+              onClose={() => setReplyOpen(false)}
+            />
+          )}
+
           {/* Bijlagen */}
           {message.contact_attachments.length > 0 && (
             <div>
@@ -229,5 +253,132 @@ export default function MessageRow({ message }: { message: Message }) {
         </div>
       )}
     </div>
+  )
+}
+
+function ReplyForm({
+  message,
+  onClose,
+}: {
+  message: Message
+  onClose: () => void
+}) {
+  const isFR = (message.locale ?? 'fr') === 'fr'
+  const defaultSubject = isFR
+    ? `Re : votre message`
+    : `Re: uw bericht`
+  const placeholder = isFR
+    ? `Bonjour ${message.name},\n\nMerci pour votre message…`
+    : `Beste ${message.name},\n\nBedankt voor uw bericht…`
+
+  const [subject, setSubject] = useState(defaultSubject)
+  const [body, setBody] = useState('')
+  const [pending, startTransition] = useTransition()
+  const [result, setResult] = useState<'success' | string | null>(null)
+
+  function onSend(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setResult(null)
+    const fd = new FormData(e.currentTarget)
+    fd.set('message_id', message.id)
+    fd.set('subject', subject)
+    fd.set('body', body)
+    startTransition(() => {
+      void (async () => {
+        const r = await sendReply(fd)
+        if (r.ok) {
+          setResult('success')
+          setTimeout(() => {
+            onClose()
+            setResult(null)
+            setBody('')
+          }, 2000)
+        } else {
+          setResult(r.error)
+        }
+      })()
+    })
+  }
+
+  return (
+    <form
+      onSubmit={onSend}
+      className="border border-(--color-bronze)/30 bg-(--color-canvas) p-4 space-y-3"
+    >
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
+          Réponse à {message.name} ({message.email})
+        </h3>
+      </div>
+      <div>
+        <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1">
+          Objet
+        </label>
+        <input
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          required
+          className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-sm text-(--color-ink)"
+        />
+      </div>
+      <div>
+        <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1">
+          Message
+        </label>
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          required
+          rows={8}
+          placeholder={placeholder}
+          className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-sm text-(--color-ink) resize-y leading-relaxed"
+        />
+        <p className="mt-1 text-xs text-(--color-stone)">
+          {body.length} / 10000 — la réponse sera envoyée depuis{' '}
+          <span className="text-(--color-bronze)">noreply@montreuil.be</span>{' '}
+          avec retour à <span className="text-(--color-bronze)">jp@montreuil.be</span>
+        </p>
+      </div>
+
+      {result === 'success' && (
+        <p className="flex items-center gap-2 text-sm text-(--color-bronze)">
+          <CheckCircle2 className="w-4 h-4" />
+          Réponse envoyée
+        </p>
+      )}
+      {result && result !== 'success' && (
+        <p className="flex items-center gap-2 text-sm text-red-300 bg-red-950/40 border border-red-900 px-3 py-2">
+          <AlertCircle className="w-4 h-4" />
+          Erreur : {result}
+        </p>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={pending || result === 'success'}
+          className="inline-flex items-center gap-2 px-5 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm uppercase tracking-[0.15em] disabled:opacity-50"
+        >
+          {pending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Envoi…
+            </>
+          ) : (
+            <>
+              <Send className="w-4 h-4" />
+              Envoyer
+            </>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex items-center px-4 py-2 border border-(--color-frame) text-(--color-stone) hover:text-(--color-ink) hover:border-(--color-stone) text-sm uppercase tracking-[0.15em]"
+        >
+          Annuler
+        </button>
+      </div>
+    </form>
   )
 }

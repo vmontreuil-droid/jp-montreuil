@@ -2,8 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { render } from '@react-email/render'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmail } from '@/lib/email/client'
+import { ReplyToMessage } from '@/lib/email/templates/ReplyToMessage'
+import { isLocale } from '@/i18n/config'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -60,6 +64,72 @@ export async function deleteMessage(messageId: string) {
   await admin.from('contact_messages').delete().eq('id', messageId)
   revalidatePath('/admin/messages')
   revalidatePath('/admin')
+}
+
+export type ReplyResult =
+  | { ok: true }
+  | { ok: false; error: string }
+
+/**
+ * Stuur een opgemaakte HTML-mail antwoord naar de afzender van een
+ * contact-bericht, en markeer het bericht als gelezen.
+ */
+export async function sendReply(formData: FormData): Promise<ReplyResult> {
+  await requireAdmin()
+  const admin = createAdminClient()
+
+  const messageId = String(formData.get('message_id') ?? '')
+  const subject = String(formData.get('subject') ?? '').trim()
+  const body = String(formData.get('body') ?? '').trim()
+
+  if (!messageId) return { ok: false, error: 'no_message_id' }
+  if (!subject) return { ok: false, error: 'subject_empty' }
+  if (body.length < 5) return { ok: false, error: 'body_too_short' }
+  if (body.length > 10000) return { ok: false, error: 'body_too_long' }
+
+  const { data: msg, error: fetchErr } = await admin
+    .from('contact_messages')
+    .select('email, name, message, locale, created_at, read_at')
+    .eq('id', messageId)
+    .single()
+
+  if (fetchErr || !msg) return { ok: false, error: 'message_not_found' }
+
+  const locale = isLocale(msg.locale ?? '') ? msg.locale : 'fr'
+
+  const html = await render(
+    ReplyToMessage({
+      recipientName: msg.name,
+      body,
+      locale: locale as 'fr' | 'nl',
+      originalMessage: {
+        date: new Date(msg.created_at),
+        preview: msg.message.slice(0, 500),
+      },
+    })
+  )
+
+  const result = await sendEmail({
+    to: msg.email,
+    subject,
+    html,
+    text: body,
+    replyTo: process.env.RESEND_REPLY_TO || 'jp@montreuil.be',
+  })
+
+  if (!result.ok) {
+    return { ok: false, error: result.error ?? 'send_failed' }
+  }
+
+  // Markeer als gelezen + record reply-tijd (gebruikt bestaande read_at)
+  await admin
+    .from('contact_messages')
+    .update({ read_at: msg.read_at ?? new Date().toISOString() })
+    .eq('id', messageId)
+
+  revalidatePath('/admin/messages')
+  revalidatePath('/admin')
+  return { ok: true }
 }
 
 /**

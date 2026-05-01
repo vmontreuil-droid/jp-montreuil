@@ -33,13 +33,48 @@ export default async function AuthedAdminLayout({
     redirect('/admin/login?error=not_admin')
   }
 
+  // Stats voor badges in sidebar
+  const [
+    { count: categoriesCount },
+    { count: worksCount },
+    { count: unreadCount },
+  ] = await Promise.all([
+    supabase.from('categories').select('*', { count: 'exact', head: true }),
+    supabase.from('works').select('*', { count: 'exact', head: true }),
+    supabase.from('contact_messages').select('*', { count: 'exact', head: true }).is('read_at', null),
+  ])
+
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutGrid },
-    { href: '/admin/categories', label: 'Catégories', icon: FolderTree },
-    { href: '/admin/works', label: 'Œuvres', icon: ImageIcon },
-    { href: '/admin/messages', label: 'Messages', icon: Inbox },
+    {
+      href: '/admin/categories',
+      label: 'Catégories',
+      icon: FolderTree,
+      badge: categoriesCount ?? null,
+      badgeStyle: 'subtle' as const,
+    },
+    {
+      href: '/admin/works',
+      label: 'Œuvres',
+      icon: ImageIcon,
+      badge: worksCount ?? null,
+      badgeStyle: 'subtle' as const,
+    },
+    {
+      href: '/admin/messages',
+      label: 'Messages',
+      icon: Inbox,
+      badge: unreadCount ?? null,
+      badgeStyle: 'accent' as const,
+    },
     { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2 },
-  ]
+  ] as Array<{
+    href: string
+    label: string
+    icon: typeof LayoutGrid
+    badge?: number | null
+    badgeStyle?: 'subtle' | 'accent'
+  }>
 
   return (
     <div className="min-h-screen flex">
@@ -63,6 +98,7 @@ export default async function AuthedAdminLayout({
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon
+            const showBadge = item.badge && item.badge > 0
             return (
               <Link
                 key={item.href}
@@ -70,7 +106,18 @@ export default async function AuthedAdminLayout({
                 className="flex items-center gap-3 px-3 py-2 text-sm text-(--color-charcoal) hover:bg-(--color-frame)/50 hover:text-(--color-ink) transition-colors"
               >
                 <Icon className="w-4 h-4" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {showBadge && (
+                  <span
+                    className={
+                      item.badgeStyle === 'accent'
+                        ? 'inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-semibold bg-(--color-bronze) text-white rounded-full'
+                        : 'inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] text-(--color-stone) bg-(--color-frame)/40 rounded-full'
+                    }
+                  >
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             )
           })}
