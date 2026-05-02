@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { Home, LayoutGrid, User, Share2, Mail } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
 import { getAltLocaleHref, getRequestPathname } from '@/i18n/server'
@@ -18,11 +19,11 @@ export default async function Header({ locale, t }: Props) {
   const altLabel = locale === 'fr' ? 'NL' : 'FR'
 
   const navItems = [
-    { href: localePath(locale, '/'), label: t.nav.home },
-    { href: localePath(locale, '/galerie'), label: t.nav.collection },
-    { href: localePath(locale, '/a-propos'), label: t.nav.about },
-    { href: localePath(locale, '/social'), label: t.nav.social },
-    { href: localePath(locale, '/contact'), label: t.nav.contact },
+    { href: localePath(locale, '/'), label: t.nav.home, icon: Home },
+    { href: localePath(locale, '/galerie'), label: t.nav.collection, icon: LayoutGrid },
+    { href: localePath(locale, '/a-propos'), label: t.nav.about, icon: User },
+    { href: localePath(locale, '/social'), label: t.nav.social, icon: Share2 },
+    { href: localePath(locale, '/contact'), label: t.nav.contact, icon: Mail },
   ]
 
   return (

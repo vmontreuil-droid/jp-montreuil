@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 
-type Item = { href: string; label: string }
+type Item = { href: string; label: string; icon?: React.ElementType }
 
 type Props = {
   items: Item[]
@@ -84,16 +84,27 @@ export default function MobileMenu({
 
           {/* Nav items */}
           <nav className="flex-1 overflow-y-auto py-4">
-            {items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="block px-6 py-4 text-base uppercase tracking-[0.2em] text-(--color-charcoal) hover:text-(--color-bronze) hover:bg-(--color-paper) transition-colors border-b border-(--color-frame)/50"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {items.map((item) => {
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-4 px-6 py-4 text-base uppercase tracking-[0.2em] text-(--color-charcoal) hover:text-(--color-bronze) hover:bg-(--color-paper) transition-colors border-b border-(--color-frame)/50 group"
+                >
+                  {Icon && (
+                    <span className="flex items-center justify-center w-8 h-8 text-(--color-bronze)">
+                      <Icon className="w-5 h-5" strokeWidth={1.5} />
+                    </span>
+                  )}
+                  <span className="flex-1">{item.label}</span>
+                  <span className="text-(--color-stone) group-hover:text-(--color-bronze) group-hover:translate-x-0.5 transition-all opacity-0 group-hover:opacity-100">
+                    →
+                  </span>
+                </Link>
+              )
+            })}
           </nav>
 
         {/* Bottom: thema + taal */}
