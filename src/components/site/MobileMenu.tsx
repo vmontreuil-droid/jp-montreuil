@@ -116,11 +116,16 @@ export default function MobileMenu({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Menu"
-        className="md:hidden inline-flex items-center justify-center w-9 h-9 text-(--color-charcoal) hover:text-(--color-ink) transition-colors"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={open ? 'Sluiten' : 'Menu'}
+        aria-expanded={open}
+        className={`md:hidden inline-flex items-center justify-center w-9 h-9 transition-colors ${
+          open
+            ? 'fixed top-4 right-6 z-[10000] text-(--color-ink)'
+            : 'relative text-(--color-charcoal) hover:text-(--color-ink)'
+        }`}
       >
-        <Menu className="w-6 h-6" />
+        {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
       {/* Portal: rendert drawer direct in document.body — ontwijkt
           stacking-context van Header (backdrop-filter creëert nieuwe
