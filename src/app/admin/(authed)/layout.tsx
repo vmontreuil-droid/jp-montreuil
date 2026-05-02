@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LogOut, LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera, BookOpen, Activity, PenTool } from 'lucide-react'
+import { LogOut, LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera, BookOpen, Activity, PenTool, User as UserIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './SignOutButton'
 import ThemeToggle from '@/components/site/ThemeToggle'
@@ -68,6 +68,7 @@ export default async function AuthedAdminLayout({
       badge: worksCount ?? null,
       badgeStyle: 'subtle' as const,
     },
+    { href: '/admin/about', label: 'À propos', icon: UserIcon },
     {
       href: '/admin/messages',
       label: 'Messages',
