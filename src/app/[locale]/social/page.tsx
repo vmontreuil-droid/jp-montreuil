@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, BookOpen } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { whatsappHref } from '@/lib/links'
+import { getActiveIbooks, ibookUrl } from '@/lib/ibook'
+import IbookViewer from '@/components/site/IbookViewer'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -40,6 +42,7 @@ export default async function SocialPage({ params }: Props) {
 
   const waHref = whatsappHref(t.contact.phoneValue, locale as Locale)
   const fbHref = 'https://www.facebook.com/jeanpierre.montreuil.3'
+  const ibooks = (await getActiveIbooks()).filter((b) => b.pdf_path)
 
   const cards = [
     {
@@ -114,6 +117,84 @@ export default async function SocialPage({ params }: Props) {
           )
         })}
       </div>
+
+      {ibooks.length > 0 && (
+        <div className="mt-16 md:mt-20">
+          <header className="text-center mb-10">
+            <p className="text-xs uppercase tracking-[0.2em] text-(--color-bronze) inline-flex items-center gap-2">
+              <BookOpen className="w-3.5 h-3.5" />
+              {isFR ? 'Les livres' : 'De boeken'}
+            </p>
+          </header>
+
+          <div className="space-y-6">
+            {ibooks.map((b) => {
+              const title = isFR ? b.title_fr : b.title_nl
+              const description = isFR ? b.description_fr : b.description_nl
+              const fallbackTitle = title || b.title_fr || b.title_nl
+
+              return (
+                <div
+                  key={b.id}
+                  className="card-elev bg-(--color-paper) border border-(--color-frame) p-6 md:p-8"
+                >
+                  {fallbackTitle && (
+                    <h2 className="text-2xl md:text-3xl text-(--color-ink) font-[family-name:var(--font-display)] mb-3">
+                      {fallbackTitle}
+                    </h2>
+                  )}
+                  {description && (
+                    <p className="text-(--color-charcoal) leading-relaxed mb-6 max-w-2xl">
+                      {description}
+                    </p>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 md:gap-8 items-center">
+                    {b.cover_path && (
+                      <div className="relative aspect-[4/3] md:aspect-auto md:h-56 bg-(--color-canvas) overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={ibookUrl(b.cover_path)}
+                          alt={fallbackTitle || 'Ibook'}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                    {b.qr_path && (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-32 h-32 md:w-36 md:h-36 bg-white p-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={ibookUrl(b.qr_path)}
+                            alt={isFR ? 'Code QR' : 'QR-code'}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
+                          {isFR ? 'Scanner' : 'Scannen'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 flex flex-wrap justify-center gap-3 pt-6 border-t border-(--color-frame)">
+                    <IbookViewer
+                      pdfUrl={ibookUrl(b.pdf_path!)}
+                      title={fallbackTitle || (isFR ? 'Le livre' : 'Het boek')}
+                      closeLabel={isFR ? 'Fermer' : 'Sluiten'}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors text-sm uppercase tracking-[0.2em]"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      {isFR ? 'Visualiser' : 'Bekijken'}
+                    </IbookViewer>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </article>
   )
 }
