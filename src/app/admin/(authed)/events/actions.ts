@@ -274,10 +274,16 @@ export async function inviteClientToPortal(input: {
     email,
     options: { redirectTo },
   })
-  if (linkErr || !linkData?.properties?.action_link) {
+  if (linkErr || !linkData?.properties?.hashed_token) {
     return { ok: false, error: linkErr?.message ?? 'magiclink_failed' }
   }
-  const actionUrl = linkData.properties.action_link
+
+  // Action URL gaat rechtstreeks naar onze callback met token_hash —
+  // sessie wordt server-side aangemaakt via verifyOtp(), cookies meteen
+  // op montreuil.be. Geen PKCE / code_verifier nodig (admin-gegenereerd).
+  const actionUrl = `${origin}/auth/callback?token_hash=${encodeURIComponent(
+    linkData.properties.hashed_token
+  )}&type=magiclink&next=${encodeURIComponent('/portail')}`
 
   // Render branded email + send via Resend
   const html = await render(

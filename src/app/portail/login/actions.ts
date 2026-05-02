@@ -55,13 +55,20 @@ export async function requestPortalMagicLink(input: {
     email,
     options: { redirectTo },
   })
-  if (linkErr || !linkData?.properties?.action_link) {
+  if (linkErr || !linkData?.properties?.hashed_token) {
     return { ok: false, error: 'send_failed' }
   }
 
+  // Bouw onze eigen action URL die rechtstreeks naar /auth/callback gaat met
+  // token_hash. Zo wordt de sessie via verifyOtp() server-side aangemaakt
+  // en zijn de cookies meteen gezet op montreuil.be (geen PKCE-pad nodig).
+  const actionUrl = `${origin}/auth/callback?token_hash=${encodeURIComponent(
+    linkData.properties.hashed_token
+  )}&type=magiclink&next=${encodeURIComponent('/portail')}`
+
   const html = await render(
     PortalMagicLink({
-      actionUrl: linkData.properties.action_link,
+      actionUrl,
       locale,
     })
   )
