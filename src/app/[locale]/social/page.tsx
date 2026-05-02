@@ -1,10 +1,12 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { ArrowUpRight, BookOpen } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowUpRight, BookOpen, MessageCircle } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
-import { whatsappHref } from '@/lib/links'
+import { localePath, whatsappHref } from '@/lib/links'
 import { getActiveIbooks, ibookUrl } from '@/lib/ibook'
+import { generateQrDataUrl } from '@/lib/qr'
 import IbookViewer from '@/components/site/IbookViewer'
 
 type Props = {
@@ -42,7 +44,11 @@ export default async function SocialPage({ params }: Props) {
 
   const waHref = whatsappHref(t.contact.phoneValue, locale as Locale)
   const fbHref = 'https://www.facebook.com/jeanpierre.montreuil.3'
+  const contactHref = localePath(locale as Locale, '/contact')
   const ibooks = (await getActiveIbooks()).filter((b) => b.pdf_path)
+  const ibookQrs = await Promise.all(
+    ibooks.map((b) => generateQrDataUrl(ibookUrl(b.pdf_path!), 240))
+  )
 
   const cards = [
     {
@@ -128,10 +134,11 @@ export default async function SocialPage({ params }: Props) {
           </header>
 
           <div className="space-y-6">
-            {ibooks.map((b) => {
+            {ibooks.map((b, idx) => {
               const title = isFR ? b.title_fr : b.title_nl
               const description = isFR ? b.description_fr : b.description_nl
               const fallbackTitle = title || b.title_fr || b.title_nl
+              const qrDataUrl = ibookQrs[idx]
 
               return (
                 <div
@@ -161,12 +168,12 @@ export default async function SocialPage({ params }: Props) {
                       </div>
                     )}
 
-                    {b.qr_path && (
+                    {qrDataUrl && (
                       <div className="flex flex-col items-center gap-2">
                         <div className="w-32 h-32 md:w-36 md:h-36 bg-white p-2">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={ibookUrl(b.qr_path)}
+                            src={qrDataUrl}
                             alt={isFR ? 'Code QR' : 'QR-code'}
                             className="w-full h-full object-contain"
                           />
@@ -188,6 +195,13 @@ export default async function SocialPage({ params }: Props) {
                       <BookOpen className="w-4 h-4" />
                       {isFR ? 'Visualiser' : 'Bekijken'}
                     </IbookViewer>
+                    <Link
+                      href={contactHref}
+                      className="inline-flex items-center gap-2 px-6 py-3 border border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-bronze) transition-colors text-sm uppercase tracking-[0.2em]"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      {t.nav.contact}
+                    </Link>
                   </div>
                 </div>
               )

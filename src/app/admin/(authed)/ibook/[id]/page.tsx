@@ -34,7 +34,6 @@ export default async function IbookDetailPage({ params }: Props) {
           description_nl: ibook.description_nl,
           is_active: ibook.is_active,
           coverUrl: ibook.cover_path ? ibookUrl(ibook.cover_path) : '',
-          qrUrl: ibook.qr_path ? ibookUrl(ibook.qr_path) : '',
           pdfUrl: ibook.pdf_path ? ibookUrl(ibook.pdf_path) : '',
         }}
       />

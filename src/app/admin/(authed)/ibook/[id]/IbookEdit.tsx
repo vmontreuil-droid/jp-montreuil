@@ -11,7 +11,6 @@ import {
   AlertCircle,
   FileText,
   Image as ImageIcon,
-  QrCode,
   Trash2,
   Eye,
   EyeOff,
@@ -26,7 +25,7 @@ import {
   toggleIbookActive,
 } from '../actions'
 
-type Slot = 'cover' | 'qr' | 'pdf'
+type Slot = 'cover' | 'pdf'
 
 type Props = {
   ibook: {
@@ -37,7 +36,6 @@ type Props = {
     description_nl: string
     is_active: boolean
     coverUrl: string
-    qrUrl: string
     pdfUrl: string
   }
 }
@@ -121,7 +119,10 @@ export default function IbookEdit({ ibook }: Props) {
         <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-4">
           Fichiers
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <p className="text-xs text-(--color-stone) mb-4">
+          Le code QR est généré automatiquement à partir du PDF — pas besoin de l&apos;uploader.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SlotCard
             ibookId={ibook.id}
             slot="cover"
@@ -129,16 +130,6 @@ export default function IbookEdit({ ibook }: Props) {
             help="JPG/PNG/WEBP, max 10MB"
             url={ibook.coverUrl}
             icon={<ImageIcon className="w-4 h-4" />}
-            accept="image/jpeg,image/png,image/webp"
-            onChanged={() => router.refresh()}
-          />
-          <SlotCard
-            ibookId={ibook.id}
-            slot="qr"
-            label="Code QR"
-            help="JPG/PNG/WEBP, max 10MB"
-            url={ibook.qrUrl}
-            icon={<QrCode className="w-4 h-4" />}
             accept="image/jpeg,image/png,image/webp"
             onChanged={() => router.refresh()}
           />
