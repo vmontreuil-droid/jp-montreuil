@@ -1,10 +1,12 @@
-import { getIbookConfig, ibookUrl } from '@/lib/ibook'
-import IbookForm from './IbookForm'
+import { BookOpen, Plus } from 'lucide-react'
+import { getAllIbooks } from '@/lib/ibook'
+import NewIbookForm from './NewIbookForm'
+import IbookListItem from './IbookListItem'
 
 export const dynamic = 'force-dynamic'
 
 export default async function IbookAdminPage() {
-  const cfg = await getIbookConfig()
+  const ibooks = await getAllIbooks()
 
   return (
     <div className="p-8 md:p-12 max-w-4xl">
@@ -16,23 +18,37 @@ export default async function IbookAdminPage() {
           Ibook
         </h1>
         <p className="mt-2 text-sm text-(--color-stone) max-w-2xl">
-          Téléversez un PDF (catalogue, livre d&apos;artiste...) avec sa photo de couverture et un
-          code QR. Le bloc apparaît sur la page <code>/a-propos</code> et un raccourci s&apos;ajoute
-          dans la liste de contact.
+          PDF-boeken (catalogue, expo&apos;s...) die op de site getoond worden in een
+          popup-viewer. Elk ibook heeft eigen cover-foto, QR-code en PDF.
         </p>
       </header>
 
-      <IbookForm
-        initial={{
-          titleFr: cfg.titleFr,
-          titleNl: cfg.titleNl,
-          descriptionFr: cfg.descriptionFr,
-          descriptionNl: cfg.descriptionNl,
-          coverUrl: cfg.coverPath ? ibookUrl(cfg.coverPath) : '',
-          qrUrl: cfg.qrPath ? ibookUrl(cfg.qrPath) : '',
-          pdfUrl: cfg.pdfPath ? ibookUrl(cfg.pdfPath) : '',
-        }}
-      />
+      {/* Nouvel ibook */}
+      <div className="mb-10 bg-(--color-paper) border border-(--color-frame) p-6">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-4 flex items-center gap-2">
+          <Plus className="w-3.5 h-3.5" />
+          Nouvel ibook
+        </h2>
+        <NewIbookForm />
+      </div>
+
+      {ibooks.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-(--color-stone) bg-(--color-paper) border border-(--color-frame)">
+          <BookOpen className="w-12 h-12 mb-4 opacity-50" />
+          <p>Aucun ibook pour le moment.</p>
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {ibooks.map((b, i) => (
+            <IbookListItem
+              key={b.id}
+              ibook={b}
+              isFirst={i === 0}
+              isLast={i === ibooks.length - 1}
+            />
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

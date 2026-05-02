@@ -4,7 +4,7 @@ import { Mail, Phone, MapPin, BookOpen } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { whatsappHref } from '@/lib/links'
-import { getIbookConfig, ibookUrl } from '@/lib/ibook'
+import { getActiveIbooks, ibookUrl } from '@/lib/ibook'
 import IbookViewer from '@/components/site/IbookViewer'
 import ContactForm from './ContactForm'
 
@@ -41,8 +41,7 @@ export default async function ContactPage({ params }: Props) {
   const t = getDictionary(locale as Locale)
 
   const waHref = whatsappHref(t.contact.phoneValue, locale as Locale)
-  const ibook = await getIbookConfig()
-  const ibookHref = ibook.pdfPath ? ibookUrl(ibook.pdfPath) : null
+  const ibooks = (await getActiveIbooks()).filter((b) => b.pdf_path)
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -91,19 +90,23 @@ export default async function ContactPage({ params }: Props) {
               Facebook
             </a>
           </li>
-          {ibookHref && (
-            <li className="flex items-start gap-3">
-              <BookOpen className="w-5 h-5 text-(--color-bronze) shrink-0 mt-0.5" />
-              <IbookViewer
-                pdfUrl={ibookHref}
-                title={locale === 'fr' ? 'Le livre' : 'Het boek'}
-                closeLabel={locale === 'fr' ? 'Fermer' : 'Sluiten'}
-                className="text-left hover:text-(--color-bronze)"
-              >
-                {locale === 'fr' ? 'Le livre (PDF)' : 'Het boek (PDF)'}
-              </IbookViewer>
-            </li>
-          )}
+          {ibooks.map((b) => {
+            const t = locale === 'fr' ? b.title_fr : b.title_nl
+            const fallback = t || b.title_fr || b.title_nl || (locale === 'fr' ? 'Livre (PDF)' : 'Boek (PDF)')
+            return (
+              <li key={b.id} className="flex items-start gap-3">
+                <BookOpen className="w-5 h-5 text-(--color-bronze) shrink-0 mt-0.5" />
+                <IbookViewer
+                  pdfUrl={ibookUrl(b.pdf_path!)}
+                  title={fallback}
+                  closeLabel={locale === 'fr' ? 'Fermer' : 'Sluiten'}
+                  className="text-left hover:text-(--color-bronze)"
+                >
+                  {fallback}
+                </IbookViewer>
+              </li>
+            )
+          })}
         </ul>
       </div>
 

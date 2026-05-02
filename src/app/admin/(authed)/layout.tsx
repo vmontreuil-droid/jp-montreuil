@@ -39,6 +39,7 @@ export default async function AuthedAdminLayout({
     { count: worksCount },
     { count: unreadCount },
     { count: albumsCount },
+    { count: ibooksCount },
   ] = await Promise.all([
     supabase.from('categories').select('*', { count: 'exact', head: true }),
     supabase.from('works').select('*', { count: 'exact', head: true }),
@@ -48,6 +49,7 @@ export default async function AuthedAdminLayout({
       .is('read_at', null)
       .is('deleted_at', null),
     supabase.from('event_albums').select('*', { count: 'exact', head: true }),
+    supabase.from('ibooks').select('*', { count: 'exact', head: true }),
   ])
 
   const navItems = [
@@ -80,9 +82,15 @@ export default async function AuthedAdminLayout({
       badge: albumsCount ?? null,
       badgeStyle: 'subtle' as const,
     },
-    { href: '/admin/ibook', label: 'Ibook', icon: BookOpen },
     { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2 },
     { href: '/admin/compose', label: 'Composer & Partager', icon: Send },
+    {
+      href: '/admin/ibook',
+      label: 'Ibook',
+      icon: BookOpen,
+      badge: ibooksCount ?? null,
+      badgeStyle: 'subtle' as const,
+    },
   ] as Array<{
     href: string
     label: string

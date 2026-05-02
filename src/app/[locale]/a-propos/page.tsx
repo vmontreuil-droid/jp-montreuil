@@ -6,7 +6,7 @@ import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { workImageUrl } from '@/lib/links'
 import { createClient } from '@/lib/supabase/server'
-import { getIbookConfig, ibookUrl } from '@/lib/ibook'
+import { getActiveIbooks, ibookUrl } from '@/lib/ibook'
 import IbookViewer from '@/components/site/IbookViewer'
 
 type Props = {
@@ -43,10 +43,7 @@ export default async function AboutPage({ params }: Props) {
     .returns<AboutSection[]>()
 
   const sections = data ?? []
-  const ibook = await getIbookConfig()
-  const showIbook = !!ibook.pdfPath
-  const ibookTitle = locale === 'fr' ? ibook.titleFr : ibook.titleNl
-  const ibookDescription = locale === 'fr' ? ibook.descriptionFr : ibook.descriptionNl
+  const ibooks = await getActiveIbooks()
 
   return (
     <article>
@@ -104,69 +101,80 @@ export default async function AboutPage({ params }: Props) {
         </div>
       )}
 
-      {showIbook && (
-        <section className="max-w-5xl mx-auto px-6 pb-24">
-          {ibookTitle && (
-            <header className="text-center mb-10">
-              <p className="text-xs uppercase tracking-[0.2em] text-(--color-bronze) mb-3 inline-flex items-center gap-2 justify-center">
-                <BookOpen className="w-3.5 h-3.5" />
-                {locale === 'fr' ? 'Le livre' : 'Het boek'}
-              </p>
-              <h2 className="text-3xl md:text-4xl text-(--color-ink) font-[family-name:var(--font-display)]">
-                {ibookTitle}
-              </h2>
-              {ibookDescription && (
-                <p className="mt-4 max-w-2xl mx-auto text-(--color-charcoal) leading-relaxed">
-                  {ibookDescription}
-                </p>
-              )}
-            </header>
-          )}
+      {ibooks.length > 0 && (
+        <section className="max-w-5xl mx-auto px-6 pb-24 space-y-10">
+          <header className="text-center">
+            <p className="text-xs uppercase tracking-[0.2em] text-(--color-bronze) mb-3 inline-flex items-center gap-2 justify-center">
+              <BookOpen className="w-3.5 h-3.5" />
+              {locale === 'fr' ? 'Les livres' : 'De boeken'}
+            </p>
+          </header>
 
-          <div className="bg-(--color-paper) border border-(--color-frame) p-6 md:p-8">
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 md:gap-8 items-center">
-              {/* Cover */}
-              {ibook.coverPath && (
-                <div className="relative aspect-[4/3] md:aspect-auto md:h-64 bg-(--color-canvas) overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={ibookUrl(ibook.coverPath)}
-                    alt={ibookTitle || 'Ibook'}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                </div>
-              )}
-
-              {/* QR */}
-              {ibook.qrPath && (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-32 h-32 md:w-40 md:h-40 bg-white p-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={ibookUrl(ibook.qrPath)}
-                      alt={locale === 'fr' ? 'Code QR vers le livre' : 'QR-code naar het boek'}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
-                    {locale === 'fr' ? 'Scanner' : 'Scannen'}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6 flex flex-wrap justify-center gap-3 pt-6 border-t border-(--color-frame)">
-              <IbookViewer
-                pdfUrl={ibookUrl(ibook.pdfPath)}
-                title={ibookTitle || (locale === 'fr' ? 'Le livre' : 'Het boek')}
-                closeLabel={locale === 'fr' ? 'Fermer' : 'Sluiten'}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors text-sm uppercase tracking-[0.2em]"
+          {ibooks.map((b) => {
+            const title = locale === 'fr' ? b.title_fr : b.title_nl
+            const description = locale === 'fr' ? b.description_fr : b.description_nl
+            const fallbackTitle = title || b.title_fr || b.title_nl
+            return (
+              <div
+                key={b.id}
+                className="bg-(--color-paper) border border-(--color-frame) p-6 md:p-8"
               >
-                <BookOpen className="w-4 h-4" />
-                {locale === 'fr' ? 'Visualiser' : 'Bekijken'}
-              </IbookViewer>
-            </div>
-          </div>
+                {fallbackTitle && (
+                  <h2 className="text-2xl md:text-3xl text-(--color-ink) font-[family-name:var(--font-display)] mb-3">
+                    {fallbackTitle}
+                  </h2>
+                )}
+                {description && (
+                  <p className="text-(--color-charcoal) leading-relaxed mb-6 max-w-2xl">
+                    {description}
+                  </p>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 md:gap-8 items-center">
+                  {b.cover_path && (
+                    <div className="relative aspect-[4/3] md:aspect-auto md:h-56 bg-(--color-canvas) overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={ibookUrl(b.cover_path)}
+                        alt={fallbackTitle || 'Ibook'}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {b.qr_path && (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-32 h-32 md:w-36 md:h-36 bg-white p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={ibookUrl(b.qr_path)}
+                          alt={locale === 'fr' ? 'Code QR' : 'QR-code'}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
+                        {locale === 'fr' ? 'Scanner' : 'Scannen'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {b.pdf_path && (
+                  <div className="mt-6 flex flex-wrap justify-center gap-3 pt-6 border-t border-(--color-frame)">
+                    <IbookViewer
+                      pdfUrl={ibookUrl(b.pdf_path)}
+                      title={fallbackTitle || (locale === 'fr' ? 'Le livre' : 'Het boek')}
+                      closeLabel={locale === 'fr' ? 'Fermer' : 'Sluiten'}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors text-sm uppercase tracking-[0.2em]"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      {locale === 'fr' ? 'Visualiser' : 'Bekijken'}
+                    </IbookViewer>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </section>
       )}
     </article>
