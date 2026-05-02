@@ -21,11 +21,42 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient()
   const { data: cat } = await supabase
     .from('categories')
-    .select('label_fr, label_nl')
+    .select('label_fr, label_nl, description_fr, description_nl, cover:works!categories_cover_work_id_fkey(storage_path)')
     .eq('slug', slug)
-    .single()
+    .single<{
+      label_fr: string
+      label_nl: string
+      description_fr: string | null
+      description_nl: string | null
+      cover: { storage_path: string } | null
+    }>()
   if (!cat) return {}
-  return { title: locale === 'fr' ? cat.label_fr : cat.label_nl }
+
+  const title = locale === 'fr' ? cat.label_fr : cat.label_nl
+  const description =
+    (locale === 'fr' ? cat.description_fr : cat.description_nl) ??
+    (locale === 'fr'
+      ? `Découvrez la collection « ${title} » de Jean-Pierre Montreuil.`
+      : `Ontdek de collectie "${title}" van Jean-Pierre Montreuil.`)
+  const coverUrl = cat.cover?.storage_path ? workImageUrl(cat.cover.storage_path) : null
+
+  return {
+    title,
+    description,
+    openGraph: {
+      type: 'article',
+      title: `${title} — Atelier Montreuil`,
+      description,
+      locale: locale === 'fr' ? 'fr_BE' : 'nl_BE',
+      images: coverUrl ? [{ url: coverUrl, alt: title }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} — Atelier Montreuil`,
+      description,
+      images: coverUrl ? [coverUrl] : undefined,
+    },
+  }
 }
 
 type Work = {
