@@ -3,11 +3,12 @@
 import { useState, useTransition } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowUp, ArrowDown, ChevronDown, Save, Loader2, Trash2, Image as ImageIcon, Plus } from 'lucide-react'
+import { ArrowUp, ArrowDown, ChevronDown, Save, Loader2, Trash2, Image as ImageIcon } from 'lucide-react'
 import { workImageUrl } from '@/lib/links'
 import { updateCategory, moveCategory, deleteCategory } from './actions'
 import type { CategoryWithWorks } from './page'
 import CoverPicker from './CoverPicker'
+import InlineWorksUpload from './InlineWorksUpload'
 import TranslateButton from '@/components/admin/TranslateButton'
 
 type Props = {
@@ -196,6 +197,15 @@ export default function CategoryRow({ cat, isFirst, isLast }: Props) {
             />
           </div>
 
+          <div>
+            <label className="block text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-2">
+              Ajouter des photos
+            </label>
+            {/* Form-binnen-form is niet toegestaan — InlineWorksUpload doet zelf
+                geen <form>, gebruikt de uploadWorks server action via FormData. */}
+            <InlineWorksUpload categoryId={cat.id} categorySlug={cat.slug} />
+          </div>
+
           <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-(--color-frame)">
             <button
               type="submit"
@@ -212,14 +222,6 @@ export default function CategoryRow({ cat, isFirst, isLast }: Props) {
             >
               <ImageIcon className="w-4 h-4" />
               Gérer les photos ({cat.works.length})
-            </Link>
-
-            <Link
-              href={`/admin/works/upload?cat=${cat.slug}`}
-              className="inline-flex items-center gap-2 px-4 py-2 border border-(--color-frame) text-(--color-charcoal) hover:text-(--color-ink) hover:border-(--color-stone) text-sm uppercase tracking-[0.15em]"
-            >
-              <Plus className="w-4 h-4" />
-              Ajouter
             </Link>
 
             <button
