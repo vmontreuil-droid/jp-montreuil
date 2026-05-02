@@ -54,12 +54,14 @@ export default function Lightbox({
     return () => document.removeEventListener('keydown', onKey)
   }, [next, prev, onClose])
 
-  // Body scroll lock
+  // Body scroll lock + modal-open class (verbergt sticky sub-footer)
   useEffect(() => {
     const original = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    document.body.classList.add('modal-open')
     return () => {
       document.body.style.overflow = original
+      document.body.classList.remove('modal-open')
     }
   }, [])
 
@@ -81,7 +83,7 @@ export default function Lightbox({
       onClick={onClose}
       onContextMenu={blockContextMenu}
     >
-      {/* Sluit-knop — duidelijk zichtbaar rechtsboven */}
+      {/* Sluit-knop — bronzen accent, altijd zichtbaar */}
       <button
         type="button"
         onClick={(e) => {
@@ -89,10 +91,10 @@ export default function Lightbox({
           onClose()
         }}
         aria-label={closeLabel}
-        className="absolute top-4 right-4 md:top-6 md:right-6 z-10 inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-sm uppercase tracking-wider transition-colors"
+        className="absolute top-4 right-4 md:top-6 md:right-6 z-10 inline-flex items-center gap-2 px-4 py-2.5 bg-(--color-bronze) hover:bg-(--color-bronze-dark) backdrop-blur-md text-white text-xs uppercase tracking-[0.15em] shadow-lg transition-colors"
       >
-        <X className="w-5 h-5" />
-        <span className="hidden sm:inline">{closeLabel}</span>
+        <X className="w-4 h-4" />
+        {closeLabel}
       </button>
 
       {/* Counter */}

@@ -141,7 +141,7 @@ export default function Footer({ locale, t }: Props) {
         body krijgt padding-bottom (zie globals.css) zodat content niet
         onder dit blok verstopt wordt. */}
     <div
-      className="fixed bottom-0 left-0 right-0 z-30 border-t border-(--color-frame) py-3 px-6 text-xs text-(--color-stone) backdrop-blur-md"
+      className="site-sub-footer fixed bottom-0 left-0 right-0 z-30 border-t border-(--color-frame) py-3 px-6 text-xs text-(--color-stone) backdrop-blur-md"
       style={{ backgroundColor: 'color-mix(in srgb, var(--color-paper) 92%, transparent)' }}
     >
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:justify-between gap-1.5 text-center">

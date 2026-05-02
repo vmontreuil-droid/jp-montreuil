@@ -121,6 +121,12 @@
     z-index: 1;
   }
 
+  /* Sticky sub-footer verbergen wanneer een modal/lightbox open is —
+     anders steekt 'ie door de modal heen op sommige schermen. */
+  body.modal-open .site-sub-footer {
+    display: none;
+  }
+
   h1, h2, h3, h4 {
     font-family: var(--font-display);
     font-weight: 400;

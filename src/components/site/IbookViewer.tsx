@@ -65,9 +65,11 @@ export default function IbookViewer({
     }
     window.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
+    document.body.classList.add('modal-open')
     return () => {
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
+      document.body.classList.remove('modal-open')
     }
   }, [open, numPages])
 
