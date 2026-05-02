@@ -40,7 +40,8 @@ export default function MobileMenu({
     setMounted(true)
   }, [])
 
-  // Body scroll-lock + ESC
+  // Body scroll-lock + ESC + modal-open class (verbergt sticky sub-footer
+  // die anders over de theme/taal-knoppen in het drawer-onderbalkje valt)
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -49,9 +50,11 @@ export default function MobileMenu({
     document.addEventListener('keydown', onKey)
     const original = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+    document.body.classList.add('modal-open')
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = original
+      document.body.classList.remove('modal-open')
     }
   }, [open])
 
