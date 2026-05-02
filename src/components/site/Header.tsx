@@ -8,6 +8,7 @@ import { localePath } from '@/lib/links'
 import ThemeToggle from './ThemeToggle'
 import MobileMenu from './MobileMenu'
 import DesktopNav from './DesktopNav'
+import PortailLocaleSwitch from './PortailLocaleSwitch'
 
 type Props = {
   locale: Locale
@@ -18,6 +19,20 @@ export default async function Header({ locale, t }: Props) {
   const pathname = await getRequestPathname()
   const altHref = getAltLocaleHref(pathname, locale)
   const altLabel = locale === 'fr' ? 'NL' : 'FR'
+  const altLocale: Locale = locale === 'fr' ? 'nl' : 'fr'
+
+  // Op /portail/* werkt URL-prefix routing niet (geen /nl/portail-route).
+  // We schakelen daar naar een cookie-based switcher die de pagina
+  // herlaadt in de andere taal zonder de URL te wijzigen.
+  const isPortail = pathname.startsWith('/portail') || pathname.startsWith('/nl/portail')
+
+  const localeSwitcher = isPortail ? (
+    <PortailLocaleSwitch
+      altLocale={altLocale}
+      altLabel={altLabel}
+      ariaLabel={`Switch to ${altLabel}`}
+    />
+  ) : null
 
   // Icon-component wordt client-side gekozen via iconName-string —
   // veilig over server→client grens (geen forwardRef-serialization).
@@ -60,13 +75,15 @@ export default async function Header({ locale, t }: Props) {
               labelLight={locale === 'fr' ? 'Mode clair' : 'Lichte modus'}
               labelDark={locale === 'fr' ? 'Mode sombre' : 'Donkere modus'}
             />
-            <a
-              href={altHref}
-              className="inline-flex items-center justify-center text-xs uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink) transition-colors border border-(--color-frame) px-3 h-[34px] rounded-sm"
-              aria-label={`Switch to ${altLabel}`}
-            >
-              {altLabel}
-            </a>
+            {localeSwitcher ?? (
+              <a
+                href={altHref}
+                className="inline-flex items-center justify-center text-xs uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink) transition-colors border border-(--color-frame) px-3 h-[34px] rounded-sm"
+                aria-label={`Switch to ${altLabel}`}
+              >
+                {altLabel}
+              </a>
+            )}
           </div>
 
           {/* Mobile: hamburger-menu */}
@@ -77,6 +94,7 @@ export default async function Header({ locale, t }: Props) {
             switchLabel={`Switch to ${altLabel}`}
             portalHref="/portail/login"
             portalLabel={locale === 'fr' ? 'Espace client' : 'Klantenportaal'}
+            localeSwitcher={localeSwitcher ?? undefined}
             themeToggle={
               <ThemeToggle
                 labelLight={locale === 'fr' ? 'Mode clair' : 'Lichte modus'}

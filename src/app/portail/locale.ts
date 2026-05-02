@@ -1,19 +1,22 @@
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 import { isLocale, defaultLocale, type Locale } from '@/i18n/config'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { PORTAIL_LOCALE_COOKIE } from './actions'
 
 /**
- * Bepaal de taal voor /portail/* :
- *   1. Ingelogd → kijk de `client_locale` op van het meest recente album
- *      gekoppeld aan het e-mailadres van de user.
- *   2. Niet ingelogd → val terug op Accept-Language (eerste FR/NL match).
- *   3. Geen indicatie → defaultLocale (FR).
- *
- * Wordt server-side gebruikt door de portail layout en pagina's. Geeft
- * altijd een geldige Locale terug.
+ * Bepaal de taal voor /portail/* (in volgorde van prioriteit):
+ *   1. Cookie `portail_locale` — handmatige keuze van de klant via de
+ *      FR/NL-knop in de header.
+ *   2. Ingelogd → `client_locale` van het meest recente actieve album.
+ *   3. Accept-Language header (eerste FR/NL match).
+ *   4. defaultLocale (FR).
  */
 export async function getPortailLocale(): Promise<Locale> {
+  const cookieStore = await cookies()
+  const cookieLoc = cookieStore.get(PORTAIL_LOCALE_COOKIE)?.value
+  if (cookieLoc && isLocale(cookieLoc)) return cookieLoc
+
   const supabase = await createClient()
   const {
     data: { user },

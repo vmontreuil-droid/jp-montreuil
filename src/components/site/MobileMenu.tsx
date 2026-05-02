@@ -25,6 +25,9 @@ type Props = {
   themeToggle: React.ReactNode
   portalHref?: string
   portalLabel?: string
+  /** Wanneer aanwezig: vervangt de URL-based FR/NL-knop. Voor /portail/*
+   *  waar er geen /nl-route is — switchen gaat dan via cookie. */
+  localeSwitcher?: React.ReactNode
 }
 
 export default function MobileMenu({
@@ -35,6 +38,7 @@ export default function MobileMenu({
   themeToggle,
   portalHref,
   portalLabel,
+  localeSwitcher,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -141,14 +145,18 @@ export default function MobileMenu({
         {/* Bottom: thema + taal */}
         <div className="p-5 border-t border-(--color-frame) flex items-center justify-between gap-3">
           <div>{themeToggle}</div>
-          <a
-            href={altHref}
-            onClick={() => setOpen(false)}
-            className="inline-flex items-center justify-center text-xs uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink) transition-colors border border-(--color-frame) px-4 h-[34px] rounded-sm"
-            aria-label={switchLabel}
-          >
-            {altLabel}
-          </a>
+          {localeSwitcher ? (
+            <div onClick={() => setOpen(false)}>{localeSwitcher}</div>
+          ) : (
+            <a
+              href={altHref}
+              onClick={() => setOpen(false)}
+              className="inline-flex items-center justify-center text-xs uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink) transition-colors border border-(--color-frame) px-4 h-[34px] rounded-sm"
+              aria-label={switchLabel}
+            >
+              {altLabel}
+            </a>
+          )}
         </div>
       </aside>
     </>
