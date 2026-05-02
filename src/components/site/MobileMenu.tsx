@@ -3,9 +3,19 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Home, LayoutGrid, User, Share2, Mail } from 'lucide-react'
 
-type Item = { href: string; label: string; icon?: React.ElementType }
+type IconName = 'home' | 'collection' | 'about' | 'social' | 'contact'
+
+const ICONS: Record<IconName, React.ElementType> = {
+  home: Home,
+  collection: LayoutGrid,
+  about: User,
+  social: Share2,
+  contact: Mail,
+}
+
+type Item = { href: string; label: string; iconName?: IconName }
 
 type Props = {
   items: Item[]
@@ -85,7 +95,7 @@ export default function MobileMenu({
           {/* Nav items */}
           <nav className="flex-1 overflow-y-auto py-4">
             {items.map((item) => {
-              const Icon = item.icon
+              const Icon = item.iconName ? ICONS[item.iconName] : null
               return (
                 <Link
                   key={item.href}

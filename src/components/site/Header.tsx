@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Home, LayoutGrid, User, Share2, Mail } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
 import { getAltLocaleHref, getRequestPathname } from '@/i18n/server'
@@ -18,12 +17,15 @@ export default async function Header({ locale, t }: Props) {
   const altHref = getAltLocaleHref(pathname, locale)
   const altLabel = locale === 'fr' ? 'NL' : 'FR'
 
+  // Icon-naam (string) wordt in MobileMenu naar lucide-component gemapt;
+  // we geven geen React-components door over server→client grens (faalt
+  // serialization van forwardRef typeof).
   const navItems = [
-    { href: localePath(locale, '/'), label: t.nav.home, icon: Home },
-    { href: localePath(locale, '/galerie'), label: t.nav.collection, icon: LayoutGrid },
-    { href: localePath(locale, '/a-propos'), label: t.nav.about, icon: User },
-    { href: localePath(locale, '/social'), label: t.nav.social, icon: Share2 },
-    { href: localePath(locale, '/contact'), label: t.nav.contact, icon: Mail },
+    { href: localePath(locale, '/'), label: t.nav.home, iconName: 'home' as const },
+    { href: localePath(locale, '/galerie'), label: t.nav.collection, iconName: 'collection' as const },
+    { href: localePath(locale, '/a-propos'), label: t.nav.about, iconName: 'about' as const },
+    { href: localePath(locale, '/social'), label: t.nav.social, iconName: 'social' as const },
+    { href: localePath(locale, '/contact'), label: t.nav.contact, iconName: 'contact' as const },
   ]
 
   return (
