@@ -139,12 +139,14 @@ export default function IbookEdit({ ibook }: Props) {
             onChanged={() => router.refresh()}
             onUploadSuccess={async (pdfFile) => {
               const coverFile = await extractPdfFirstPageAsJpeg(pdfFile, 'cover.jpg')
-              if (!coverFile) return
               const fd = new FormData()
               fd.set('ibook_id', ibook.id)
               fd.set('slot', 'cover')
               fd.set('file', coverFile)
-              await uploadIbookFile(fd)
+              const r = await uploadIbookFile(fd)
+              if (!r.ok) {
+                throw new Error(`Upload cover faalde: ${r.error}`)
+              }
             }}
           />
           <CoverCard url={ibook.coverUrl} hasPdf={!!ibook.pdfUrl} />
@@ -325,8 +327,9 @@ function SlotCard({
           if (onUploadSuccess) {
             try {
               await onUploadSuccess(file)
-            } catch {
-              // hook-fout mag de hoofd-upload niet breken
+            } catch (err) {
+              console.error('[ibook] post-upload hook failed:', err)
+              setError(`Cover-extraction: ${(err as Error).message}`)
             }
           }
           onChanged()
