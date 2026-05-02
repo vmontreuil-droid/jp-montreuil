@@ -122,7 +122,7 @@ export default function IbookEdit({ ibook }: Props) {
         <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-4">
           Fichiers
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <SlotCard
             ibookId={ibook.id}
             slot="cover"
@@ -143,50 +143,8 @@ export default function IbookEdit({ ibook }: Props) {
             accept="application/pdf"
             onChanged={() => router.refresh()}
           />
+          <QrCard ibookId={ibook.id} qrDataUrl={ibook.qrDataUrl} />
         </div>
-      </section>
-
-      {/* QR-code (auto-gegenereerd) */}
-      <section className="mb-10">
-        <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-4 inline-flex items-center gap-2">
-          <QrCode className="w-3.5 h-3.5" />
-          Code QR
-        </h2>
-        {ibook.qrDataUrl ? (
-          <div className="bg-(--color-paper) border border-(--color-frame) p-5 flex flex-wrap items-center gap-6">
-            <div className="bg-white p-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={ibook.qrDataUrl}
-                alt="QR-code"
-                width={160}
-                height={160}
-                className="block"
-              />
-            </div>
-            <div className="flex-1 min-w-[220px] space-y-3">
-              <p className="text-sm text-(--color-charcoal) leading-relaxed">
-                Généré automatiquement à partir du PDF. Scanne le code avec un téléphone
-                pour ouvrir directement le livre.
-              </p>
-              <p className="text-[11px] text-(--color-stone) break-all font-mono">
-                {ibook.pdfUrl}
-              </p>
-              <a
-                href={ibook.qrDataUrl}
-                download={`qr-ibook-${ibook.id}.png`}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-xs uppercase tracking-[0.15em]"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Télécharger le QR
-              </a>
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-(--color-stone) bg-(--color-paper) border border-(--color-frame) p-5">
-            Téléverse d&apos;abord un PDF pour générer le code QR.
-          </p>
-        )}
       </section>
 
       {/* Tekst */}
@@ -415,10 +373,10 @@ function SlotCard({
             <IbookViewer
               pdfUrl={url}
               title={label}
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-(--color-charcoal) hover:text-(--color-bronze) transition-colors"
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-(--color-bronze) hover:text-(--color-bronze-dark) transition-colors"
             >
-              <FileText className="w-12 h-12" />
-              <span className="text-xs">Aperçu</span>
+              <FileText className="w-12 h-12" strokeWidth={1.5} />
+              <span className="text-xs uppercase tracking-[0.15em]">Aperçu</span>
             </IbookViewer>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
@@ -479,6 +437,54 @@ function SlotCard({
           <AlertCircle className="w-3 h-3" />
           {error}
         </p>
+      )}
+    </div>
+  )
+}
+
+// ============================================================================
+// QrCard — read-only display van auto-gegenereerd QR + download-knop
+// ============================================================================
+
+function QrCard({ ibookId, qrDataUrl }: { ibookId: string; qrDataUrl: string }) {
+  return (
+    <div className="bg-(--color-paper) border border-(--color-frame) p-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs uppercase tracking-[0.15em] text-(--color-charcoal) inline-flex items-center gap-2">
+          <QrCode className="w-4 h-4" />
+          Code QR
+        </p>
+      </div>
+
+      <div className="relative aspect-square bg-(--color-canvas) border border-(--color-frame) overflow-hidden flex items-center justify-center">
+        {qrDataUrl ? (
+          <div className="bg-white p-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qrDataUrl} alt="QR-code" className="block w-full h-auto" />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2 text-(--color-stone) text-xs px-4 text-center">
+            <QrCode className="w-8 h-8 opacity-40" />
+            <span>Téléverse d&apos;abord un PDF</span>
+          </div>
+        )}
+      </div>
+
+      {qrDataUrl ? (
+        <a
+          href={qrDataUrl}
+          download={`qr-ibook-${ibookId}.png`}
+          className="flex flex-col items-center gap-1 border border-dashed border-(--color-frame) hover:border-(--color-bronze) text-(--color-stone) hover:text-(--color-bronze) transition-colors p-3 text-center text-xs"
+        >
+          <Download className="w-4 h-4" />
+          <span>Télécharger</span>
+          <span className="text-[10px] opacity-70">PNG, généré auto</span>
+        </a>
+      ) : (
+        <div className="flex flex-col items-center gap-1 border border-dashed border-(--color-frame) p-3 text-center text-xs text-(--color-stone) opacity-50">
+          <Download className="w-4 h-4" />
+          <span>Télécharger</span>
+        </div>
       )}
     </div>
   )
