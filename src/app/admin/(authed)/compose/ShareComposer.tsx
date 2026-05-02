@@ -15,6 +15,7 @@ import {
   Eye,
 } from 'lucide-react'
 import { workImageUrl } from '@/lib/links'
+import { withShareCacheBuster } from '@/lib/share-url'
 import TranslateButton from '@/components/admin/TranslateButton'
 
 export type ComposerCategory = {
@@ -241,10 +242,13 @@ export default function ShareComposer({ categories, works }: Props) {
     }
   }
 
-  const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
+  // Cache-buster (?v=YYYYMMDD) enkel op de URL die naar FB/WA scrapers gaat —
+  // niet op "Copier le lien" of native share. Forceert verse OG-fetch.
+  const scrapeUrl = withShareCacheBuster(shareUrl)
+  const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(scrapeUrl)}`
 
   function whatsappShareUrl(caption: string): string {
-    const body = caption ? `${caption}\n\n${shareUrl}` : shareUrl
+    const body = caption ? `${caption}\n\n${scrapeUrl}` : scrapeUrl
     return `https://wa.me/?text=${encodeURIComponent(body)}`
   }
 

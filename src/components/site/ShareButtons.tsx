@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Mail, Link as LinkIcon, Check, Share2 } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { localePath } from '@/lib/links'
+import { withShareCacheBuster } from '@/lib/share-url'
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -42,8 +43,11 @@ export default function ShareButtons({ url, title, compact = false, className = 
   const targetUrl =
     url ?? (typeof window !== 'undefined' ? window.location.href : '')
 
-  const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(targetUrl)}`
-  const waUrl = `https://wa.me/?text=${encodeURIComponent(`${title} — ${targetUrl}`)}`
+  // Cache-buster enkel voor FB/WA scrapers; copy-link en native share
+  // krijgen de schone URL zonder ?v= zodat berichten netjes blijven.
+  const scrapeUrl = withShareCacheBuster(targetUrl)
+  const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(scrapeUrl)}`
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(`${title} — ${scrapeUrl}`)}`
   const contactHref = localePath(locale, '/contact')
 
   async function copy() {
