@@ -7,6 +7,7 @@ const BASE = PUBLIC_BASE_URL.replace(/\/$/, '')
 const STATIC_PATHS = [
   { path: '/', priority: 1.0 },
   { path: '/galerie', priority: 0.9 },
+  { path: '/expositions', priority: 0.85 },
   { path: '/a-propos', priority: 0.7 },
   { path: '/social', priority: 0.7 },
   { path: '/contact', priority: 0.8 },

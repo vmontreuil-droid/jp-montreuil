@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LogOut, LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera, BookOpen, Activity, PenTool, User as UserIcon } from 'lucide-react'
+import { LogOut, LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera, BookOpen, Activity, PenTool, User as UserIcon, CalendarDays } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './SignOutButton'
 import ThemeToggle from '@/components/site/ThemeToggle'
@@ -40,6 +40,7 @@ export default async function AuthedAdminLayout({
     { count: unreadCount },
     { count: albumsCount },
     { count: ibooksCount },
+    { count: exhibitionsCount },
   ] = await Promise.all([
     supabase.from('categories').select('*', { count: 'exact', head: true }),
     supabase.from('works').select('*', { count: 'exact', head: true }),
@@ -50,6 +51,7 @@ export default async function AuthedAdminLayout({
       .is('deleted_at', null),
     supabase.from('event_albums').select('*', { count: 'exact', head: true }),
     supabase.from('ibooks').select('*', { count: 'exact', head: true }),
+    supabase.from('exhibitions').select('*', { count: 'exact', head: true }),
   ])
 
   const navItems = [
@@ -81,6 +83,13 @@ export default async function AuthedAdminLayout({
       label: 'Albums clients',
       icon: Camera,
       badge: albumsCount ?? null,
+      badgeStyle: 'subtle' as const,
+    },
+    {
+      href: '/admin/exhibitions',
+      label: 'Expositions',
+      icon: CalendarDays,
+      badge: exhibitionsCount ?? null,
       badgeStyle: 'subtle' as const,
     },
     { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2 },
