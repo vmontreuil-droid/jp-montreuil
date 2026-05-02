@@ -36,20 +36,14 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: t.brand,
       title: t.og.title,
       description: t.og.description,
-      images: [
-        {
-          url: '/logo-dark.png',
-          width: 743,
-          height: 258,
-          alt: t.brand,
-        },
-      ],
+      // images niet expliciet — Next.js injecteert automatisch de
+      // 1200×630 image gegenereerd door app/opengraph-image.tsx
     },
     twitter: {
       card: 'summary_large_image',
       title: t.og.title,
       description: t.og.description,
-      images: ['/logo-dark.png'],
+      // idem — twitter-image.tsx levert de afbeelding
     },
     alternates: {
       canonical: baseUrl,

@@ -5,9 +5,12 @@ const SITE_NAME = 'Atelier Montreuil'
 
 /**
  * Bouw OG + Twitter metadata zodat share-previews op FB/WhatsApp/iMessage
- * altijd een titel, beschrijving én foto tonen. `imageUrl` mag een absolute
- * URL zijn (bv. Supabase storage) of een pad relatief aan de site (bv.
- * '/logo-dark.png'). Geen image gegeven → val terug op het logo.
+ * altijd een titel, beschrijving én foto tonen. `imageUrl` is optioneel:
+ * - aanwezig → gebruikt voor og:image en twitter:image
+ * - afwezig → file-convention `app/opengraph-image.tsx` levert de fallback
+ *   (een 1200×630 brand-image) en wordt automatisch geïnjecteerd door
+ *   Next.js. Niet expliciet `images` zetten zorgt dat die fallback erdoor
+ *   komt.
  */
 export function pageMetadata(input: {
   locale: Locale
@@ -19,7 +22,6 @@ export function pageMetadata(input: {
 }): Metadata {
   const { locale, title, description, imageUrl, ogType = 'website' } = input
   const fullTitle = `${title} — ${SITE_NAME}`
-  const image = imageUrl || '/logo-dark.png'
 
   return {
     title,
@@ -30,13 +32,13 @@ export function pageMetadata(input: {
       title: fullTitle,
       description,
       locale: locale === 'fr' ? 'fr_BE' : 'nl_BE',
-      images: [{ url: image, alt: title }],
+      ...(imageUrl ? { images: [{ url: imageUrl, alt: title }] } : {}),
     },
     twitter: {
       card: 'summary_large_image',
       title: fullTitle,
       description,
-      images: [image],
+      ...(imageUrl ? { images: [imageUrl] } : {}),
     },
   }
 }
