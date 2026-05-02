@@ -1,23 +1,26 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Loader2, AlertCircle } from 'lucide-react'
+import { Document, Page, pdfjs } from 'react-pdf'
+import 'react-pdf/dist/Page/AnnotationLayer.css'
+import 'react-pdf/dist/Page/TextLayer.css'
+
+// Worker via CDN — Next/Turbopack vraagt asset-URL en dat is gevoelig voor
+// versie-mismatch. Pinning op pdfjs.version voorkomt API-mismatch.
+if (typeof window !== 'undefined') {
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+}
 
 type Props = {
   pdfUrl: string
   title?: string
   closeLabel?: string
-  /** Knop-/link-styling: class wordt aan de trigger button toegekend. */
   className?: string
-  /** Inhoud van de trigger (icoon + tekst). */
   children: React.ReactNode
 }
 
-/**
- * Trigger + fullscreen modal die het PDF in een iframe toont — bezoekers
- * blijven op de site, geen download-flow.
- */
 export default function IbookViewer({
   pdfUrl,
   title,
@@ -27,7 +30,11 @@ export default function IbookViewer({
 }: Props) {
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [iframeLoaded, setIframeLoaded] = useState(false)
+  const [numPages, setNumPages] = useState(0)
+  const [page, setPage] = useState(1)
+  const [error, setError] = useState<string | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [pageWidth, setPageWidth] = useState(800)
 
   useEffect(() => {
     setMounted(true)
@@ -37,6 +44,8 @@ export default function IbookViewer({
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
+      else if (e.key === 'ArrowRight') setPage((p) => Math.min(p + 1, numPages || p))
+      else if (e.key === 'ArrowLeft') setPage((p) => Math.max(p - 1, 1))
     }
     window.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
@@ -44,16 +53,27 @@ export default function IbookViewer({
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
-  }, [open])
+  }, [open, numPages])
 
   useEffect(() => {
-    if (!open) setIframeLoaded(false)
+    if (!open) {
+      setPage(1)
+      setNumPages(0)
+      setError(null)
+    }
   }, [open])
 
-  // PDF-viewer flags zodat de browser-toolbar (Chrome) zonder download-knop
-  // toont. Niet 100% afdwingbaar — gebruikers die echt willen, kunnen via
-  // dev-tools de URL halen — maar weert casual download.
-  const viewerSrc = `${pdfUrl}#toolbar=0&navpanes=0&statusbar=0`
+  // Width responsive — pagina-breedte is min(container.width - padding, 1200px)
+  useEffect(() => {
+    if (!open) return
+    const calc = () => {
+      const w = containerRef.current?.clientWidth ?? window.innerWidth
+      setPageWidth(Math.min(w - 32, 1200))
+    }
+    calc()
+    window.addEventListener('resize', calc)
+    return () => window.removeEventListener('resize', calc)
+  }, [open])
 
   return (
     <>
@@ -90,22 +110,67 @@ export default function IbookViewer({
               </button>
             </div>
 
-            {/* PDF iframe */}
-            <div className="flex-1 relative bg-(--color-canvas)">
-              {!iframeLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center text-white/70">
-                  <Loader2 className="w-8 h-8 animate-spin" />
+            {/* PDF page */}
+            <div
+              ref={containerRef}
+              className="flex-1 overflow-auto flex items-start justify-center py-6 px-4"
+            >
+              {error ? (
+                <div className="flex flex-col items-center gap-3 text-white/80 mt-20">
+                  <AlertCircle className="w-8 h-8" />
+                  <p className="text-sm">{error}</p>
                 </div>
+              ) : (
+                <Document
+                  file={pdfUrl}
+                  loading={
+                    <div className="flex items-center gap-2 text-white/70 mt-20">
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <span className="text-sm">Chargement…</span>
+                    </div>
+                  }
+                  onLoadSuccess={(d) => setNumPages(d.numPages)}
+                  onLoadError={(e) => setError(e.message || 'Impossible de charger le PDF')}
+                  // text + annotation layers tonen voor selecteerbaar/clickbaar
+                  // — laagjes zijn klein en geven geen download-knop
+                >
+                  <Page
+                    pageNumber={page}
+                    width={pageWidth}
+                    renderAnnotationLayer
+                    renderTextLayer
+                    className="shadow-2xl"
+                  />
+                </Document>
               )}
-              <iframe
-                src={viewerSrc}
-                title={title || 'PDF viewer'}
-                className="absolute inset-0 w-full h-full"
-                onLoad={() => setIframeLoaded(true)}
-                // Sandbox zodat de PDF JS niet zomaar naar parent kan praten
-                sandbox="allow-scripts allow-same-origin allow-popups"
-              />
             </div>
+
+            {/* Bottom controls — vorige / pagina-counter / volgende */}
+            {numPages > 0 && !error && (
+              <div className="flex items-center justify-center gap-3 py-4 border-t border-white/10 text-white">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                  disabled={page <= 1}
+                  aria-label="Précédent"
+                  className="inline-flex items-center justify-center w-10 h-10 border border-white/20 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="text-xs uppercase tracking-[0.2em] opacity-80 min-w-[60px] text-center">
+                  {page} / {numPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(p + 1, numPages))}
+                  disabled={page >= numPages}
+                  aria-label="Suivant"
+                  className="inline-flex items-center justify-center w-10 h-10 border border-white/20 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </div>,
           document.body
         )}
