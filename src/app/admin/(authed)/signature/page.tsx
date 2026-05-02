@@ -35,8 +35,11 @@ export default function SignatureAdminPage() {
           email: 'jp@montreuil.be',
           website: 'montreuil.be',
           websiteUrl: 'https://montreuil.be',
+          websiteUrlNl: 'https://montreuil.be/nl',
           facebook: 'https://www.facebook.com/jeanpierre.montreuil.3',
           logoUrl,
+          taglineFr: 'Visitez notre site renouvelé',
+          taglineNl: 'Bezoek onze vernieuwde website',
         }}
       />
     </div>

@@ -14,8 +14,11 @@ type Info = {
   email: string
   website: string
   websiteUrl: string
+  websiteUrlNl: string
   facebook: string
   logoUrl: string
+  taglineFr: string
+  taglineNl: string
 }
 
 type Props = {
@@ -27,6 +30,8 @@ export default function SignatureDesigns({ info }: Props) {
   const ref1 = useRef<HTMLDivElement>(null)
   const ref2 = useRef<HTMLDivElement>(null)
   const ref3 = useRef<HTMLDivElement>(null)
+  const ref4 = useRef<HTMLDivElement>(null)
+  const ref5 = useRef<HTMLDivElement>(null)
 
   async function copySignature(ref: React.RefObject<HTMLDivElement | null>, key: string) {
     const node = ref.current
@@ -96,12 +101,38 @@ export default function SignatureDesigns({ info }: Props) {
       <DesignBlock
         number={3}
         title="Compact horizontal"
-        description="Une seule ligne, idéal pour les réponses courtes."
+        description="Logo + ligne unique, idéal pour les réponses courtes."
         copied={copied === 'd3'}
         onCopy={() => copySignature(ref3, 'd3')}
       >
         <div ref={ref3}>
           <Design3 info={info} />
+        </div>
+      </DesignBlock>
+
+      {/* === Design 4 — Carte (boxed) === */}
+      <DesignBlock
+        number={4}
+        title="Carte encadrée"
+        description="Style carte de visite avec encadrement subtil."
+        copied={copied === 'd4'}
+        onCopy={() => copySignature(ref4, 'd4')}
+      >
+        <div ref={ref4}>
+          <Design4 info={info} />
+        </div>
+      </DesignBlock>
+
+      {/* === Design 5 — Centré formel === */}
+      <DesignBlock
+        number={5}
+        title="Centré formel"
+        description="Logo grand format, mise en page centrée — élégant et formel."
+        copied={copied === 'd5'}
+        onCopy={() => copySignature(ref5, 'd5')}
+      >
+        <div ref={ref5}>
+          <Design5 info={info} />
         </div>
       </DesignBlock>
 
@@ -155,6 +186,41 @@ function DesignBlock({
           getoond, dus we tonen 't ook hier op cream achtergrond */}
       <div className="bg-[#faf8f5] p-8 md:p-10">{children}</div>
     </section>
+  )
+}
+
+// ============================================================================
+// Tagline — bilingual website-zin met juiste links
+// ============================================================================
+
+function Tagline({ info, align = 'left' }: { info: Info; align?: 'left' | 'center' }) {
+  return (
+    <p
+      style={{
+        margin: '14px 0 0',
+        paddingTop: 10,
+        borderTop: '1px solid rgba(128, 120, 112, 0.25)',
+        fontSize: 11,
+        lineHeight: '1.6',
+        color: '#807870',
+        fontStyle: 'italic',
+        textAlign: align,
+      }}
+    >
+      <a
+        href={info.websiteUrl}
+        style={{ color: '#8b6f47', textDecoration: 'none' }}
+      >
+        {info.taglineFr}
+      </a>
+      <span style={{ margin: '0 8px', color: '#c9c0b3', fontStyle: 'normal' }}>·</span>
+      <a
+        href={info.websiteUrlNl}
+        style={{ color: '#8b6f47', textDecoration: 'none' }}
+      >
+        {info.taglineNl}
+      </a>
+    </p>
   )
 }
 
@@ -253,6 +319,7 @@ function Design1({ info }: { info: Info }) {
                 {info.website}
               </a>
             </p>
+            <Tagline info={info} />
           </td>
         </tr>
       </tbody>
@@ -406,6 +473,7 @@ function Design2({ info }: { info: Info }) {
                 </tr>
               </tbody>
             </table>
+            <Tagline info={info} />
           </td>
         </tr>
       </tbody>
@@ -426,7 +494,25 @@ function Design3({ info }: { info: Info }) {
     >
       <tbody>
         <tr>
-          <td style={{ padding: 0 }}>
+          {/* Logo links */}
+          <td style={{ paddingRight: 14, verticalAlign: 'middle' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={info.logoUrl}
+              alt={info.atelier}
+              width={90}
+              height={31}
+              style={{ display: 'block', height: 'auto', width: 90, border: 0 }}
+            />
+          </td>
+          {/* Tekst rechts */}
+          <td
+            style={{
+              paddingLeft: 14,
+              verticalAlign: 'middle',
+              borderLeft: '1px solid rgba(139, 111, 71, 0.4)',
+            }}
+          >
             <p
               style={{
                 margin: 0,
@@ -478,6 +564,297 @@ function Design3({ info }: { info: Info }) {
                 style={{ color: '#8b6f47', textDecoration: 'none' }}
               >
                 {info.website}
+              </a>
+            </p>
+            <p
+              style={{
+                margin: '4px 0 0',
+                fontSize: 11,
+                color: '#807870',
+                fontStyle: 'italic',
+              }}
+            >
+              <a
+                href={info.websiteUrl}
+                style={{ color: '#8b6f47', textDecoration: 'none' }}
+              >
+                {info.taglineFr}
+              </a>
+              <span style={{ margin: '0 6px', color: '#c9c0b3', fontStyle: 'normal' }}>·</span>
+              <a
+                href={info.websiteUrlNl}
+                style={{ color: '#8b6f47', textDecoration: 'none' }}
+              >
+                {info.taglineNl}
+              </a>
+            </p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  )
+}
+
+// ============================================================================
+// Design 4 — Boxed card style
+// ============================================================================
+
+function Design4({ info }: { info: Info }) {
+  return (
+    <table
+      cellPadding={0}
+      cellSpacing={0}
+      style={{
+        borderCollapse: 'collapse',
+        fontFamily: 'Helvetica, Arial, sans-serif',
+      }}
+    >
+      <tbody>
+        <tr>
+          <td
+            style={{
+              padding: 20,
+              backgroundColor: '#ffffff',
+              border: '1px solid #e3dccf',
+              boxShadow: '0 4px 16px -8px rgba(28, 25, 22, 0.12)',
+            }}
+          >
+            <table cellPadding={0} cellSpacing={0} style={{ borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr>
+                  <td style={{ paddingRight: 16, verticalAlign: 'top' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={info.logoUrl}
+                      alt={info.atelier}
+                      width={110}
+                      height={38}
+                      style={{ display: 'block', height: 'auto', width: 110, border: 0 }}
+                    />
+                  </td>
+                  <td
+                    style={{
+                      verticalAlign: 'top',
+                      paddingLeft: 16,
+                      borderLeft: '1px solid #e3dccf',
+                    }}
+                  >
+                    <p
+                      style={{
+                        margin: 0,
+                        fontFamily: 'Georgia, "Times New Roman", serif',
+                        fontSize: 20,
+                        color: '#1c1916',
+                      }}
+                    >
+                      {info.name}
+                    </p>
+                    <p
+                      style={{
+                        margin: '3px 0 0',
+                        fontSize: 10,
+                        color: '#8b6f47',
+                        letterSpacing: '0.18em',
+                        textTransform: 'uppercase',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {info.roleFr} · {info.roleNl}
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div
+              style={{
+                marginTop: 14,
+                paddingTop: 14,
+                borderTop: '1px solid #e3dccf',
+                fontSize: 12,
+                lineHeight: '1.7',
+                color: '#1c1916',
+              }}
+            >
+              <span style={{ color: '#807870' }}>{info.address}</span>
+              <br />
+              <a
+                href={`tel:${info.phoneTel}`}
+                style={{ color: '#1c1916', textDecoration: 'none' }}
+              >
+                {info.phone}
+              </a>
+              <span style={{ margin: '0 8px', color: '#c9c0b3' }}>·</span>
+              <a
+                href={`mailto:${info.email}`}
+                style={{ color: '#8b6f47', textDecoration: 'none' }}
+              >
+                {info.email}
+              </a>
+              <span style={{ margin: '0 8px', color: '#c9c0b3' }}>·</span>
+              <a
+                href={info.websiteUrl}
+                style={{ color: '#8b6f47', textDecoration: 'none' }}
+              >
+                {info.website}
+              </a>
+            </div>
+
+            <p
+              style={{
+                margin: '12px 0 0',
+                fontSize: 11,
+                color: '#807870',
+                fontStyle: 'italic',
+              }}
+            >
+              <a
+                href={info.websiteUrl}
+                style={{ color: '#8b6f47', textDecoration: 'none' }}
+              >
+                {info.taglineFr}
+              </a>
+              <span style={{ margin: '0 8px', color: '#c9c0b3', fontStyle: 'normal' }}>·</span>
+              <a
+                href={info.websiteUrlNl}
+                style={{ color: '#8b6f47', textDecoration: 'none' }}
+              >
+                {info.taglineNl}
+              </a>
+            </p>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  )
+}
+
+// ============================================================================
+// Design 5 — Centered formal
+// ============================================================================
+
+function Design5({ info }: { info: Info }) {
+  return (
+    <table
+      cellPadding={0}
+      cellSpacing={0}
+      style={{
+        borderCollapse: 'collapse',
+        fontFamily: 'Helvetica, Arial, sans-serif',
+        textAlign: 'center',
+        margin: '0 auto',
+      }}
+    >
+      <tbody>
+        <tr>
+          <td style={{ textAlign: 'center', padding: '0 0 14px 0' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={info.logoUrl}
+              alt={info.atelier}
+              width={180}
+              height={62}
+              style={{ display: 'inline-block', height: 'auto', width: 180, border: 0 }}
+            />
+          </td>
+        </tr>
+        <tr>
+          <td style={{ textAlign: 'center' }}>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: 'Georgia, "Times New Roman", serif',
+                fontSize: 26,
+                color: '#1c1916',
+                lineHeight: '1.2',
+              }}
+            >
+              {info.name}
+            </p>
+            <table
+              cellPadding={0}
+              cellSpacing={0}
+              style={{ borderCollapse: 'collapse', margin: '6px auto 0' }}
+            >
+              <tbody>
+                <tr>
+                  <td
+                    style={{
+                      backgroundColor: '#8b6f47',
+                      width: 32,
+                      height: 1,
+                      lineHeight: '1px',
+                      fontSize: 1,
+                    }}
+                  >
+                    &nbsp;
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p
+              style={{
+                margin: '8px 0 0',
+                fontSize: 11,
+                color: '#8b6f47',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                fontWeight: 600,
+              }}
+            >
+              {info.roleFr} · {info.roleNl}
+            </p>
+            <p
+              style={{
+                margin: '14px 0 0',
+                fontSize: 12,
+                color: '#807870',
+                lineHeight: '1.7',
+              }}
+            >
+              {info.address}
+              <br />
+              <a
+                href={`tel:${info.phoneTel}`}
+                style={{ color: '#1c1916', textDecoration: 'none' }}
+              >
+                {info.phone}
+              </a>
+              <span style={{ margin: '0 8px', color: '#c9c0b3' }}>·</span>
+              <a
+                href={`mailto:${info.email}`}
+                style={{ color: '#8b6f47', textDecoration: 'none' }}
+              >
+                {info.email}
+              </a>
+              <br />
+              <a
+                href={info.websiteUrl}
+                style={{ color: '#8b6f47', textDecoration: 'none' }}
+              >
+                {info.website}
+              </a>
+            </p>
+            <p
+              style={{
+                margin: '12px 0 0',
+                fontSize: 11,
+                color: '#807870',
+                fontStyle: 'italic',
+              }}
+            >
+              <a
+                href={info.websiteUrl}
+                style={{ color: '#8b6f47', textDecoration: 'none' }}
+              >
+                {info.taglineFr}
+              </a>
+              <span style={{ margin: '0 8px', color: '#c9c0b3', fontStyle: 'normal' }}>·</span>
+              <a
+                href={info.websiteUrlNl}
+                style={{ color: '#8b6f47', textDecoration: 'none' }}
+              >
+                {info.taglineNl}
               </a>
             </p>
           </td>
