@@ -98,9 +98,14 @@ export default async function Header({ locale, t }: Props) {
             </a>
           </div>
 
-          {/* Mobile: hamburger-menu */}
+          {/* Mobile: hamburger-menu — geef enkel serializeerbare velden door
+              (geen Icon-component refs over server→client grens) */}
           <MobileMenu
-            items={navItems}
+            items={navItems.map(({ href, label, iconName }) => ({
+              href,
+              label,
+              iconName,
+            }))}
             altHref={altHref}
             altLabel={altLabel}
             switchLabel={`Switch to ${altLabel}`}
