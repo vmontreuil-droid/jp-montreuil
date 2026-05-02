@@ -128,10 +128,11 @@ export default function IbookViewer({
               </p>
             )}
 
-            {/* PDF page */}
+            {/* PDF page — gehele zone klikbaar voor pagina-navigatie:
+                linker helft = vorige, rechter helft = volgende */}
             <div
               ref={containerRef}
-              className="flex-1 overflow-auto flex items-start justify-center py-6 px-4"
+              className="flex-1 overflow-auto flex items-start justify-center py-6 px-4 relative"
             >
               {error ? (
                 <div className="flex flex-col items-center gap-3 text-white/80 mt-20">
@@ -149,16 +150,10 @@ export default function IbookViewer({
                   }
                   onLoadSuccess={(d) => setNumPages(d.numPages)}
                   onLoadError={(e) => setError(e.message || 'Impossible de charger le PDF')}
-                  // text + annotation layers tonen voor selecteerbaar/clickbaar
-                  // — laagjes zijn klein en geven geen download-knop
                 >
                   <Page
                     pageNumber={page}
                     width={pageWidth}
-                    // Annotation- en text-layer uit: geen klikbare hyperlinks
-                    // binnen het PDF die de bezoeker naar een externe pagina
-                    // kunnen leiden. Pure render = bezoeker blijft 100% in
-                    // onze modal.
                     renderAnnotationLayer={false}
                     renderTextLayer={false}
                     className="shadow-2xl"
@@ -167,19 +162,45 @@ export default function IbookViewer({
               )}
             </div>
 
-            {/* Bottom controls — vorige / pagina-counter / volgende */}
+            {/* Side-tap regions — voor mobile vooral handig (volledige hoogte
+                aan beide kanten, achter de floating controls liggend) */}
             {numPages > 0 && !error && (
-              <div className="flex items-center justify-center gap-3 py-4 border-t border-white/10 text-white">
+              <>
                 <button
                   type="button"
                   onClick={() => setPage((p) => Math.max(p - 1, 1))}
                   disabled={page <= 1}
                   aria-label="Précédent"
-                  className="inline-flex items-center justify-center w-10 h-10 border border-white/20 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-[55] w-14 h-24 items-center justify-center bg-black/40 hover:bg-(--color-bronze) backdrop-blur-md border border-white/20 border-l-0 text-white disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-7 h-7" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(p + 1, numPages))}
+                  disabled={page >= numPages}
+                  aria-label="Suivant"
+                  className="hidden md:flex fixed right-0 top-1/2 -translate-y-1/2 z-[55] w-14 h-24 items-center justify-center bg-black/40 hover:bg-(--color-bronze) backdrop-blur-md border border-white/20 border-r-0 text-white disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-7 h-7" />
+                </button>
+              </>
+            )}
+
+            {/* Floating bottom controls — altijd zichtbaar centraal onderaan,
+                ook op mobile waar side-tap niet getoond wordt */}
+            {numPages > 0 && !error && (
+              <div className="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-[60] inline-flex items-center gap-2 px-3 py-2 bg-black/70 backdrop-blur-md border border-white/20 text-white shadow-lg">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                  disabled={page <= 1}
+                  aria-label="Précédent"
+                  className="inline-flex items-center justify-center w-10 h-10 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <span className="text-xs uppercase tracking-[0.2em] opacity-80 min-w-[60px] text-center">
+                <span className="text-xs uppercase tracking-[0.2em] opacity-90 min-w-[70px] text-center font-mono">
                   {page} / {numPages}
                 </span>
                 <button
@@ -187,7 +208,7 @@ export default function IbookViewer({
                   onClick={() => setPage((p) => Math.min(p + 1, numPages))}
                   disabled={page >= numPages}
                   aria-label="Suivant"
-                  className="inline-flex items-center justify-center w-10 h-10 border border-white/20 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="inline-flex items-center justify-center w-10 h-10 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
