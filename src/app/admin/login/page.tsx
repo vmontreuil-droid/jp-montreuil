@@ -13,8 +13,6 @@ export default function AdminLoginPage() {
   const router = useRouter()
   const params = useSearchParams()
   const errorParam = params.get('error')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(
     errorParam === 'not_admin'
       ? 'Ce compte n\'a pas les droits administrateur.'
@@ -24,9 +22,18 @@ export default function AdminLoginPage() {
   )
   const [loading, setLoading] = useState(false)
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
+    // FormData ipv React state — Chrome autofill triggert niet altijd onChange,
+    // waardoor controlled state leeg blijft en Supabase "missing email or phone" geeft.
+    const data = new FormData(e.currentTarget)
+    const email = String(data.get('email') ?? '').trim()
+    const password = String(data.get('password') ?? '')
+    if (!email || !password) {
+      setError('E-mail et mot de passe requis.')
+      return
+    }
     setLoading(true)
     const supabase = createClient()
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
@@ -166,10 +173,10 @@ export default function AdminLoginPage() {
                   </span>
                   <input
                     id="email"
+                    name="email"
                     type="email"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    defaultValue=""
                     className="w-full pl-10 pr-4 py-3 bg-(--color-canvas) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
                     autoComplete="email"
                   />
@@ -190,10 +197,10 @@ export default function AdminLoginPage() {
                   </span>
                   <input
                     id="password"
+                    name="password"
                     type="password"
                     required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    defaultValue=""
                     className="w-full pl-10 pr-4 py-3 bg-(--color-canvas) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
                     autoComplete="current-password"
                   />
