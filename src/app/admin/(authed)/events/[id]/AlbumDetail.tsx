@@ -17,6 +17,7 @@ import {
   Mail,
   Send,
   MessageCircle,
+  KeyRound,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -26,6 +27,7 @@ import {
   registerPhoto,
   deletePhoto,
   shareAlbumByEmail,
+  inviteClientToPortal,
 } from '../actions'
 
 export type AlbumDetailRow = {
@@ -651,7 +653,7 @@ function SharePanel({ album, photoCount, publicUrl }: SharePanelProps) {
   const [sending, setSending] = useState(false)
   const [sendOk, setSendOk] = useState(false)
   const [sendErr, setSendErr] = useState<string | null>(null)
-  const [channel, setChannel] = useState<'email' | 'whatsapp'>('email')
+  const [channel, setChannel] = useState<'email' | 'whatsapp' | 'portal'>('email')
 
   // Lokale URL aangepast aan locale (FR / NL)
   const localizedUrl = useMemo(() => {
@@ -784,6 +786,18 @@ function SharePanel({ album, photoCount, publicUrl }: SharePanelProps) {
           >
             <MessageCircle className="w-3.5 h-3.5" />
             WhatsApp
+          </button>
+          <button
+            type="button"
+            onClick={() => setChannel('portal')}
+            className={`inline-flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-[0.15em] transition-colors ${
+              channel === 'portal'
+                ? 'bg-(--color-bronze) text-white'
+                : 'text-(--color-charcoal) hover:bg-(--color-paper)'
+            }`}
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            Portail
           </button>
         </div>
 
@@ -919,6 +933,17 @@ function SharePanel({ album, photoCount, publicUrl }: SharePanelProps) {
               Ouvrir WhatsApp
             </a>
           </div>
+        )}
+
+        {channel === 'portal' && (
+          <PortalInviteForm
+            albumId={album.id}
+            clientEmail={album.client_email ?? ''}
+            recipientName={recipientName}
+            message={message}
+            locale={locale}
+            isActive={album.is_active}
+          />
         )}
       </div>
 
@@ -1072,6 +1097,119 @@ function SharePanel({ album, photoCount, publicUrl }: SharePanelProps) {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// PortalInviteForm — verstuur magic-link uitnodiging naar de opdrachtgever
+// ============================================================================
+
+function PortalInviteForm({
+  albumId,
+  clientEmail,
+  recipientName,
+  message,
+  locale,
+  isActive,
+}: {
+  albumId: string
+  clientEmail: string
+  recipientName: string
+  message: string
+  locale: 'fr' | 'nl'
+  isActive: boolean
+}) {
+  const [sending, setSending] = useState(false)
+  const [sendOk, setSendOk] = useState(false)
+  const [sendErr, setSendErr] = useState<string | null>(null)
+
+  async function onInvite() {
+    setSendErr(null)
+    setSendOk(false)
+    if (!isActive) {
+      setSendErr('Le lien est désactivé — réactivez l\'album dans Paramètres avant d\'inviter.')
+      return
+    }
+    if (!clientEmail) {
+      setSendErr('Aucun e-mail client. Renseignez-le dans Paramètres.')
+      return
+    }
+    setSending(true)
+    const r = await inviteClientToPortal({
+      album_id: albumId,
+      message,
+      locale,
+    })
+    setSending(false)
+    if (r.ok) {
+      setSendOk(true)
+      setTimeout(() => setSendOk(false), 3000)
+    } else {
+      const map: Record<string, string> = {
+        invalid_email: 'Adresse e-mail invalide',
+        album_inactive: 'Album désactivé — réactivez-le d\'abord',
+        album_not_found: 'Album introuvable',
+        magiclink_failed: 'Échec génération du lien',
+        no_api_key: 'Service mail non configuré',
+        send_failed: 'Échec envoi',
+      }
+      setSendErr(map[r.error] ?? `Erreur: ${r.error}`)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-(--color-bronze)/10 border border-(--color-bronze)/30 p-4 text-sm text-(--color-charcoal)">
+        <p className="font-semibold text-(--color-ink) mb-2">Espace client privé</p>
+        <p className="text-xs leading-relaxed mb-2">
+          Le client reçoit un e-mail avec un lien de connexion automatique. Une fois
+          connecté, il accède à <code className="font-mono text-(--color-bronze)">/portail</code> où
+          tous ses albums sont listés.
+        </p>
+        <p className="text-xs leading-relaxed">
+          Idéal pour les clients réguliers — ils retrouvent tout en un endroit, sans
+          mot de passe à retenir.
+        </p>
+      </div>
+
+      <div>
+        <label className="block text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-1.5">
+          E-mail du client
+        </label>
+        <input
+          type="email"
+          value={clientEmail}
+          readOnly
+          className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) text-(--color-charcoal) text-sm cursor-not-allowed"
+        />
+        <p className="mt-1 text-[10px] text-(--color-stone)">
+          Modifie l&apos;e-mail dans l&apos;onglet Paramètres si nécessaire.
+        </p>
+      </div>
+
+      {sendErr && (
+        <p className="inline-flex items-center gap-2 text-xs text-red-300">
+          <AlertCircle className="w-3.5 h-3.5" />
+          {sendErr}
+        </p>
+      )}
+      {sendOk && (
+        <p className="inline-flex items-center gap-2 text-xs text-(--color-bronze)">
+          <Check className="w-3.5 h-3.5" />
+          Invitation envoyée — le client peut maintenant se connecter.
+        </p>
+      )}
+
+      <button
+        type="button"
+        onClick={onInvite}
+        disabled={sending || !isActive || !clientEmail}
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-xs uppercase tracking-[0.15em] disabled:opacity-50"
+      >
+        {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+        Envoyer l&apos;invitation
+      </button>
     </div>
   )
 }

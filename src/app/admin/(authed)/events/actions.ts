@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { generateAlbumSlug } from '@/lib/album-slug'
 import { sendEmail } from '@/lib/email/client'
 import { ShareAlbumLink } from '@/lib/email/templates/ShareAlbumLink'
+import { PortalInvite } from '@/lib/email/templates/PortalInvite'
 import { PUBLIC_BASE_URL } from '@/lib/public-url'
 
 export async function createAlbum(formData: FormData) {
@@ -218,4 +219,83 @@ export async function deletePhoto(photoId: string, albumId: string) {
   }
 
   revalidatePath(`/admin/events/${albumId}`)
+}
+
+/**
+ * Stuur een portail-uitnodiging naar de opdrachtgever — magic-link via
+ * Supabase Auth, gepackaged in onze branded Resend-mail. Klant klikt
+ * en logt automatisch in op /portail.
+ */
+export async function inviteClientToPortal(input: {
+  album_id: string
+  message: string
+  locale: 'fr' | 'nl'
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+
+  const { data: album, error } = await admin
+    .from('event_albums')
+    .select('id, slug, title, client_name, client_email, is_active')
+    .eq('id', input.album_id)
+    .single()
+  if (error || !album) return { ok: false, error: 'album_not_found' }
+  if (!album.is_active) return { ok: false, error: 'album_inactive' }
+
+  const email = (album.client_email ?? '').trim().toLowerCase()
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    return { ok: false, error: 'invalid_email' }
+  }
+
+  // Foto-aantal voor de mail
+  const { count: photoCount } = await admin
+    .from('event_photos')
+    .select('*', { count: 'exact', head: true })
+    .eq('album_id', album.id)
+
+  const origin = PUBLIC_BASE_URL.replace(/\/$/, '')
+  const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent('/portail')}`
+
+  // Genereer magic-link via Supabase Auth Admin API
+  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+    type: 'magiclink',
+    email,
+    options: { redirectTo },
+  })
+  if (linkErr || !linkData?.properties?.action_link) {
+    return { ok: false, error: linkErr?.message ?? 'magiclink_failed' }
+  }
+  const actionUrl = linkData.properties.action_link
+
+  // Render branded email + send via Resend
+  const html = await render(
+    PortalInvite({
+      recipientName: album.client_name ?? undefined,
+      message: input.message.trim() || undefined,
+      albumTitle: album.title,
+      actionUrl,
+      photoCount: photoCount ?? undefined,
+      locale: input.locale,
+    })
+  )
+
+  const subject =
+    input.locale === 'fr'
+      ? `Vos photos « ${album.title} » — accès personnel`
+      : `Uw foto's "${album.title}" — persoonlijke toegang`
+
+  const result = await sendEmail({
+    to: email,
+    subject,
+    html,
+    text:
+      (input.message.trim() ? input.message.trim() + '\n\n' : '') +
+      (input.locale === 'fr'
+        ? `Accédez à vos photos: ${actionUrl}`
+        : `Bekijk uw foto's: ${actionUrl}`),
+    replyTo: process.env.RESEND_REPLY_TO || 'jp@montreuil.be',
+  })
+
+  if (!result.ok) return { ok: false, error: result.error ?? 'send_failed' }
+  return { ok: true }
 }
