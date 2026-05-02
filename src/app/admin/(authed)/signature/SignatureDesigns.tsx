@@ -15,6 +15,7 @@ type Info = {
   website: string
   websiteUrl: string
   facebook: string
+  logoUrl: string
 }
 
 type Props = {
@@ -170,6 +171,18 @@ function Design1({ info }: { info: Info }) {
     >
       <tbody>
         <tr>
+          <td style={{ padding: '0 0 14px 0' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={info.logoUrl}
+              alt={info.atelier}
+              width={140}
+              height={48}
+              style={{ display: 'block', height: 'auto', width: 140, border: 0 }}
+            />
+          </td>
+        </tr>
+        <tr>
           <td style={{ padding: 0 }}>
             <p
               style={{
@@ -260,10 +273,27 @@ function Design2({ info }: { info: Info }) {
     >
       <tbody>
         <tr>
+          {/* Logo-kolom */}
           <td
             style={{
-              borderLeft: '3px solid #8b6f47',
-              paddingLeft: 16,
+              paddingRight: 18,
+              verticalAlign: 'top',
+              borderRight: '2px solid #8b6f47',
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={info.logoUrl}
+              alt={info.atelier}
+              width={120}
+              height={42}
+              style={{ display: 'block', height: 'auto', width: 120, border: 0 }}
+            />
+          </td>
+          {/* Info-kolom */}
+          <td
+            style={{
+              paddingLeft: 18,
               verticalAlign: 'top',
             }}
           >

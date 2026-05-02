@@ -1,9 +1,11 @@
 import { PenTool } from 'lucide-react'
+import { PUBLIC_BASE_URL } from '@/lib/public-url'
 import SignatureDesigns from './SignatureDesigns'
 
 export const dynamic = 'force-dynamic'
 
 export default function SignatureAdminPage() {
+  const logoUrl = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/logo-dark.png`
   return (
     <div className="p-8 md:p-12 max-w-5xl">
       <header className="mb-8">
@@ -34,6 +36,7 @@ export default function SignatureAdminPage() {
           website: 'montreuil.be',
           websiteUrl: 'https://montreuil.be',
           facebook: 'https://www.facebook.com/jeanpierre.montreuil.3',
+          logoUrl,
         }}
       />
     </div>

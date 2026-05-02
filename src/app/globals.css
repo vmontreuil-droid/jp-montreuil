@@ -94,6 +94,33 @@
     z-index: 1;
   }
 
+  /* Topo-overlay binnen een container (bv. admin main waar de canvas bg
+     het body::before patroon afdekt). Lichte opacity zodat het gewoon
+     extra structuur toevoegt, niet stoort. */
+  .topo-overlay {
+    position: relative;
+    isolation: isolate;
+  }
+  .topo-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/topo.svg');
+    background-size: 1200px 1200px;
+    background-repeat: repeat;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.06;
+  }
+  html.light .topo-overlay::before {
+    filter: invert(1);
+    opacity: 0.08;
+  }
+  .topo-overlay > * {
+    position: relative;
+    z-index: 1;
+  }
+
   h1, h2, h3, h4 {
     font-family: var(--font-display);
     font-weight: 400;

@@ -168,8 +168,8 @@ export default async function AuthedAdminLayout({
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto bg-(--color-canvas)">
+      {/* Main content — topo-overlay voor extra structuur in lege ruimtes */}
+      <main className="flex-1 overflow-y-auto bg-(--color-canvas) topo-overlay">
         {children}
       </main>
     </div>
