@@ -100,9 +100,10 @@ export default async function AuthedAdminLayout({
   }>
 
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar */}
-      <aside className="w-64 shrink-0 border-r border-(--color-frame) bg-(--color-paper) flex flex-col">
+    <div className="h-screen flex">
+      {/* Sidebar — vaste hoogte = viewport, footer altijd zichtbaar.
+          Eigen overflow-y zodat lange nav-lijsten binnen sidebar scrollen. */}
+      <aside className="w-64 shrink-0 border-r border-(--color-frame) bg-(--color-paper) flex flex-col h-screen sticky top-0 overflow-y-auto">
         <div className="p-6 border-b border-(--color-frame)">
           <Link href="/admin" className="flex items-center gap-2">
             <Image
