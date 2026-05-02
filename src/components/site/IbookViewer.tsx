@@ -110,21 +110,23 @@ export default function IbookViewer({
             aria-modal="true"
             aria-label={title}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between gap-4 px-4 md:px-6 py-3 border-b border-white/10 text-white">
-              <p className="text-sm font-[family-name:var(--font-display)] truncate">
-                {title || 'PDF'}
+            {/* Floating Fermer-knop — altijd boven het PDF zichtbaar */}
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label={closeLabel}
+              className="fixed top-4 right-4 md:top-6 md:right-6 z-[60] inline-flex items-center gap-2 px-4 py-2.5 bg-black/70 hover:bg-(--color-bronze) backdrop-blur-md border border-white/20 text-white text-xs uppercase tracking-[0.15em] shadow-lg transition-colors"
+            >
+              <X className="w-4 h-4" />
+              {closeLabel}
+            </button>
+
+            {/* Floating titel top-left (optioneel) */}
+            {title && (
+              <p className="fixed top-4 left-4 md:top-6 md:left-6 z-[60] max-w-[60%] truncate px-3 py-1.5 bg-black/50 backdrop-blur-md border border-white/15 text-white/90 text-sm font-[family-name:var(--font-display)]">
+                {title}
               </p>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label={closeLabel}
-                className="inline-flex items-center gap-2 px-3 py-1.5 border border-white/20 hover:bg-white/10 text-xs uppercase tracking-[0.15em]"
-              >
-                <X className="w-3.5 h-3.5" />
-                {closeLabel}
-              </button>
-            </div>
+            )}
 
             {/* PDF page */}
             <div
