@@ -1,7 +1,7 @@
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './SignOutButton'
 import Header from '@/components/site/Header'
+import Footer from '@/components/site/Footer'
 import { getDictionary } from '@/i18n/dictionaries'
 import { defaultLocale } from '@/i18n/config'
 
@@ -36,12 +36,7 @@ export default async function PortailLayout({
 
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-(--color-frame) py-6 text-center text-xs text-(--color-stone)">
-        © {new Date().getFullYear()} Atelier Montreuil ·{' '}
-        <Link href="/" className="hover:text-(--color-ink)">
-          montreuil.be
-        </Link>
-      </footer>
+      <Footer locale={defaultLocale} t={t} />
     </div>
   )
 }
