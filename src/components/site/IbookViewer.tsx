@@ -155,8 +155,12 @@ export default function IbookViewer({
                   <Page
                     pageNumber={page}
                     width={pageWidth}
-                    renderAnnotationLayer
-                    renderTextLayer
+                    // Annotation- en text-layer uit: geen klikbare hyperlinks
+                    // binnen het PDF die de bezoeker naar een externe pagina
+                    // kunnen leiden. Pure render = bezoeker blijft 100% in
+                    // onze modal.
+                    renderAnnotationLayer={false}
+                    renderTextLayer={false}
                     className="shadow-2xl"
                   />
                 </Document>
