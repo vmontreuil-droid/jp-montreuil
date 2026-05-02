@@ -69,6 +69,7 @@ export default function CategoryGallery({ works, locale }: Props) {
           prevLabel={t.prev}
           nextLabel={t.next}
           closeLabel={t.close}
+          locale={locale}
         />
       )}
     </>

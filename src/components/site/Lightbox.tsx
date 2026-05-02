@@ -20,6 +20,7 @@ type Props = {
   prevLabel?: string
   nextLabel?: string
   closeLabel?: string
+  locale: 'fr' | 'nl'
 }
 
 export default function Lightbox({
@@ -29,6 +30,7 @@ export default function Lightbox({
   prevLabel = 'Précédent',
   nextLabel = 'Suivant',
   closeLabel = 'Fermer',
+  locale,
 }: Props) {
   const [index, setIndex] = useState(startIndex)
 
@@ -166,6 +168,7 @@ export default function Lightbox({
           <ShareButtons
             title={titleText || `Atelier Montreuil — ${index + 1} / ${works.length}`}
             compact
+            locale={locale}
           />
         </div>
       </div>

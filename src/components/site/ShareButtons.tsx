@@ -1,7 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Mail, Link as LinkIcon, Check, Share2 } from 'lucide-react'
+import type { Locale } from '@/i18n/config'
+import { localePath } from '@/lib/links'
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -28,9 +31,11 @@ type Props = {
   compact?: boolean
   /** Klasse op container */
   className?: string
+  /** Locale voor de contact-link op het envelope-icoon */
+  locale: Locale
 }
 
-export default function ShareButtons({ url, title, compact = false, className = '' }: Props) {
+export default function ShareButtons({ url, title, compact = false, className = '', locale }: Props) {
   const [copied, setCopied] = useState(false)
   const [shared, setShared] = useState(false)
 
@@ -39,7 +44,7 @@ export default function ShareButtons({ url, title, compact = false, className = 
 
   const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(targetUrl)}`
   const waUrl = `https://wa.me/?text=${encodeURIComponent(`${title} — ${targetUrl}`)}`
-  const mailUrl = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${title}\n\n${targetUrl}`)}`
+  const contactHref = localePath(locale, '/contact')
 
   async function copy() {
     try {
@@ -103,9 +108,13 @@ export default function ShareButtons({ url, title, compact = false, className = 
         >
           <WhatsAppIcon className="w-4 h-4" />
         </a>
-        <a href={mailUrl} aria-label="Email" className={baseBtn}>
+        <Link
+          href={contactHref}
+          aria-label={locale === 'fr' ? 'Contact' : 'Contact'}
+          className={baseBtn}
+        >
           <Mail className="w-4 h-4" />
-        </a>
+        </Link>
         <button
           type="button"
           onClick={copy}

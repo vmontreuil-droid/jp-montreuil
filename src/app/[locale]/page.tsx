@@ -86,7 +86,7 @@ export default async function HomePage({ params }: Props) {
           {t.home.intro}
         </p>
         <div className="flex justify-center">
-          <ShareButtons title="Atelier Montreuil — Jean-Pierre Montreuil" />
+          <ShareButtons title="Atelier Montreuil — Jean-Pierre Montreuil" locale={locale} />
         </div>
       </section>
     </>

@@ -137,7 +137,7 @@ export default async function CategoryDetailPage({ params }: Props) {
         />
 
         <div className="mt-16 pt-8 border-t border-(--color-frame) flex justify-center">
-          <ShareButtons title={`${label} — Atelier Montreuil`} />
+          <ShareButtons title={`${label} — Atelier Montreuil`} locale={locale as 'fr' | 'nl'} />
         </div>
       </div>
     </>
