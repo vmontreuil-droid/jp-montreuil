@@ -260,6 +260,14 @@ export async function inviteClientToPortal(input: {
   const origin = PUBLIC_BASE_URL.replace(/\/$/, '')
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent('/portail')}`
 
+  // Pre-create user (auto-confirmed) zodat de eerste klik niet door
+  // Supabase's "Confirm signup"-mail loopt — wij sturen onze eigen
+  // branded uitnodiging via Resend hieronder. Bestaande user → no-op.
+  await admin.auth.admin.createUser({
+    email,
+    email_confirm: true,
+  })
+
   // Genereer magic-link via Supabase Auth Admin API
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
     type: 'magiclink',

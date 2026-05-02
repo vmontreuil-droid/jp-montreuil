@@ -37,11 +37,17 @@ function FormInner({ t }: Props) {
         const { error } = await sb.auth.signInWithOtp({
           email: value,
           options: {
+            shouldCreateUser: false,
             emailRedirectTo: `${origin}/auth/callback?next=/portail`,
           },
         })
         if (error) {
-          setError(error.message)
+          // Supabase signaleert onbekende e-mails via "Signups not allowed for otp"
+          // (sinds shouldCreateUser:false). Toon dan onze nette tekst.
+          const isUnknown =
+            /signups? not allowed/i.test(error.message) ||
+            /user not found/i.test(error.message)
+          setError(isUnknown ? t.login.unknownEmail : error.message)
         } else {
           setSent(true)
         }
