@@ -84,7 +84,6 @@ export default async function AuthedAdminLayout({
     },
     { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2 },
     { href: '/admin/compose', label: 'Composer & Partager', icon: Send },
-    { href: '/admin/signature', label: 'Signature mail', icon: PenTool },
     {
       href: '/admin/ibook',
       label: 'Ibook',
@@ -93,6 +92,7 @@ export default async function AuthedAdminLayout({
       badgeStyle: 'subtle' as const,
     },
     { href: '/admin/analytics', label: 'Activité web', icon: Activity },
+    { href: '/admin/signature', label: 'Signature mail', icon: PenTool },
   ] as Array<{
     href: string
     label: string
