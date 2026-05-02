@@ -33,7 +33,7 @@ export async function extractPdfFirstPageAsJpeg(
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-  await page.render({ canvasContext: ctx, viewport }).promise
+  await page.render({ canvasContext: ctx, viewport, canvas }).promise
 
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.85)
