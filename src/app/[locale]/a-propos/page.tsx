@@ -1,12 +1,13 @@
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { BookOpen, Download } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { workImageUrl } from '@/lib/links'
 import { createClient } from '@/lib/supabase/server'
 import { getIbookConfig, ibookUrl } from '@/lib/ibook'
+import IbookViewer from '@/components/site/IbookViewer'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -155,23 +156,15 @@ export default async function AboutPage({ params }: Props) {
             </div>
 
             <div className="mt-6 flex flex-wrap justify-center gap-3 pt-6 border-t border-(--color-frame)">
-              <a
-                href={ibookUrl(ibook.pdfPath)}
-                target="_blank"
-                rel="noopener noreferrer"
+              <IbookViewer
+                pdfUrl={ibookUrl(ibook.pdfPath)}
+                title={ibookTitle || (locale === 'fr' ? 'Le livre' : 'Het boek')}
+                closeLabel={locale === 'fr' ? 'Fermer' : 'Sluiten'}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors text-sm uppercase tracking-[0.2em]"
               >
                 <BookOpen className="w-4 h-4" />
                 {locale === 'fr' ? 'Visualiser' : 'Bekijken'}
-              </a>
-              <a
-                href={ibookUrl(ibook.pdfPath)}
-                download
-                className="inline-flex items-center gap-2 px-6 py-3 border border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-bronze) transition-colors text-sm uppercase tracking-[0.2em]"
-              >
-                <Download className="w-4 h-4" />
-                {locale === 'fr' ? 'Télécharger' : 'Downloaden'}
-              </a>
+              </IbookViewer>
             </div>
           </div>
         </section>

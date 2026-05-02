@@ -5,6 +5,7 @@ import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { whatsappHref } from '@/lib/links'
 import { getIbookConfig, ibookUrl } from '@/lib/ibook'
+import IbookViewer from '@/components/site/IbookViewer'
 import ContactForm from './ContactForm'
 
 function FacebookIcon({ className }: { className?: string }) {
@@ -93,14 +94,14 @@ export default async function ContactPage({ params }: Props) {
           {ibookHref && (
             <li className="flex items-start gap-3">
               <BookOpen className="w-5 h-5 text-(--color-bronze) shrink-0 mt-0.5" />
-              <a
-                href={ibookHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-(--color-bronze)"
+              <IbookViewer
+                pdfUrl={ibookHref}
+                title={locale === 'fr' ? 'Le livre' : 'Het boek'}
+                closeLabel={locale === 'fr' ? 'Fermer' : 'Sluiten'}
+                className="text-left hover:text-(--color-bronze)"
               >
                 {locale === 'fr' ? 'Le livre (PDF)' : 'Het boek (PDF)'}
-              </a>
+              </IbookViewer>
             </li>
           )}
         </ul>
