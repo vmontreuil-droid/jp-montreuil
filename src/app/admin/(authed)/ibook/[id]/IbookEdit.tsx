@@ -14,6 +14,8 @@ import {
   Trash2,
   Eye,
   EyeOff,
+  QrCode,
+  Download,
 } from 'lucide-react'
 import TranslateButton from '@/components/admin/TranslateButton'
 import IbookViewer from '@/components/site/IbookViewer'
@@ -37,6 +39,7 @@ type Props = {
     is_active: boolean
     coverUrl: string
     pdfUrl: string
+    qrDataUrl: string
   }
 }
 
@@ -119,9 +122,6 @@ export default function IbookEdit({ ibook }: Props) {
         <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-4">
           Fichiers
         </h2>
-        <p className="text-xs text-(--color-stone) mb-4">
-          Le code QR est généré automatiquement à partir du PDF — pas besoin de l&apos;uploader.
-        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SlotCard
             ibookId={ibook.id}
@@ -144,6 +144,49 @@ export default function IbookEdit({ ibook }: Props) {
             onChanged={() => router.refresh()}
           />
         </div>
+      </section>
+
+      {/* QR-code (auto-gegenereerd) */}
+      <section className="mb-10">
+        <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-4 inline-flex items-center gap-2">
+          <QrCode className="w-3.5 h-3.5" />
+          Code QR
+        </h2>
+        {ibook.qrDataUrl ? (
+          <div className="bg-(--color-paper) border border-(--color-frame) p-5 flex flex-wrap items-center gap-6">
+            <div className="bg-white p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={ibook.qrDataUrl}
+                alt="QR-code"
+                width={160}
+                height={160}
+                className="block"
+              />
+            </div>
+            <div className="flex-1 min-w-[220px] space-y-3">
+              <p className="text-sm text-(--color-charcoal) leading-relaxed">
+                Généré automatiquement à partir du PDF. Scanne le code avec un téléphone
+                pour ouvrir directement le livre.
+              </p>
+              <p className="text-[11px] text-(--color-stone) break-all font-mono">
+                {ibook.pdfUrl}
+              </p>
+              <a
+                href={ibook.qrDataUrl}
+                download={`qr-ibook-${ibook.id}.png`}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-xs uppercase tracking-[0.15em]"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Télécharger le QR
+              </a>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-(--color-stone) bg-(--color-paper) border border-(--color-frame) p-5">
+            Téléverse d&apos;abord un PDF pour générer le code QR.
+          </p>
+        )}
       </section>
 
       {/* Tekst */}

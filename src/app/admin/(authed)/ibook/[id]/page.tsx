@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { getIbookById, ibookUrl } from '@/lib/ibook'
+import { generateQrDataUrl } from '@/lib/qr'
 import IbookEdit from './IbookEdit'
 
 export const dynamic = 'force-dynamic'
@@ -14,6 +15,9 @@ export default async function IbookDetailPage({ params }: Props) {
   const { id } = await params
   const ibook = await getIbookById(id)
   if (!ibook) notFound()
+
+  const pdfUrl = ibook.pdf_path ? ibookUrl(ibook.pdf_path) : ''
+  const qrDataUrl = pdfUrl ? await generateQrDataUrl(pdfUrl, 320) : ''
 
   return (
     <div className="p-8 md:p-12 max-w-4xl">
@@ -34,7 +38,8 @@ export default async function IbookDetailPage({ params }: Props) {
           description_nl: ibook.description_nl,
           is_active: ibook.is_active,
           coverUrl: ibook.cover_path ? ibookUrl(ibook.cover_path) : '',
-          pdfUrl: ibook.pdf_path ? ibookUrl(ibook.pdf_path) : '',
+          pdfUrl,
+          qrDataUrl,
         }}
       />
     </div>
