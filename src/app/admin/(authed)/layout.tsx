@@ -82,7 +82,6 @@ export default async function AuthedAdminLayout({
       badge: albumsCount ?? null,
       badgeStyle: 'subtle' as const,
     },
-    { href: '/admin/analytics', label: 'Activité web', icon: Activity },
     { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2 },
     { href: '/admin/compose', label: 'Composer & Partager', icon: Send },
     {
@@ -92,6 +91,7 @@ export default async function AuthedAdminLayout({
       badge: ibooksCount ?? null,
       badgeStyle: 'subtle' as const,
     },
+    { href: '/admin/analytics', label: 'Activité web', icon: Activity },
   ] as Array<{
     href: string
     label: string
