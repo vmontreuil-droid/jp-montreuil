@@ -51,7 +51,7 @@ export default function HeroSlideshow({
   const activeSlide = slides[active]
 
   return (
-    <section className="relative h-[100vh] min-h-[560px] -mt-[1px] overflow-hidden bg-(--color-canvas)">
+    <section className="relative h-[85vh] min-h-[520px] -mt-[1px] overflow-hidden bg-(--color-canvas)">
       {/* Crossfade-stack van foto's */}
       <div className="absolute inset-0">
         {slides.map((s, i) => (
