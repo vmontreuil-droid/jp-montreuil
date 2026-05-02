@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 
@@ -22,6 +23,12 @@ export default function MobileMenu({
   themeToggle,
 }: Props) {
   const [open, setOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Portal mount-detectie (alleen client-side)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Body scroll-lock + ESC
   useEffect(() => {
@@ -38,33 +45,24 @@ export default function MobileMenu({
     }
   }, [open])
 
-  return (
+  const drawer = (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Menu"
-        className="md:hidden inline-flex items-center justify-center w-9 h-9 text-(--color-charcoal) hover:text-(--color-ink) transition-colors"
-      >
-        <Menu className="w-6 h-6" />
-      </button>
-
       {/* Backdrop */}
       <div
-        className={`md:hidden fixed inset-0 z-[59] bg-black/70 backdrop-blur-sm transition-opacity duration-200 ${
+        className={`fixed inset-0 z-[9998] bg-black/70 backdrop-blur-sm transition-opacity duration-200 ${
           open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setOpen(false)}
         aria-hidden={!open}
       />
 
-      {/* Drawer panel — slide-in van rechts, fixed eigen container */}
+      {/* Drawer panel — slide-in van rechts */}
       <aside
         role="dialog"
         aria-modal="true"
         aria-label="Menu"
         aria-hidden={!open}
-        className={`md:hidden fixed top-0 right-0 bottom-0 z-[60] w-[88%] max-w-sm flex flex-col border-l border-(--color-frame) transition-transform duration-300 ease-out ${
+        className={`fixed top-0 right-0 bottom-0 z-[9999] w-[88%] max-w-sm flex flex-col border-l border-(--color-frame) transition-transform duration-300 ease-out ${
           open ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'
         }`}
         style={{ backgroundColor: 'var(--color-canvas)' }}
@@ -111,6 +109,25 @@ export default function MobileMenu({
           </a>
         </div>
       </aside>
+    </>
+  )
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Menu"
+        className="md:hidden inline-flex items-center justify-center w-9 h-9 text-(--color-charcoal) hover:text-(--color-ink) transition-colors"
+      >
+        <Menu className="w-6 h-6" />
+      </button>
+      {/* Portal: rendert drawer direct in document.body — ontwijkt
+          stacking-context van Header (backdrop-filter creëert nieuwe
+          containing block voor fixed children, wat positionering breekt). */}
+      {mounted && typeof document !== 'undefined'
+        ? createPortal(<div className="md:hidden">{drawer}</div>, document.body)
+        : null}
     </>
   )
 }
