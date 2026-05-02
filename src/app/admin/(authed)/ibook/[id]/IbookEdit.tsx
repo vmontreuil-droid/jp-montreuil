@@ -138,8 +138,11 @@ export default function IbookEdit({ ibook }: Props) {
             icon={<FileText className="w-4 h-4" />}
             accept="application/pdf"
             onChanged={() => router.refresh()}
-            onUploadSuccess={async (pdfFile) => {
+            onUploadSuccess={async (pdfFile, setStage) => {
+              setStage('Génération couverture…')
               const coverFile = await extractPdfFirstPageAsJpeg(pdfFile, 'cover.jpg')
+
+              setStage('Téléversement couverture…')
               const sb = createBrowserSupabase()
               const storagePath = `${ibook.id}/cover-${Date.now()}.jpg`
               const { error: upErr } = await sb.storage
@@ -150,6 +153,8 @@ export default function IbookEdit({ ibook }: Props) {
                   cacheControl: '31536000',
                 })
               if (upErr) throw new Error(`Upload cover: ${upErr.message}`)
+
+              setStage('Enregistrement couverture…')
               const r = await setIbookFile({
                 ibook_id: ibook.id,
                 slot: 'cover',
@@ -306,8 +311,9 @@ type SlotCardProps = {
   icon: React.ReactNode
   accept: string
   onChanged: () => void
-  /** Optionele post-upload hook (bv. cover-extractie na PDF-upload) */
-  onUploadSuccess?: (file: File) => void | Promise<void>
+  /** Optionele post-upload hook. setStage update de UI-stage-label
+   *  zodat de gebruiker ziet waar de flow zit (cover-extractie etc.) */
+  onUploadSuccess?: (file: File, setStage: (label: string) => void) => void | Promise<void>
 }
 
 function SlotCard({
@@ -322,6 +328,7 @@ function SlotCard({
   onUploadSuccess,
 }: SlotCardProps) {
   const [pending, startTransition] = useTransition()
+  const [stage, setStage] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -355,6 +362,7 @@ function SlotCard({
     startTransition(() => {
       void (async () => {
         try {
+          setStage(isPdf ? 'Téléversement PDF…' : 'Téléversement…')
           // Direct browser → Supabase Storage upload (bypass server action
           // body-limits van Vercel/Next).
           const sb = createBrowserSupabase()
@@ -364,33 +372,36 @@ function SlotCard({
             cacheControl: '31536000',
           })
           if (upErr) {
+            setStage('')
             setError(`Upload échoué: ${upErr.message}`)
             return
           }
 
-          // DB-row updaten via server action (alleen path, geen file)
+          setStage('Enregistrement…')
           const r = await setIbookFile({
             ibook_id: ibookId,
             slot,
             storage_path: storagePath,
           })
           if (!r.ok) {
-            // Storage-bestand opruimen, want DB-record klopt niet
             await sb.storage.from('ibook').remove([storagePath])
+            setStage('')
             setError(`DB-update faalde: ${r.error}`)
             return
           }
 
           if (onUploadSuccess) {
             try {
-              await onUploadSuccess(file)
+              await onUploadSuccess(file, setStage)
             } catch (err) {
               console.error('[ibook] post-upload hook failed:', err)
               setError(`Cover-extractie faalde: ${(err as Error).message}`)
             }
           }
+          setStage('Terminé ✓')
           onChanged()
         } catch (err) {
+          setStage('')
           setError(`Erreur: ${(err as Error).message}`)
         }
       })()
@@ -436,7 +447,12 @@ function SlotCard({
 
       <div className="relative aspect-square bg-(--color-canvas) border border-(--color-frame) overflow-hidden flex items-center justify-center">
         {pending ? (
-          <Loader2 className="w-6 h-6 animate-spin text-(--color-bronze)" />
+          <div className="flex flex-col items-center gap-3 text-center px-4">
+            <Loader2 className="w-7 h-7 animate-spin text-(--color-bronze)" />
+            {stage && (
+              <p className="text-xs text-(--color-charcoal) max-w-[150px]">{stage}</p>
+            )}
+          </div>
         ) : url ? (
           slot === 'pdf' ? (
             <IbookViewer
