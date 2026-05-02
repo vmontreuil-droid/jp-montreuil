@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, MessageCircle } from 'lucide-react'
+import { ArrowRight, MessageCircle, ChevronDown } from 'lucide-react'
 
 export type HeroSlide = {
   src: string
@@ -132,7 +132,7 @@ export default function HeroSlideshow({
       </Link>
 
       {/* Progress dots, midden onderaan */}
-      <div className="absolute left-0 right-0 bottom-6 md:bottom-10 flex justify-center gap-2 z-10 pointer-events-none">
+      <div className="absolute left-0 right-0 bottom-16 md:bottom-20 flex justify-center gap-2 z-10 pointer-events-none">
         {slides.map((_, i) => (
           <span
             key={i}
@@ -143,6 +143,19 @@ export default function HeroSlideshow({
           />
         ))}
       </div>
+
+      {/* Scroll-down indicator — chevron met bounce-animatie */}
+      <button
+        type="button"
+        onClick={() => {
+          window.scrollTo({ top: window.innerHeight * 0.85, behavior: 'smooth' })
+        }}
+        aria-label="Scroll naar beneden"
+        className="absolute left-1/2 -translate-x-1/2 bottom-4 md:bottom-6 z-10 inline-flex flex-col items-center gap-1 text-white/80 hover:text-white transition-colors"
+      >
+        <span className="text-[10px] uppercase tracking-[0.3em]">scroll</span>
+        <ChevronDown className="w-5 h-5 animate-bounce" strokeWidth={1.5} />
+      </button>
     </section>
   )
 }
