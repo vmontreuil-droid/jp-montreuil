@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import TranslateButton from '@/components/admin/TranslateButton'
 import IbookViewer from '@/components/site/IbookViewer'
+import { extractPdfFirstPageAsJpeg } from '@/lib/pdf-cover'
 import {
   uploadIbookFile,
   clearIbookFile,
@@ -122,17 +123,11 @@ export default function IbookEdit({ ibook }: Props) {
         <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-4">
           Fichiers
         </h2>
+        <p className="text-xs text-(--color-stone) mb-4">
+          Téléverse uniquement le PDF — la couverture (page 1) et le code QR sont
+          générés automatiquement.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <SlotCard
-            ibookId={ibook.id}
-            slot="cover"
-            label="Photo de couverture"
-            help="JPG/PNG/WEBP, max 10MB"
-            url={ibook.coverUrl}
-            icon={<ImageIcon className="w-4 h-4" />}
-            accept="image/jpeg,image/png,image/webp"
-            onChanged={() => router.refresh()}
-          />
           <SlotCard
             ibookId={ibook.id}
             slot="pdf"
@@ -142,7 +137,17 @@ export default function IbookEdit({ ibook }: Props) {
             icon={<FileText className="w-4 h-4" />}
             accept="application/pdf"
             onChanged={() => router.refresh()}
+            onUploadSuccess={async (pdfFile) => {
+              const coverFile = await extractPdfFirstPageAsJpeg(pdfFile, 'cover.jpg')
+              if (!coverFile) return
+              const fd = new FormData()
+              fd.set('ibook_id', ibook.id)
+              fd.set('slot', 'cover')
+              fd.set('file', coverFile)
+              await uploadIbookFile(fd)
+            }}
           />
+          <CoverCard url={ibook.coverUrl} hasPdf={!!ibook.pdfUrl} />
           <QrCard ibookId={ibook.id} qrDataUrl={ibook.qrDataUrl} />
         </div>
       </section>
@@ -287,6 +292,8 @@ type SlotCardProps = {
   icon: React.ReactNode
   accept: string
   onChanged: () => void
+  /** Optionele post-upload hook (bv. cover-extractie na PDF-upload) */
+  onUploadSuccess?: (file: File) => void | Promise<void>
 }
 
 function SlotCard({
@@ -298,6 +305,7 @@ function SlotCard({
   icon,
   accept,
   onChanged,
+  onUploadSuccess,
 }: SlotCardProps) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -314,6 +322,13 @@ function SlotCard({
       void (async () => {
         const r = await uploadIbookFile(fd)
         if (r.ok) {
+          if (onUploadSuccess) {
+            try {
+              await onUploadSuccess(file)
+            } catch {
+              // hook-fout mag de hoofd-upload niet breken
+            }
+          }
           onChanged()
         } else {
           const map: Record<string, string> = {
@@ -438,6 +453,50 @@ function SlotCard({
           {error}
         </p>
       )}
+    </div>
+  )
+}
+
+// ============================================================================
+// CoverCard — read-only display van auto-gegenereerde cover (page 1 PDF)
+// ============================================================================
+
+function CoverCard({ url, hasPdf }: { url: string; hasPdf: boolean }) {
+  return (
+    <div className="bg-(--color-paper) border border-(--color-frame) p-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs uppercase tracking-[0.15em] text-(--color-charcoal) inline-flex items-center gap-2">
+          <ImageIcon className="w-4 h-4" />
+          Couverture
+        </p>
+      </div>
+
+      <div className="relative aspect-square bg-(--color-canvas) border border-(--color-frame) overflow-hidden flex items-center justify-center">
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={url}
+            alt="Cover"
+            className="absolute inset-0 w-full h-full object-contain p-2"
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-2 text-(--color-stone) text-xs px-4 text-center">
+            <ImageIcon className="w-8 h-8 opacity-40" />
+            <span>
+              {hasPdf
+                ? 'Réuploade le PDF pour générer la couverture'
+                : 'Téléverse d\'abord un PDF'}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col items-center gap-1 border border-dashed border-(--color-frame) p-3 text-center text-xs text-(--color-stone)">
+        <span className="text-[10px] uppercase tracking-[0.15em] text-(--color-bronze)">
+          Auto · page 1
+        </span>
+        <span className="text-[10px] opacity-70">Extrait du PDF lors du téléversement</span>
+      </div>
     </div>
   )
 }
