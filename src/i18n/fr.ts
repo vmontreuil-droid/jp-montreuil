@@ -67,6 +67,7 @@ const dict = {
       hint: "L'adresse e-mail doit être celle utilisée par Jean-Pierre lors de la création de votre album.",
       invalidEmail: 'Adresse e-mail invalide',
       unknownEmail: "Aucun compte n'est associé à cette adresse. Vérifiez l'orthographe ou contactez Jean-Pierre.",
+      sendFailed: "Impossible d'envoyer le lien pour le moment. Réessayez dans quelques instants.",
       expired: 'Le lien a expiré. Demandez-en un nouveau ci-dessous.',
       sentTitle: 'Vérifiez votre e-mail',
       sentBody: 'Un lien de connexion a été envoyé à',

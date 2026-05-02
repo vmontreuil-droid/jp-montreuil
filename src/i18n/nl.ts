@@ -69,6 +69,7 @@ const dict: Dictionary = {
       hint: 'Het e-mailadres moet hetzelfde zijn dat Jean-Pierre gebruikt heeft bij het aanmaken van uw album.',
       invalidEmail: 'Ongeldig e-mailadres',
       unknownEmail: 'Er bestaat geen account met dit e-mailadres. Controleer de spelling of neem contact op met Jean-Pierre.',
+      sendFailed: 'De link kan momenteel niet verstuurd worden. Probeer het over enkele ogenblikken opnieuw.',
       expired: 'De link is verlopen. Vraag hieronder een nieuwe aan.',
       sentTitle: 'Controleer uw e-mail',
       sentBody: 'Een login-link is verstuurd naar',

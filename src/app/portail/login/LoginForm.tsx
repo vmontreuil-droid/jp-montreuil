@@ -3,8 +3,8 @@
 import { useState, useTransition, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Mail, Send, Check, AlertCircle, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import type { Dictionary } from '@/i18n/dictionaries'
+import { requestPortalMagicLink } from './actions'
 
 type Props = {
   t: Dictionary['portail']
@@ -31,26 +31,14 @@ function FormInner({ t }: Props) {
     }
     startTransition(() => {
       void (async () => {
-        const sb = createClient()
-        const origin =
-          typeof window !== 'undefined' ? window.location.origin : 'https://montreuil.be'
-        const { error } = await sb.auth.signInWithOtp({
-          email: value,
-          options: {
-            shouldCreateUser: false,
-            emailRedirectTo: `${origin}/auth/callback?next=/portail`,
-          },
-        })
-        if (error) {
-          // Supabase signaleert onbekende e-mails via "Signups not allowed for otp"
-          // (sinds shouldCreateUser:false). Toon dan onze nette tekst.
-          const isUnknown =
-            /signups? not allowed/i.test(error.message) ||
-            /user not found/i.test(error.message)
-          setError(isUnknown ? t.login.unknownEmail : error.message)
-        } else {
+        const r = await requestPortalMagicLink({ email: value })
+        if (r.ok) {
           setSent(true)
+          return
         }
+        if (r.error === 'unknown_email') setError(t.login.unknownEmail)
+        else if (r.error === 'invalid_email') setError(t.login.invalidEmail)
+        else setError(t.login.sendFailed)
       })()
     })
   }
