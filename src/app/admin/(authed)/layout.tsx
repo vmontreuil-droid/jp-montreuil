@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LogOut, LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera, BookOpen, Activity } from 'lucide-react'
+import { LogOut, LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera, BookOpen, Activity, PenTool } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './SignOutButton'
 import ThemeToggle from '@/components/site/ThemeToggle'
@@ -84,6 +84,7 @@ export default async function AuthedAdminLayout({
     },
     { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2 },
     { href: '/admin/compose', label: 'Composer & Partager', icon: Send },
+    { href: '/admin/signature', label: 'Signature mail', icon: PenTool },
     {
       href: '/admin/ibook',
       label: 'Ibook',
