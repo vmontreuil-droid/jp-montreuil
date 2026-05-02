@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { ArrowRight, MessageCircle } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { localePath, workImageUrl } from '@/lib/links'
@@ -68,6 +70,23 @@ export default async function HomePage({ params }: Props) {
         </p>
         <div className="flex justify-center">
           <ShareButtons title="Atelier Montreuil — Jean-Pierre Montreuil" locale={locale} />
+        </div>
+
+        <div className="mt-10 flex flex-wrap gap-3 justify-center">
+          <Link
+            href={localePath(locale as Locale, '/galerie')}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors text-sm uppercase tracking-[0.2em]"
+          >
+            {t.nav.collection}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href={localePath(locale as Locale, '/contact')}
+            className="inline-flex items-center gap-2 px-6 py-3 border border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-bronze) transition-colors text-sm uppercase tracking-[0.2em]"
+          >
+            <MessageCircle className="w-4 h-4" />
+            {t.nav.contact}
+          </Link>
         </div>
       </section>
     </>
