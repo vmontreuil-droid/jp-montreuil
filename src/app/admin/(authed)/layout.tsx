@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LogOut, LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send } from 'lucide-react'
+import { LogOut, LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './SignOutButton'
 import ThemeToggle from '@/components/site/ThemeToggle'
@@ -38,6 +38,7 @@ export default async function AuthedAdminLayout({
     { count: categoriesCount },
     { count: worksCount },
     { count: unreadCount },
+    { count: albumsCount },
   ] = await Promise.all([
     supabase.from('categories').select('*', { count: 'exact', head: true }),
     supabase.from('works').select('*', { count: 'exact', head: true }),
@@ -46,6 +47,7 @@ export default async function AuthedAdminLayout({
       .select('*', { count: 'exact', head: true })
       .is('read_at', null)
       .is('deleted_at', null),
+    supabase.from('event_albums').select('*', { count: 'exact', head: true }),
   ])
 
   const navItems = [
@@ -70,6 +72,13 @@ export default async function AuthedAdminLayout({
       icon: Inbox,
       badge: unreadCount ?? null,
       badgeStyle: 'accent' as const,
+    },
+    {
+      href: '/admin/events',
+      label: 'Albums clients',
+      icon: Camera,
+      badge: albumsCount ?? null,
+      badgeStyle: 'subtle' as const,
     },
     { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2 },
     { href: '/admin/compose', label: 'Composer & Partager', icon: Send },
