@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { Home, LayoutGrid, User, Share2, Mail } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
 import { getAltLocaleHref, getRequestPathname } from '@/i18n/server'
@@ -19,14 +20,21 @@ export default async function Header({ locale, t }: Props) {
 
   // Icon-naam (string) wordt in MobileMenu naar lucide-component gemapt;
   // we geven geen React-components door over server→client grens (faalt
-  // serialization van forwardRef typeof).
+  // serialization van forwardRef typeof). Desktop-nav rendert hier
+  // server-side met directe component-references — wel veilig.
   const navItems = [
-    { href: localePath(locale, '/'), label: t.nav.home, iconName: 'home' as const },
-    { href: localePath(locale, '/galerie'), label: t.nav.collection, iconName: 'collection' as const },
-    { href: localePath(locale, '/a-propos'), label: t.nav.about, iconName: 'about' as const },
-    { href: localePath(locale, '/social'), label: t.nav.social, iconName: 'social' as const },
-    { href: localePath(locale, '/contact'), label: t.nav.contact, iconName: 'contact' as const },
+    { href: localePath(locale, '/'), label: t.nav.home, iconName: 'home' as const, Icon: Home },
+    { href: localePath(locale, '/galerie'), label: t.nav.collection, iconName: 'collection' as const, Icon: LayoutGrid },
+    { href: localePath(locale, '/a-propos'), label: t.nav.about, iconName: 'about' as const, Icon: User },
+    { href: localePath(locale, '/social'), label: t.nav.social, iconName: 'social' as const, Icon: Share2 },
+    { href: localePath(locale, '/contact'), label: t.nav.contact, iconName: 'contact' as const, Icon: Mail },
   ]
+
+  // Active-detectie: home is exact match, andere items matchen op prefix
+  const isActive = (href: string): boolean => {
+    if (href === '/' || href === '/nl') return pathname === href
+    return pathname === href || pathname.startsWith(href + '/')
+  }
 
   return (
     <header className="sticky top-0 z-40 bg-(--color-canvas)/85 backdrop-blur-sm border-b border-(--color-frame)">
@@ -42,16 +50,36 @@ export default async function Header({ locale, t }: Props) {
           />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm tracking-wide uppercase">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-(--color-charcoal) hover:text-(--color-bronze) transition-colors"
-            >
-              {item.label}
-            </Link>
-          ))}
+        <nav className="hidden md:flex items-center gap-1 text-xs tracking-[0.15em] uppercase">
+          {navItems.map((item) => {
+            const Icon = item.Icon
+            const active = isActive(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                className={`group relative inline-flex items-center gap-1.5 px-3 py-2 transition-colors ${
+                  active ? 'text-(--color-ink)' : 'text-(--color-charcoal) hover:text-(--color-bronze)'
+                }`}
+              >
+                <Icon
+                  className={`w-4 h-4 transition-colors ${
+                    active ? 'text-(--color-bronze)' : 'text-(--color-stone) group-hover:text-(--color-bronze)'
+                  }`}
+                  strokeWidth={1.5}
+                />
+                <span>{item.label}</span>
+                {/* Onderlijn voor actieve pagina */}
+                <span
+                  aria-hidden="true"
+                  className={`absolute left-3 right-3 -bottom-0.5 h-px bg-(--color-bronze) origin-left transition-transform ${
+                    active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+                  }`}
+                />
+              </Link>
+            )
+          })}
         </nav>
 
         <div className="flex items-center gap-2">
