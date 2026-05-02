@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation'
 import { LogOut, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-export default function SignOutButton() {
+type Props = {
+  label: string
+}
+
+export default function SignOutButton({ label }: Props) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
 
@@ -32,7 +36,7 @@ export default function SignOutButton() {
       ) : (
         <LogOut className="w-3.5 h-3.5" />
       )}
-      Déconnexion
+      {label}
     </button>
   )
 }

@@ -36,6 +36,7 @@ export type AlbumDetailRow = {
   title: string
   client_name: string | null
   client_email: string | null
+  client_locale: 'fr' | 'nl'
   event_date: string | null
   is_active: boolean
   created_at: string
@@ -583,17 +584,41 @@ export default function AlbumDetail({ album, photos }: Props) {
               />
             </div>
           </div>
-          <div>
-            <label htmlFor="event_date" className="block text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-1">
-              Date
-            </label>
-            <input
-              id="event_date"
-              name="event_date"
-              type="date"
-              defaultValue={album.event_date ?? ''}
-              className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) text-(--color-ink) text-sm focus:border-(--color-bronze) focus:outline-none"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="event_date" className="block text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-1">
+                Date
+              </label>
+              <input
+                id="event_date"
+                name="event_date"
+                type="date"
+                defaultValue={album.event_date ?? ''}
+                className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) text-(--color-ink) text-sm focus:border-(--color-bronze) focus:outline-none"
+              />
+            </div>
+            <div>
+              <span className="block text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-1">
+                Langue du client
+              </span>
+              <div className="flex gap-2">
+                {(['fr', 'nl'] as const).map((loc) => (
+                  <label
+                    key={loc}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 border border-(--color-frame) bg-(--color-paper) text-xs uppercase tracking-[0.15em] text-(--color-charcoal) cursor-pointer has-[:checked]:border-(--color-bronze) has-[:checked]:text-(--color-ink)"
+                  >
+                    <input
+                      type="radio"
+                      name="client_locale"
+                      value={loc}
+                      defaultChecked={album.client_locale === loc}
+                      className="sr-only"
+                    />
+                    {loc === 'fr' ? 'Français' : 'Nederlands'}
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
 
           {saveErr && (

@@ -55,6 +55,41 @@ const dict = {
     description:
       "L'intermédiaire entre vous et la toile. Peintures, portraits, bronzes — Jean-Pierre Montreuil.",
   },
+
+  portail: {
+    espaceClient: 'Espace client',
+    signOut: 'Déconnexion',
+    login: {
+      intro: 'Recevez un lien de connexion par e-mail. Aucun mot de passe à retenir.',
+      emailLabel: 'E-mail',
+      emailPlaceholder: 'vous@example.com',
+      submit: 'Envoyer le lien',
+      hint: "L'adresse e-mail doit être celle utilisée par Jean-Pierre lors de la création de votre album.",
+      invalidEmail: 'Adresse e-mail invalide',
+      expired: 'Le lien a expiré. Demandez-en un nouveau ci-dessous.',
+      sentTitle: 'Vérifiez votre e-mail',
+      sentBody: 'Un lien de connexion a été envoyé à',
+      sentExpiry: "Cliquez sur le lien dans l'e-mail pour accéder à vos photos. Le lien expire après 1 heure.",
+      retryQuestion: 'Pas reçu ? Vérifiez vos spams, ou',
+      retryAction: 'essayez à nouveau',
+    },
+    dashboard: {
+      eyebrow: 'Atelier Montreuil',
+      welcome: 'Bienvenue',
+      lead: "Vos albums photo en un coup d'œil.",
+      empty: 'Aucun album partagé avec cet e-mail pour le moment.',
+      emptyHint: "Si vous attendiez un album, contactez Jean-Pierre — il vérifiera l'adresse associée à votre compte.",
+      photoSingular: 'photo',
+      photoPlural: 'photos',
+      seeAlbum: "Voir l'album",
+    },
+    album: {
+      backToAlbums: 'Mes albums',
+      forbiddenTitle: 'Accès non autorisé',
+      forbiddenBody: "Cet album n'est pas associé à votre adresse e-mail. Si vous pensez qu'il s'agit d'une erreur, contactez Jean-Pierre.",
+      backFull: 'Retour à mes albums',
+    },
+  },
 }
 
 export type Dictionary = typeof dict

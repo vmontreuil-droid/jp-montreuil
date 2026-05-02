@@ -73,6 +73,28 @@ export default function NewAlbumForm() {
           className="w-full px-3 py-2 bg-(--color-canvas) border border-(--color-frame) text-(--color-ink) text-sm focus:border-(--color-bronze) focus:outline-none"
         />
       </div>
+      <div className="md:col-span-2">
+        <span className="block text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-1">
+          Langue du client
+        </span>
+        <div className="flex gap-2 max-w-md">
+          {(['fr', 'nl'] as const).map((loc, i) => (
+            <label
+              key={loc}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 border border-(--color-frame) bg-(--color-canvas) text-xs uppercase tracking-[0.15em] text-(--color-charcoal) cursor-pointer has-[:checked]:border-(--color-bronze) has-[:checked]:text-(--color-ink)"
+            >
+              <input
+                type="radio"
+                name="client_locale"
+                value={loc}
+                defaultChecked={i === 0}
+                className="sr-only"
+              />
+              {loc === 'fr' ? 'Français' : 'Nederlands'}
+            </label>
+          ))}
+        </div>
+      </div>
 
       {error && (
         <p className="md:col-span-2 inline-flex items-center gap-2 text-xs text-red-300">

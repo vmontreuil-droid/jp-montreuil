@@ -57,6 +57,41 @@ const dict: Dictionary = {
     description:
       'De tussenpersoon tussen u en het doek. Schilderijen, portretten, bronzen — Jean-Pierre Montreuil.',
   },
+
+  portail: {
+    espaceClient: 'Klantenportaal',
+    signOut: 'Afmelden',
+    login: {
+      intro: 'Ontvang een login-link per e-mail. Geen wachtwoord te onthouden.',
+      emailLabel: 'E-mail',
+      emailPlaceholder: 'u@voorbeeld.com',
+      submit: 'Stuur de link',
+      hint: 'Het e-mailadres moet hetzelfde zijn dat Jean-Pierre gebruikt heeft bij het aanmaken van uw album.',
+      invalidEmail: 'Ongeldig e-mailadres',
+      expired: 'De link is verlopen. Vraag hieronder een nieuwe aan.',
+      sentTitle: 'Controleer uw e-mail',
+      sentBody: 'Een login-link is verstuurd naar',
+      sentExpiry: "Klik op de link in de e-mail om uw foto's te bekijken. De link vervalt na 1 uur.",
+      retryQuestion: 'Niets ontvangen? Controleer uw spam, of',
+      retryAction: 'probeer opnieuw',
+    },
+    dashboard: {
+      eyebrow: 'Atelier Montreuil',
+      welcome: 'Welkom',
+      lead: "Uw fotoalbums in één oogopslag.",
+      empty: 'Nog geen album gedeeld met dit e-mailadres.',
+      emptyHint: 'Verwachtte u een album? Neem contact op met Jean-Pierre — hij controleert het e-mailadres dat met uw account verbonden is.',
+      photoSingular: 'foto',
+      photoPlural: "foto's",
+      seeAlbum: 'Bekijk het album',
+    },
+    album: {
+      backToAlbums: 'Mijn albums',
+      forbiddenTitle: 'Geen toegang',
+      forbiddenBody: 'Dit album is niet gekoppeld aan uw e-mailadres. Denkt u dat dit een fout is, neem dan contact op met Jean-Pierre.',
+      backFull: 'Terug naar mijn albums',
+    },
+  },
 }
 
 export default dict

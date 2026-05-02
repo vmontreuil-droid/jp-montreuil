@@ -3,7 +3,7 @@ import SignOutButton from './SignOutButton'
 import Header from '@/components/site/Header'
 import Footer from '@/components/site/Footer'
 import { getDictionary } from '@/i18n/dictionaries'
-import { defaultLocale } from '@/i18n/config'
+import { getPortailLocale } from './locale'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,11 +17,12 @@ export default async function PortailLayout({
     data: { user },
   } = await supabase.auth.getUser()
 
-  const t = getDictionary(defaultLocale)
+  const locale = await getPortailLocale()
+  const t = getDictionary(locale)
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header locale={defaultLocale} t={t} />
+      <Header locale={locale} t={t} />
 
       {user && (
         <div className="border-b border-(--color-frame) bg-(--color-paper)/60">
@@ -29,14 +30,14 @@ export default async function PortailLayout({
             <span className="text-(--color-stone) truncate max-w-[240px]">
               {user.email}
             </span>
-            <SignOutButton />
+            <SignOutButton label={t.portail.signOut} />
           </div>
         </div>
       )}
 
       <main className="flex-1">{children}</main>
 
-      <Footer locale={defaultLocale} t={t} />
+      <Footer locale={locale} t={t} />
     </div>
   )
 }

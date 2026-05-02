@@ -20,6 +20,8 @@ export async function createAlbum(formData: FormData) {
   const client_email = String(formData.get('client_email') ?? '').trim() || null
   const dateRaw = String(formData.get('event_date') ?? '').trim()
   const event_date = dateRaw || null
+  const localeRaw = String(formData.get('client_locale') ?? 'fr')
+  const client_locale: 'fr' | 'nl' = localeRaw === 'nl' ? 'nl' : 'fr'
 
   // Slug genereren — kleine kans op botsing, retry tot 3x
   let slug = ''
@@ -39,7 +41,7 @@ export async function createAlbum(formData: FormData) {
 
   const { data, error } = await supabase
     .from('event_albums')
-    .insert({ title, client_name, client_email, event_date, slug })
+    .insert({ title, client_name, client_email, client_locale, event_date, slug })
     .select('id')
     .single()
   if (error || !data) return { error: error?.message ?? 'insert_failed' }
@@ -61,10 +63,12 @@ export async function updateAlbum(formData: FormData) {
   const dateRaw = String(formData.get('event_date') ?? '').trim()
   const event_date = dateRaw || null
   const is_active = formData.get('is_active') === 'on' || formData.get('is_active') === 'true'
+  const localeRaw = String(formData.get('client_locale') ?? 'fr')
+  const client_locale: 'fr' | 'nl' = localeRaw === 'nl' ? 'nl' : 'fr'
 
   await supabase
     .from('event_albums')
-    .update({ title, client_name, client_email, event_date, is_active })
+    .update({ title, client_name, client_email, client_locale, event_date, is_active })
     .eq('id', id)
 
   revalidatePath('/admin/events')

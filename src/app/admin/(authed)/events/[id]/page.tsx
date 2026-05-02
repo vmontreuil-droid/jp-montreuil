@@ -19,7 +19,7 @@ export default async function AlbumAdminPage({ params }: Props) {
 
   const { data: album } = await supabase
     .from('event_albums')
-    .select('id, slug, title, client_name, client_email, event_date, is_active, created_at')
+    .select('id, slug, title, client_name, client_email, client_locale, event_date, is_active, created_at')
     .eq('id', id)
     .single<AlbumDetailRow>()
 

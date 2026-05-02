@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { Camera, ArrowRight, Calendar, ImageIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getDictionary } from '@/i18n/dictionaries'
+import { getPortailLocale } from './locale'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,6 +31,10 @@ export default async function PortailDashboardPage() {
   if (!user || !user.email) {
     redirect('/portail/login')
   }
+
+  const locale = await getPortailLocale()
+  const t = getDictionary(locale).portail
+  const dateLocale = locale === 'fr' ? 'fr-BE' : 'nl-BE'
 
   // Service-role om client-data op te halen — RLS bypass nodig omdat
   // we matchen op email-veld dat anders niet door RLS gefilterd wordt.
@@ -73,26 +79,19 @@ export default async function PortailDashboardPage() {
     <div className="max-w-5xl mx-auto px-6 py-12">
       <header className="mb-10">
         <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-2">
-          Atelier Montreuil
+          {t.dashboard.eyebrow}
         </p>
         <h1 className="text-3xl md:text-4xl text-(--color-ink) font-[family-name:var(--font-display)]">
-          Bienvenue
+          {t.dashboard.welcome}
         </h1>
-        <p className="mt-2 text-sm text-(--color-charcoal)">
-          Vos albums photo en un coup d&apos;œil.
-        </p>
+        <p className="mt-2 text-sm text-(--color-charcoal)">{t.dashboard.lead}</p>
       </header>
 
       {albums.length === 0 ? (
         <div className="bg-(--color-paper) border border-(--color-frame) p-10 text-center">
           <Camera className="w-10 h-10 mx-auto mb-4 text-(--color-stone) opacity-50" />
-          <p className="text-sm text-(--color-charcoal)">
-            Aucun album partagé avec cet e-mail pour le moment.
-          </p>
-          <p className="mt-2 text-xs text-(--color-stone)">
-            Si vous attendiez un album, contactez Jean-Pierre — il vérifiera l&apos;adresse
-            associée à votre compte.
-          </p>
+          <p className="text-sm text-(--color-charcoal)">{t.dashboard.empty}</p>
+          <p className="mt-2 text-xs text-(--color-stone)">{t.dashboard.emptyHint}</p>
         </div>
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -124,18 +123,19 @@ export default async function PortailDashboardPage() {
                     {a.event_date && (
                       <span className="inline-flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {new Date(a.event_date).toLocaleDateString('fr-BE', {
+                        {new Date(a.event_date).toLocaleDateString(dateLocale, {
                           dateStyle: 'long',
                         })}
                       </span>
                     )}
                     <span className="inline-flex items-center gap-1">
                       <ImageIcon className="w-3 h-3" />
-                      {a.photos_count} photo{a.photos_count !== 1 ? 's' : ''}
+                      {a.photos_count}{' '}
+                      {a.photos_count === 1 ? t.dashboard.photoSingular : t.dashboard.photoPlural}
                     </span>
                   </div>
                   <div className="mt-4 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] text-(--color-bronze) group-hover:gap-2 transition-all">
-                    Voir l&apos;album
+                    {t.dashboard.seeAlbum}
                     <ArrowRight className="w-3.5 h-3.5" />
                   </div>
                 </div>

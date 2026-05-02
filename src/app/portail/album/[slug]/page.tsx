@@ -4,6 +4,9 @@ import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import AlbumViewer, { type ViewerPhoto } from '@/app/[locale]/album/[slug]/AlbumViewer'
+import { getDictionary } from '@/i18n/dictionaries'
+import { isLocale, type Locale } from '@/i18n/config'
+import { getPortailLocale } from '../../locale'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,11 +30,15 @@ export default async function PortailAlbumPage({ params }: Props) {
   const admin = createAdminClient()
   const { data: album } = await admin
     .from('event_albums')
-    .select('id, slug, title, client_name, client_email, event_date, is_active')
+    .select('id, slug, title, client_name, client_email, client_locale, event_date, is_active')
     .eq('slug', slug)
     .maybeSingle()
 
   if (!album) notFound()
+
+  // Taal: bij voorkeur die van het album zelf, val anders terug op de helper.
+  const albumLocale: Locale = isLocale(album.client_locale) ? album.client_locale : await getPortailLocale()
+  const t = getDictionary(albumLocale).portail
 
   // Verifieer dat ingelogde user de eigenaar is via email-match
   const userEmail = user.email.toLowerCase()
@@ -40,18 +47,15 @@ export default async function PortailAlbumPage({ params }: Props) {
     return (
       <main className="max-w-2xl mx-auto px-6 py-20 text-center">
         <h1 className="text-2xl text-(--color-ink) font-[family-name:var(--font-display)] mb-3">
-          Accès non autorisé
+          {t.album.forbiddenTitle}
         </h1>
-        <p className="text-sm text-(--color-charcoal) mb-6">
-          Cet album n&apos;est pas associé à votre adresse e-mail. Si vous pensez qu&apos;il s&apos;agit
-          d&apos;une erreur, contactez Jean-Pierre.
-        </p>
+        <p className="text-sm text-(--color-charcoal) mb-6">{t.album.forbiddenBody}</p>
         <Link
           href="/portail"
           className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-(--color-bronze) hover:text-(--color-bronze-dark)"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          Retour à mes albums
+          {t.album.backFull}
         </Link>
       </main>
     )
@@ -89,11 +93,11 @@ export default async function PortailAlbumPage({ params }: Props) {
           className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-(--color-stone) hover:text-(--color-ink)"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          Mes albums
+          {t.album.backToAlbums}
         </Link>
       </div>
       <AlbumViewer
-        locale="fr"
+        locale={albumLocale}
         title={album.title}
         clientName={album.client_name}
         eventDate={album.event_date}
