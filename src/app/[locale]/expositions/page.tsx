@@ -4,6 +4,7 @@ import { CalendarDays, MapPin, ArrowUpRight } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { createClient } from '@/lib/supabase/server'
 import { workImageUrl } from '@/lib/links'
+import { pageMetadata } from '@/lib/og'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,13 +27,28 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
+  if (!isLocale(locale)) return {}
   const isFR = locale === 'fr'
-  return {
+
+  // Eerstkomende expositie met image als cover, anders meest recente
+  const supabase = await createClient()
+  const { data: ex } = await supabase
+    .from('exhibitions')
+    .select('image_path')
+    .not('image_path', 'is', null)
+    .order('date_from', { ascending: false })
+    .limit(1)
+    .maybeSingle<{ image_path: string | null }>()
+  const imgUrl = ex?.image_path ? workImageUrl(ex.image_path) : null
+
+  return pageMetadata({
+    locale: locale as Locale,
     title: isFR ? 'Expositions' : 'Tentoonstellingen',
     description: isFR
       ? 'Expositions, salons et événements à venir et passés de Jean-Pierre Montreuil.'
       : 'Komende en voorbije tentoonstellingen, beurzen en evenementen van Jean-Pierre Montreuil.',
-  }
+    imageUrl: imgUrl,
+  })
 }
 
 function formatRange(from: string, to: string | null, locale: Locale): string {

@@ -5,6 +5,7 @@ import { ArrowUpRight, BookOpen, MessageCircle } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { localePath, whatsappHref } from '@/lib/links'
+import { pageMetadata } from '@/lib/og'
 import { getActiveIbooks, ibookUrl } from '@/lib/ibook'
 import { generateQrDataUrl } from '@/lib/qr'
 import IbookViewer from '@/components/site/IbookViewer'
@@ -33,7 +34,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
   if (!isLocale(locale)) return {}
   const t = getDictionary(locale as Locale)
-  return { title: t.nav.about }
+  const isFR = locale === 'fr'
+  return pageMetadata({
+    locale: locale as Locale,
+    title: t.nav.social,
+    description: isFR
+      ? 'Suivez Jean-Pierre Montreuil sur Facebook, WhatsApp et découvrez ses publications.'
+      : 'Volg Jean-Pierre Montreuil op Facebook, WhatsApp en ontdek zijn publicaties.',
+  })
 }
 
 export default async function SocialPage({ params }: Props) {

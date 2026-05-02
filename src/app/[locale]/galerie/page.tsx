@@ -6,6 +6,7 @@ import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { localePath, workImageUrl } from '@/lib/links'
 import { createClient } from '@/lib/supabase/server'
+import { pageMetadata } from '@/lib/og'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -15,7 +16,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
   if (!isLocale(locale)) return {}
   const t = getDictionary(locale as Locale)
-  return { title: t.nav.collection }
+  const isFR = locale === 'fr'
+
+  // Cover van de eerste categorie als share-image
+  const supabase = await createClient()
+  const { data: firstCat } = await supabase
+    .from('categories')
+    .select('cover:works!categories_cover_work_id_fkey(storage_path)')
+    .order('sort_order', { ascending: true })
+    .limit(1)
+    .maybeSingle<{ cover: { storage_path: string } | null }>()
+  const coverUrl = firstCat?.cover?.storage_path
+    ? workImageUrl(firstCat.cover.storage_path)
+    : null
+
+  return pageMetadata({
+    locale: locale as Locale,
+    title: t.nav.collection,
+    description: isFR
+      ? "Découvrez la collection complète de Jean-Pierre Montreuil — chevaux, chiens, portraits et art animalier."
+      : 'Ontdek de volledige collectie van Jean-Pierre Montreuil — paarden, honden, portretten en dierenkunst.',
+    imageUrl: coverUrl,
+  })
 }
 
 type CategoryWithCover = {

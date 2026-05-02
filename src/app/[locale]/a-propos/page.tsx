@@ -5,6 +5,7 @@ import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { workImageUrl } from '@/lib/links'
 import { createClient } from '@/lib/supabase/server'
+import { pageMetadata } from '@/lib/og'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -14,7 +15,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
   if (!isLocale(locale)) return {}
   const t = getDictionary(locale as Locale)
-  return { title: t.about.title }
+  const isFR = locale === 'fr'
+
+  // Eerste about-section met image als share-foto
+  const supabase = await createClient()
+  const { data: section } = await supabase
+    .from('about_sections')
+    .select('image_path')
+    .not('image_path', 'is', null)
+    .order('sort_order', { ascending: true })
+    .limit(1)
+    .maybeSingle<{ image_path: string | null }>()
+  const imgUrl = section?.image_path ? workImageUrl(section.image_path) : null
+
+  return pageMetadata({
+    locale: locale as Locale,
+    title: t.about.title,
+    description: isFR
+      ? 'Découvrez le parcours et la démarche de Jean-Pierre Montreuil, artiste peintre animalier.'
+      : 'Ontdek de loopbaan en werkwijze van Jean-Pierre Montreuil, kunstschilder gespecialiseerd in dierenkunst.',
+    imageUrl: imgUrl,
+  })
 }
 
 type AboutSection = {

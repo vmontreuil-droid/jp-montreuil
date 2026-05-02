@@ -4,6 +4,7 @@ import { Mail, Phone, MapPin, BookOpen } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { whatsappHref } from '@/lib/links'
+import { pageMetadata } from '@/lib/og'
 import { getActiveIbooks, ibookUrl } from '@/lib/ibook'
 import IbookViewer from '@/components/site/IbookViewer'
 import ContactForm from './ContactForm'
@@ -32,7 +33,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
   if (!isLocale(locale)) return {}
   const t = getDictionary(locale as Locale)
-  return { title: t.contact.title }
+  const isFR = locale === 'fr'
+  return pageMetadata({
+    locale: locale as Locale,
+    title: t.contact.title,
+    description: isFR
+      ? 'Contactez Jean-Pierre Montreuil pour une commande, un portrait ou une exposition.'
+      : 'Neem contact op met Jean-Pierre Montreuil voor een opdracht, portret of tentoonstelling.',
+  })
 }
 
 export default async function ContactPage({ params }: Props) {

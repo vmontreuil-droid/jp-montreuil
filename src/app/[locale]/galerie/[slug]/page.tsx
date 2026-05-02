@@ -6,6 +6,7 @@ import { LayoutGrid, MessageCircle } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { localePath, workImageUrl } from '@/lib/links'
+import { pageMetadata } from '@/lib/og'
 import { createClient } from '@/lib/supabase/server'
 import CategoryGallery from '@/components/site/CategoryGallery'
 import type { LightboxWork } from '@/components/site/Lightbox'
@@ -40,23 +41,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : `Ontdek de collectie "${title}" van Jean-Pierre Montreuil.`)
   const coverUrl = cat.cover?.storage_path ? workImageUrl(cat.cover.storage_path) : null
 
-  return {
+  return pageMetadata({
+    locale: locale as Locale,
     title,
     description,
-    openGraph: {
-      type: 'article',
-      title: `${title} — Atelier Montreuil`,
-      description,
-      locale: locale === 'fr' ? 'fr_BE' : 'nl_BE',
-      images: coverUrl ? [{ url: coverUrl, alt: title }] : undefined,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${title} — Atelier Montreuil`,
-      description,
-      images: coverUrl ? [coverUrl] : undefined,
-    },
-  }
+    imageUrl: coverUrl,
+    ogType: 'article',
+  })
 }
 
 type Work = {
