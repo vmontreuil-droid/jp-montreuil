@@ -19,21 +19,6 @@ type CategoryWithCover = {
   cover: { storage_path: string } | null
 }
 
-// Volgorde van slides in de hero — papa's photos eerst, daarna gevarieerd
-// over schilder-categorieën. JP kan dit later via admin per-cover aanpassen.
-const SLIDE_ORDER = [
-  'photos',
-  'portraits',
-  'chevaux',
-  'voitures',
-  'chasse',
-  'chiens-chats',
-  'oiseaux',
-  'bronze',
-  'bafra-art',
-  'expos',
-]
-
 export default async function HomePage({ params }: Props) {
   const { locale } = await params
   if (!isLocale(locale)) notFound()
@@ -43,18 +28,14 @@ export default async function HomePage({ params }: Props) {
   const { data } = await supabase
     .from('categories')
     .select('id, slug, sort_order, label_fr, label_nl, cover:works!categories_cover_work_id_fkey(storage_path)')
+    .order('sort_order', { ascending: true })
     .returns<CategoryWithCover[]>()
 
   const categories = data ?? []
 
-  // Sorteer volgens SLIDE_ORDER; categorieën zonder cover overslaan.
-  const orderIndex = (slug: string) => {
-    const i = SLIDE_ORDER.indexOf(slug)
-    return i === -1 ? 999 : i
-  }
-  const slides: HeroSlide[] = [...categories]
+  // Slides volgen de admin sort_order; categorieën zonder cover overslaan.
+  const slides: HeroSlide[] = categories
     .filter((c) => c.cover?.storage_path)
-    .sort((a, b) => orderIndex(a.slug) - orderIndex(b.slug))
     .map((c) => ({
       src: workImageUrl(c.cover!.storage_path),
       label: locale === 'fr' ? c.label_fr : c.label_nl,
