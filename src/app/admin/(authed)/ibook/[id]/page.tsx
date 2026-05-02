@@ -17,7 +17,15 @@ export default async function IbookDetailPage({ params }: Props) {
   if (!ibook) notFound()
 
   const pdfUrl = ibook.pdf_path ? ibookUrl(ibook.pdf_path) : ''
-  const qrDataUrl = pdfUrl ? await generateQrDataUrl(pdfUrl, 320) : ''
+  // QR encodeert publieke /social#livre-<id> (modal-viewer met sluit-knop),
+  // niet de rauwe PDF — anders krijgt scanner de browser-PDF-viewer zonder
+  // sluit-knop.
+  const siteOrigin = (process.env.NEXT_PUBLIC_SITE_URL || 'https://montreuil.be').replace(
+    /\/$/,
+    ''
+  )
+  const publicLivreUrl = pdfUrl ? `${siteOrigin}/social#livre-${ibook.id}` : ''
+  const qrDataUrl = publicLivreUrl ? await generateQrDataUrl(publicLivreUrl, 320) : ''
 
   return (
     <div className="p-8 md:p-12 max-w-4xl">

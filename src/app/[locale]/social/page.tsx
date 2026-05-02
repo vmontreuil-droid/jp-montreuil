@@ -46,8 +46,21 @@ export default async function SocialPage({ params }: Props) {
   const fbHref = 'https://www.facebook.com/jeanpierre.montreuil.3'
   const contactHref = localePath(locale as Locale, '/contact')
   const ibooks = (await getActiveIbooks()).filter((b) => b.pdf_path)
+
+  // Site-origin voor deep-link in QR — fallback wanneer NEXT_PUBLIC_SITE_URL
+  // niet gezet is (lokaal dev), maar in productie altijd montreuil.be.
+  const siteOrigin = (process.env.NEXT_PUBLIC_SITE_URL || 'https://montreuil.be').replace(
+    /\/$/,
+    ''
+  )
+  const socialPath = localePath(locale as Locale, '/social')
+  // QR encodeert /social#livre-<id> ipv rauwe PDF-URL — scannen brengt
+  // bezoeker naar onze pagina met modal-viewer (sluit-knop), geen
+  // browser-PDF-viewer.
   const ibookQrs = await Promise.all(
-    ibooks.map((b) => generateQrDataUrl(ibookUrl(b.pdf_path!), 240))
+    ibooks.map((b) =>
+      generateQrDataUrl(`${siteOrigin}${socialPath}#livre-${b.id}`, 240)
+    )
   )
 
   const cards = [
@@ -143,7 +156,8 @@ export default async function SocialPage({ params }: Props) {
               return (
                 <div
                   key={b.id}
-                  className="card-elev bg-(--color-paper) border border-(--color-frame) p-6 md:p-8"
+                  id={`livre-${b.id}`}
+                  className="card-elev bg-(--color-paper) border border-(--color-frame) p-6 md:p-8 scroll-mt-24"
                 >
                   {fallbackTitle && (
                     <h2 className="text-2xl md:text-3xl text-(--color-ink) font-[family-name:var(--font-display)] mb-3">
@@ -190,6 +204,7 @@ export default async function SocialPage({ params }: Props) {
                       pdfUrl={ibookUrl(b.pdf_path!)}
                       title={fallbackTitle || (isFR ? 'Le livre' : 'Het boek')}
                       closeLabel={isFR ? 'Fermer' : 'Sluiten'}
+                      autoOpenForId={b.id}
                       className="inline-flex items-center gap-2 px-6 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors text-sm uppercase tracking-[0.2em]"
                     >
                       <BookOpen className="w-4 h-4" />

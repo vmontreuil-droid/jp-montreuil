@@ -19,6 +19,9 @@ type Props = {
   closeLabel?: string
   className?: string
   children: React.ReactNode
+  /** Wanneer URL-hash gelijk is aan `#livre-<autoOpenForId>` opent de
+   *  viewer automatisch op page-load. Gebruikt voor QR-deeplinks. */
+  autoOpenForId?: string
 }
 
 export default function IbookViewer({
@@ -27,6 +30,7 @@ export default function IbookViewer({
   closeLabel = 'Fermer',
   className,
   children,
+  autoOpenForId,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -39,6 +43,18 @@ export default function IbookViewer({
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Deeplink via URL-hash: /social#livre-<id> opent automatisch de viewer.
+  useEffect(() => {
+    if (!autoOpenForId || typeof window === 'undefined') return
+    const target = `#livre-${autoOpenForId}`
+    const check = () => {
+      if (window.location.hash === target) setOpen(true)
+    }
+    check()
+    window.addEventListener('hashchange', check)
+    return () => window.removeEventListener('hashchange', check)
+  }, [autoOpenForId])
 
   useEffect(() => {
     if (!open) return
