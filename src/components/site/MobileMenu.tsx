@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { Menu, X, Home, LayoutGrid, User, Share2, Mail } from 'lucide-react'
+import { Menu, X, Home, LayoutGrid, User, Share2, Mail, KeyRound } from 'lucide-react'
 
 type IconName = 'home' | 'collection' | 'about' | 'social' | 'contact'
 
@@ -23,6 +23,8 @@ type Props = {
   altLabel: string
   switchLabel: string
   themeToggle: React.ReactNode
+  portalHref?: string
+  portalLabel?: string
 }
 
 export default function MobileMenu({
@@ -31,6 +33,8 @@ export default function MobileMenu({
   altLabel,
   switchLabel,
   themeToggle,
+  portalHref,
+  portalLabel,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -119,6 +123,20 @@ export default function MobileMenu({
               )
             })}
           </nav>
+
+        {/* Klantenportaal link */}
+        {portalHref && (
+          <Link
+            href={portalHref}
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-4 px-6 py-4 text-sm uppercase tracking-[0.2em] text-(--color-charcoal) hover:text-(--color-bronze) hover:bg-(--color-paper) transition-colors border-t border-(--color-frame)"
+          >
+            <span className="flex items-center justify-center w-8 h-8 text-(--color-bronze)">
+              <KeyRound className="w-5 h-5" strokeWidth={1.5} />
+            </span>
+            <span className="flex-1">{portalLabel ?? 'Espace client'}</span>
+          </Link>
+        )}
 
         {/* Bottom: thema + taal */}
         <div className="p-5 border-t border-(--color-frame) flex items-center justify-between gap-3">

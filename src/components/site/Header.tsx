@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { KeyRound } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
 import { getAltLocaleHref, getRequestPathname } from '@/i18n/server'
@@ -45,8 +46,16 @@ export default async function Header({ locale, t }: Props) {
         <DesktopNav items={navItems} />
 
         <div className="flex items-center gap-2">
-          {/* Desktop: thema + taal-switch zichtbaar */}
+          {/* Desktop: portail + thema + taal-switch zichtbaar */}
           <div className="hidden md:flex items-center gap-2">
+            <Link
+              href="/portail/login"
+              aria-label={locale === 'fr' ? 'Espace client' : 'Klantenportaal'}
+              title={locale === 'fr' ? 'Espace client' : 'Klantenportaal'}
+              className="inline-flex items-center justify-center w-[34px] h-[34px] text-(--color-stone) hover:text-(--color-bronze) transition-colors border border-(--color-frame) hover:border-(--color-bronze) rounded-sm"
+            >
+              <KeyRound className="w-4 h-4" />
+            </Link>
             <ThemeToggle
               labelLight={locale === 'fr' ? 'Mode clair' : 'Lichte modus'}
               labelDark={locale === 'fr' ? 'Mode sombre' : 'Donkere modus'}
@@ -66,6 +75,8 @@ export default async function Header({ locale, t }: Props) {
             altHref={altHref}
             altLabel={altLabel}
             switchLabel={`Switch to ${altLabel}`}
+            portalHref="/portail/login"
+            portalLabel={locale === 'fr' ? 'Espace client' : 'Klantenportaal'}
             themeToggle={
               <ThemeToggle
                 labelLight={locale === 'fr' ? 'Mode clair' : 'Lichte modus'}
