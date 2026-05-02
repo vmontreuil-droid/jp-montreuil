@@ -114,11 +114,14 @@ export default async function AnalyticsPage() {
     .select('*', { count: 'exact', head: true })
     .eq('event_type', 'page_view')
 
-  // Bezoekers per dag (laatste 30 dagen) voor de chart
+  // Bezoekers per dag — laatste 30 dagen TOT EN MET vandaag.
+  // Bucket-keys zijn UTC date-strings, matchend met events.created_at.slice(0,10).
   const dayBuckets = new Map<string, Set<string>>()
-  for (let i = 0; i < 30; i++) {
-    const d = new Date(start30d.getTime() + i * 24 * 60 * 60 * 1000)
-    d.setHours(0, 0, 0, 0)
+  const todayUtc = new Date(now)
+  todayUtc.setUTCHours(0, 0, 0, 0)
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(todayUtc)
+    d.setUTCDate(d.getUTCDate() - i)
     dayBuckets.set(d.toISOString().slice(0, 10), new Set<string>())
   }
   for (const e of recent) {
