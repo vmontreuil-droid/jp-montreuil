@@ -69,6 +69,13 @@
     -moz-osx-font-smoothing: grayscale;
     overflow-x: clip;
     position: relative;
+    /* Ruimte voor sticky sub-footer (fixed bottom-0 in Footer.tsx) */
+    padding-bottom: 56px;
+  }
+  @media (max-width: 768px) {
+    body {
+      padding-bottom: 96px;
+    }
   }
 
   /* Topografische contour-overlay over heel de body — getekend in wit,

@@ -40,6 +40,7 @@ export default function Footer({ locale, t }: Props) {
   const waHref = whatsappHref(t.contact.phoneValue, locale)
 
   return (
+    <>
     <footer className="mt-24 border-t border-(--color-frame) bg-(--color-paper)">
       <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-8">
         {/* 1. Logo + tagline */}
@@ -134,42 +135,50 @@ export default function Footer({ locale, t }: Props) {
         </div>
       </div>
 
-      <div className="border-t border-(--color-frame) py-4 px-6 text-xs text-(--color-stone)">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:justify-between gap-2 text-center">
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-            <Link
-              href={localePath(locale, '/mentions-legales')}
-              className="hover:text-(--color-ink) transition-colors"
-            >
-              {locale === 'fr' ? 'Mentions légales' : 'Wettelijke vermeldingen'}
-            </Link>
-            <span aria-hidden="true">·</span>
-            <Link
-              href={localePath(locale, '/confidentialite')}
-              className="hover:text-(--color-ink) transition-colors"
-            >
-              {locale === 'fr' ? 'Confidentialité' : 'Privacybeleid'}
-            </Link>
-            <span aria-hidden="true">·</span>
-            <Link
-              href="/admin"
-              className="hover:text-(--color-ink) transition-colors"
-            >
-              Admin
-            </Link>
-          </div>
-          <div>© {year} Jean-Pierre Montreuil — {t.footer.rights}</div>
-          <div>
-            {locale === 'fr' ? 'Site créé par' : 'Site gemaakt door'}{' '}
-            <a
-              href="mailto:vmontreuil@outlook.be"
-              className="hover:text-(--color-ink) transition-colors"
-            >
-              Vincent Montreuil
-            </a>
-          </div>
+    </footer>
+
+    {/* Sticky sub-footer — altijd zichtbaar onderaan viewport.
+        body krijgt padding-bottom (zie globals.css) zodat content niet
+        onder dit blok verstopt wordt. */}
+    <div
+      className="fixed bottom-0 left-0 right-0 z-30 border-t border-(--color-frame) py-3 px-6 text-xs text-(--color-stone) backdrop-blur-md"
+      style={{ backgroundColor: 'color-mix(in srgb, var(--color-paper) 92%, transparent)' }}
+    >
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:justify-between gap-1.5 text-center">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          <Link
+            href={localePath(locale, '/mentions-legales')}
+            className="hover:text-(--color-ink) transition-colors"
+          >
+            {locale === 'fr' ? 'Mentions légales' : 'Wettelijke vermeldingen'}
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link
+            href={localePath(locale, '/confidentialite')}
+            className="hover:text-(--color-ink) transition-colors"
+          >
+            {locale === 'fr' ? 'Confidentialité' : 'Privacybeleid'}
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link
+            href="/admin"
+            className="hover:text-(--color-ink) transition-colors"
+          >
+            Admin
+          </Link>
+        </div>
+        <div className="hidden md:block">© {year} Jean-Pierre Montreuil — {t.footer.rights}</div>
+        <div>
+          {locale === 'fr' ? 'Site créé par' : 'Site gemaakt door'}{' '}
+          <a
+            href="mailto:vmontreuil@outlook.be"
+            className="hover:text-(--color-ink) transition-colors"
+          >
+            Vincent Montreuil
+          </a>
         </div>
       </div>
-    </footer>
+    </div>
+    </>
   )
 }
