@@ -3,6 +3,7 @@ import { isLocale, locales, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import Header from '@/components/site/Header'
 import Footer from '@/components/site/Footer'
+import AnalyticsTracker from '@/components/site/AnalyticsTracker'
 
 type Props = {
   children: React.ReactNode
@@ -21,6 +22,7 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <>
+      <AnalyticsTracker />
       <Header locale={locale as Locale} t={t} />
       <main className="min-h-[calc(100vh-200px)]">{children}</main>
       <Footer locale={locale as Locale} t={t} />

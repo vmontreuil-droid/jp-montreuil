@@ -23,7 +23,7 @@ const montserrat = Montserrat({
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale()
   const t = getDictionary(locale)
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://jp-montreuil.vercel.app'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://montreuil.be'
 
   return {
     title: { default: t.og.title, template: `%s — ${t.brand}` },
@@ -36,12 +36,40 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: t.brand,
       title: t.og.title,
       description: t.og.description,
+      images: [
+        {
+          url: '/logo-dark.png',
+          width: 743,
+          height: 258,
+          alt: t.brand,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title: t.og.title,
       description: t.og.description,
+      images: ['/logo-dark.png'],
     },
+    alternates: {
+      canonical: baseUrl,
+      languages: {
+        'fr-BE': baseUrl,
+        'nl-BE': `${baseUrl}/nl`,
+      },
+    },
+    keywords: [
+      'Jean-Pierre Montreuil',
+      'artiste peintre',
+      'kunstschilder',
+      'atelier',
+      'Anzegem',
+      'portrait',
+      'cheval',
+      'chien',
+      'art animalier',
+    ],
+    authors: [{ name: 'Jean-Pierre Montreuil' }],
   }
 }
 
