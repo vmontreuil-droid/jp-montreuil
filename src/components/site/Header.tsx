@@ -60,23 +60,30 @@ export default async function Header({ locale, t }: Props) {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={`group relative inline-flex items-center gap-1.5 px-3 py-2 transition-colors ${
-                  active ? 'text-(--color-ink)' : 'text-(--color-charcoal) hover:text-(--color-bronze)'
+                  active
+                    ? 'text-(--color-ink) font-semibold'
+                    : 'text-(--color-charcoal) hover:text-(--color-bronze)'
                 }`}
               >
                 <Icon
                   className={`w-4 h-4 transition-colors ${
                     active ? 'text-(--color-bronze)' : 'text-(--color-stone) group-hover:text-(--color-bronze)'
                   }`}
-                  strokeWidth={1.5}
+                  strokeWidth={active ? 2 : 1.5}
                 />
                 <span>{item.label}</span>
-                {/* Onderlijn voor actieve pagina */}
-                <span
-                  aria-hidden="true"
-                  className={`absolute left-3 right-3 -bottom-0.5 h-px bg-(--color-bronze) origin-left transition-transform ${
-                    active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-                  }`}
-                />
+                {/* Onderlijn — actieve pagina krijgt 2px volle balk; anders slide-in op hover */}
+                {active ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-2 right-2 bottom-0 h-[2px] bg-(--color-bronze)"
+                  />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-3 right-3 bottom-0 h-px bg-(--color-bronze) origin-left scale-x-0 group-hover:scale-x-100 transition-transform"
+                  />
+                )}
               </Link>
             )
           })}
