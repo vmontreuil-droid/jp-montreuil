@@ -2,7 +2,7 @@ import { headers, cookies } from 'next/headers'
 import { isLocale, defaultLocale, type Locale } from '@/i18n/config'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { PORTAIL_LOCALE_COOKIE } from './actions'
+import { PORTAIL_LOCALE_COOKIE } from './locale-cookie'
 
 /**
  * Bepaal de taal voor /portail/* (in volgorde van prioriteit):

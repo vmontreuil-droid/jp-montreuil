@@ -3,8 +3,7 @@
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { isLocale, type Locale } from '@/i18n/config'
-
-export const PORTAIL_LOCALE_COOKIE = 'portail_locale'
+import { PORTAIL_LOCALE_COOKIE } from './locale-cookie'
 
 /**
  * Zet de taalvoorkeur voor /portail/* via cookie. Overschrijft de
@@ -18,7 +17,7 @@ export async function setPortailLocale(locale: Locale): Promise<void> {
     path: '/',
     maxAge: 60 * 60 * 24 * 365, // 1 jaar
     sameSite: 'lax',
-    httpOnly: false, // mag client-zichtbaar zijn — geen secret
+    httpOnly: false,
   })
   revalidatePath('/portail', 'layout')
 }
