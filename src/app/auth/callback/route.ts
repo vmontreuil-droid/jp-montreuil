@@ -19,7 +19,9 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
+    if (error) {
+      console.error('[auth/callback] exchangeCodeForSession failed:', error.message)
+    } else {
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
@@ -27,21 +29,27 @@ export async function GET(request: Request) {
   // Flow 2: Admin-gegenereerde magic-link — geen code_verifier nodig,
   // we verifiëren rechtstreeks via token_hash + type.
   if (tokenHash && typeRaw) {
-    const allowedTypes = ['magiclink', 'recovery', 'invite', 'signup', 'email_change'] as const
+    const allowedTypes = ['magiclink', 'recovery', 'invite', 'signup', 'email_change', 'email'] as const
     type AllowedType = (typeof allowedTypes)[number]
     const type = (allowedTypes as readonly string[]).includes(typeRaw)
       ? (typeRaw as AllowedType)
       : null
-    if (type) {
+    if (!type) {
+      console.error('[auth/callback] unsupported type:', typeRaw)
+    } else {
       const supabase = await createClient()
       const { error } = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
         type,
       })
-      if (!error) {
+      if (error) {
+        console.error('[auth/callback] verifyOtp failed:', error.message, 'type:', type)
+      } else {
         return NextResponse.redirect(`${origin}${next}`)
       }
     }
+  } else if (!code) {
+    console.error('[auth/callback] no code/token_hash in request:', request.url)
   }
 
   return NextResponse.redirect(errorRedirect)
