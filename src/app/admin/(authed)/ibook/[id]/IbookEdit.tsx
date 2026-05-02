@@ -327,7 +327,9 @@ function SlotCard({
   onChanged,
   onUploadSuccess,
 }: SlotCardProps) {
-  const [pending, startTransition] = useTransition()
+  // Manual loading-state — useTransition met async-wrapper werkt niet
+  // betrouwbaar (transition komt los van de async-werk).
+  const [pending, setPending] = useState(false)
   const [stage, setStage] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -359,53 +361,52 @@ function SlotCard({
           : 'jpg'
     const storagePath = `${ibookId}/${slot}-${Date.now()}.${ext}`
 
-    startTransition(() => {
-      void (async () => {
-        try {
-          setStage(isPdf ? 'Téléversement PDF…' : 'Téléversement…')
-          // Direct browser → Supabase Storage upload (bypass server action
-          // body-limits van Vercel/Next).
-          const sb = createBrowserSupabase()
-          const { error: upErr } = await sb.storage.from('ibook').upload(storagePath, file, {
-            contentType: file.type,
-            upsert: false,
-            cacheControl: '31536000',
-          })
-          if (upErr) {
-            setStage('')
-            setError(`Upload échoué: ${upErr.message}`)
-            return
-          }
-
-          setStage('Enregistrement…')
-          const r = await setIbookFile({
-            ibook_id: ibookId,
-            slot,
-            storage_path: storagePath,
-          })
-          if (!r.ok) {
-            await sb.storage.from('ibook').remove([storagePath])
-            setStage('')
-            setError(`DB-update faalde: ${r.error}`)
-            return
-          }
-
-          if (onUploadSuccess) {
-            try {
-              await onUploadSuccess(file, setStage)
-            } catch (err) {
-              console.error('[ibook] post-upload hook failed:', err)
-              setError(`Cover-extractie faalde: ${(err as Error).message}`)
-            }
-          }
-          setStage('Terminé ✓')
-          onChanged()
-        } catch (err) {
+    setPending(true)
+    void (async () => {
+      try {
+        setStage(isPdf ? 'Téléversement PDF…' : 'Téléversement…')
+        const sb = createBrowserSupabase()
+        const { error: upErr } = await sb.storage.from('ibook').upload(storagePath, file, {
+          contentType: file.type,
+          upsert: false,
+          cacheControl: '31536000',
+        })
+        if (upErr) {
           setStage('')
-          setError(`Erreur: ${(err as Error).message}`)
+          setError(`Upload échoué: ${upErr.message}`)
+          return
         }
-      })()
-    })
+
+        setStage('Enregistrement…')
+        const r = await setIbookFile({
+          ibook_id: ibookId,
+          slot,
+          storage_path: storagePath,
+        })
+        if (!r.ok) {
+          await sb.storage.from('ibook').remove([storagePath])
+          setStage('')
+          setError(`DB-update faalde: ${r.error}`)
+          return
+        }
+
+        if (onUploadSuccess) {
+          try {
+            await onUploadSuccess(file, setStage)
+          } catch (err) {
+            console.error('[ibook] post-upload hook failed:', err)
+            setError(`Cover-extractie faalde: ${(err as Error).message}`)
+          }
+        }
+        setStage('Terminé ✓')
+        onChanged()
+      } catch (err) {
+        setStage('')
+        setError(`Erreur: ${(err as Error).message}`)
+      } finally {
+        setPending(false)
+      }
+    })()
   }
 
   function onDrop(e: React.DragEvent) {
