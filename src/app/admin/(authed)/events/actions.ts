@@ -2,9 +2,13 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { render } from '@react-email/render'
 import { requireAdmin } from '@/lib/admin/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { generateAlbumSlug } from '@/lib/album-slug'
+import { sendEmail } from '@/lib/email/client'
+import { ShareAlbumLink } from '@/lib/email/templates/ShareAlbumLink'
+import { PUBLIC_BASE_URL } from '@/lib/public-url'
 
 export async function createAlbum(formData: FormData) {
   const supabase = await requireAdmin()
@@ -129,6 +133,72 @@ export async function registerPhoto(input: {
 
   if (error) return { error: error.message }
   revalidatePath(`/admin/events/${input.album_id}`)
+  return { ok: true }
+}
+
+/**
+ * Stuur de album-link via mail naar de opdrachtgever.
+ */
+export async function shareAlbumByEmail(input: {
+  album_id: string
+  to: string
+  recipient_name: string
+  message: string
+  locale: 'fr' | 'nl'
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+
+  const to = input.to.trim()
+  if (!to || !/^\S+@\S+\.\S+$/.test(to)) return { ok: false, error: 'invalid_email' }
+
+  const { data: album, error } = await admin
+    .from('event_albums')
+    .select('id, slug, title, is_active')
+    .eq('id', input.album_id)
+    .single()
+  if (error || !album) return { ok: false, error: 'album_not_found' }
+  if (!album.is_active) return { ok: false, error: 'album_inactive' }
+
+  // Foto-aantal voor in de mail
+  const { count: photoCount } = await admin
+    .from('event_photos')
+    .select('*', { count: 'exact', head: true })
+    .eq('album_id', input.album_id)
+
+  const albumUrl = `${PUBLIC_BASE_URL.replace(/\/$/, '')}${
+    input.locale === 'fr' ? '' : '/nl'
+  }/album/${album.slug}`
+
+  const html = await render(
+    ShareAlbumLink({
+      recipientName: input.recipient_name.trim(),
+      message: input.message.trim() || undefined,
+      albumTitle: album.title,
+      albumUrl,
+      photoCount: photoCount ?? undefined,
+      locale: input.locale,
+    })
+  )
+
+  const subject =
+    input.locale === 'fr'
+      ? `Vos photos — « ${album.title} »`
+      : `Uw foto's — "${album.title}"`
+
+  const result = await sendEmail({
+    to,
+    subject,
+    html,
+    text:
+      (input.message.trim() ? input.message.trim() + '\n\n' : '') +
+      (input.locale === 'fr'
+        ? `Voici votre album: ${albumUrl}`
+        : `Hier is uw album: ${albumUrl}`),
+    replyTo: process.env.RESEND_REPLY_TO || 'jp@montreuil.be',
+  })
+
+  if (!result.ok) return { ok: false, error: result.error ?? 'send_failed' }
   return { ok: true }
 }
 
