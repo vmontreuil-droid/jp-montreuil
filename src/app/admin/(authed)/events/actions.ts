@@ -278,10 +278,10 @@ export async function inviteClientToPortal(input: {
     return { ok: false, error: linkErr?.message ?? 'magiclink_failed' }
   }
 
-  // Action URL gaat rechtstreeks naar onze callback met token_hash —
-  // sessie wordt server-side aangemaakt via verifyOtp(), cookies meteen
-  // op montreuil.be. Geen PKCE / code_verifier nodig (admin-gegenereerd).
-  const actionUrl = `${origin}/auth/callback?token_hash=${encodeURIComponent(
+  // Action URL gaat naar /auth/confirm — een tussenpagina met expliciete
+  // 'Continue'-knop. Voorkomt dat link-scanners (Outlook SafeLinks etc.)
+  // de eenmalige token opbruiken vóór de klant zelf klikt.
+  const actionUrl = `${origin}/auth/confirm?token_hash=${encodeURIComponent(
     linkData.properties.hashed_token
   )}&type=magiclink&next=${encodeURIComponent('/portail')}`
 

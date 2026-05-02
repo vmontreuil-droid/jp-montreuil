@@ -59,10 +59,11 @@ export async function requestPortalMagicLink(input: {
     return { ok: false, error: 'send_failed' }
   }
 
-  // Bouw onze eigen action URL die rechtstreeks naar /auth/callback gaat met
-  // token_hash. Zo wordt de sessie via verifyOtp() server-side aangemaakt
-  // en zijn de cookies meteen gezet op montreuil.be (geen PKCE-pad nodig).
-  const actionUrl = `${origin}/auth/callback?token_hash=${encodeURIComponent(
+  // Action URL gaat naar /auth/confirm — een tussenpagina met expliciete
+  // 'Continue'-knop. Voorkomt dat link-scanners (Outlook SafeLinks etc.)
+  // de eenmalige token opbruiken vóór de klant zelf klikt. Pas op de klik
+  // POST't de form-action naar verifyOtp.
+  const actionUrl = `${origin}/auth/confirm?token_hash=${encodeURIComponent(
     linkData.properties.hashed_token
   )}&type=magiclink&next=${encodeURIComponent('/portail')}`
 
