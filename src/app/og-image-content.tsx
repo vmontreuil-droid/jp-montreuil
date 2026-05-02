@@ -2,11 +2,14 @@
  * Gedeelde JSX voor de programmatische Open Graph- en Twitter-images.
  * Wordt gerenderd door next/og's ImageResponse op 1200×630.
  *
- * Bewust geen Megrim-font: ImageResponse moet de fonts mee-bundelen via
- * `fonts` optie en dat is overkill voor de OG. We gebruiken een serif-stack
- * die elk OS heeft, voor een vergelijkbaar atelier-gevoel.
+ * Het echte logo PNG (Megrim-typografie) wordt geëmbed via absolute URL.
+ * Alleen production-bezoekers zien deze image, dus de site-URL is altijd
+ * beschikbaar.
  */
 export function OgImageContent() {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://montreuil.be'
+  const logoSrc = `${baseUrl.replace(/\/$/, '')}/logo-dark.png`
+
   return (
     <div
       style={{
@@ -22,29 +25,14 @@ export function OgImageContent() {
         fontFamily: 'Georgia, "Times New Roman", serif',
       }}
     >
-      <div
-        style={{
-          fontSize: 24,
-          letterSpacing: '0.4em',
-          textTransform: 'uppercase',
-          color: '#807870',
-          marginBottom: 24,
-          fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
-        }}
-      >
-        Jean-Pierre Montreuil
-      </div>
-
-      <div
-        style={{
-          fontSize: 130,
-          color: '#1c1916',
-          lineHeight: 1,
-          marginBottom: 32,
-        }}
-      >
-        Atelier Montreuil
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={logoSrc}
+        alt="Atelier Montreuil"
+        width={820}
+        height={285}
+        style={{ marginBottom: 36 }}
+      />
 
       <div
         style={{
@@ -57,7 +45,7 @@ export function OgImageContent() {
 
       <div
         style={{
-          fontSize: 32,
+          fontSize: 30,
           color: '#807870',
           fontStyle: 'italic',
         }}
