@@ -207,6 +207,49 @@ export async function uploadIbookFile(
   return { ok: true }
 }
 
+/**
+ * Update DB-row na een client-side direct upload naar Supabase Storage.
+ * Gebruikt om server-action body-limieten en Vercel-platform-limieten
+ * volledig te omzeilen. Caller is verantwoordelijk voor de upload zelf.
+ */
+export async function setIbookFile(input: {
+  ibook_id: string
+  slot: Slot
+  storage_path: string
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+
+  if (!['cover', 'qr', 'pdf'].includes(input.slot)) return { ok: false, error: 'invalid_slot' }
+  if (!input.storage_path) return { ok: false, error: 'no_path' }
+
+  const column = input.slot === 'pdf' ? 'pdf_path' : `${input.slot}_path`
+
+  const { data: existing } = await admin
+    .from('ibooks')
+    .select(column)
+    .eq('id', input.ibook_id)
+    .single<Record<string, string | null>>()
+  const oldPath = existing?.[column]
+
+  const { error } = await admin
+    .from('ibooks')
+    .update({ [column]: input.storage_path })
+    .eq('id', input.ibook_id)
+  if (error) return { ok: false, error: error.message }
+
+  if (oldPath && oldPath !== input.storage_path) {
+    await admin.storage.from('ibook').remove([oldPath])
+  }
+
+  revalidatePath(`/admin/ibook/${input.ibook_id}`)
+  revalidatePath('/admin/ibook')
+  revalidatePath('/[locale]/a-propos', 'page')
+  revalidatePath('/[locale]/contact', 'page')
+  revalidatePath('/[locale]/social', 'page')
+  return { ok: true }
+}
+
 export async function clearIbookFile(ibookId: string, slot: Slot) {
   await requireAdmin()
   const admin = createAdminClient()

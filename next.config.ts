@@ -10,8 +10,8 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      // Contact-formulier ondersteunt foto-bijlagen tot ~25MB totaal
-      bodySizeLimit: '30mb',
+      // Ibook-PDF's tot 50MB + contactform-bijlagen tot 25MB. Buffer tot 60MB.
+      bodySizeLimit: '60mb',
     },
   },
 }

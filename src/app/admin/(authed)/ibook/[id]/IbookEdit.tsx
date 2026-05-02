@@ -20,8 +20,9 @@ import {
 import TranslateButton from '@/components/admin/TranslateButton'
 import IbookViewer from '@/components/site/IbookViewer'
 import { extractPdfFirstPageAsJpeg } from '@/lib/pdf-cover'
+import { createClient as createBrowserSupabase } from '@/lib/supabase/client'
 import {
-  uploadIbookFile,
+  setIbookFile,
   clearIbookFile,
   updateIbook,
   deleteIbook,
@@ -139,13 +140,24 @@ export default function IbookEdit({ ibook }: Props) {
             onChanged={() => router.refresh()}
             onUploadSuccess={async (pdfFile) => {
               const coverFile = await extractPdfFirstPageAsJpeg(pdfFile, 'cover.jpg')
-              const fd = new FormData()
-              fd.set('ibook_id', ibook.id)
-              fd.set('slot', 'cover')
-              fd.set('file', coverFile)
-              const r = await uploadIbookFile(fd)
+              const sb = createBrowserSupabase()
+              const storagePath = `${ibook.id}/cover-${Date.now()}.jpg`
+              const { error: upErr } = await sb.storage
+                .from('ibook')
+                .upload(storagePath, coverFile, {
+                  contentType: 'image/jpeg',
+                  upsert: false,
+                  cacheControl: '31536000',
+                })
+              if (upErr) throw new Error(`Upload cover: ${upErr.message}`)
+              const r = await setIbookFile({
+                ibook_id: ibook.id,
+                slot: 'cover',
+                storage_path: storagePath,
+              })
               if (!r.ok) {
-                throw new Error(`Upload cover faalde: ${r.error}`)
+                await sb.storage.from('ibook').remove([storagePath])
+                throw new Error(`DB-update cover: ${r.error}`)
               }
             }}
           />
@@ -316,31 +328,70 @@ function SlotCard({
 
   function upload(file: File) {
     setError(null)
-    const fd = new FormData()
-    fd.set('ibook_id', ibookId)
-    fd.set('slot', slot)
-    fd.set('file', file)
+    // Client-side validatie zodat we nutteloze upload-pogingen voorkomen
+    const isPdf = slot === 'pdf'
+    const allowed = isPdf
+      ? ['application/pdf']
+      : ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    const max = isPdf ? 50 * 1024 * 1024 : 10 * 1024 * 1024
+    if (!allowed.includes(file.type.toLowerCase())) {
+      setError('Type non autorisé')
+      return
+    }
+    if (file.size > max) {
+      setError('Fichier trop volumineux')
+      return
+    }
+
+    const ext = isPdf
+      ? 'pdf'
+      : file.type.includes('png')
+        ? 'png'
+        : file.type.includes('webp')
+          ? 'webp'
+          : 'jpg'
+    const storagePath = `${ibookId}/${slot}-${Date.now()}.${ext}`
+
     startTransition(() => {
       void (async () => {
-        const r = await uploadIbookFile(fd)
-        if (r.ok) {
+        try {
+          // Direct browser → Supabase Storage upload (bypass server action
+          // body-limits van Vercel/Next).
+          const sb = createBrowserSupabase()
+          const { error: upErr } = await sb.storage.from('ibook').upload(storagePath, file, {
+            contentType: file.type,
+            upsert: false,
+            cacheControl: '31536000',
+          })
+          if (upErr) {
+            setError(`Upload échoué: ${upErr.message}`)
+            return
+          }
+
+          // DB-row updaten via server action (alleen path, geen file)
+          const r = await setIbookFile({
+            ibook_id: ibookId,
+            slot,
+            storage_path: storagePath,
+          })
+          if (!r.ok) {
+            // Storage-bestand opruimen, want DB-record klopt niet
+            await sb.storage.from('ibook').remove([storagePath])
+            setError(`DB-update faalde: ${r.error}`)
+            return
+          }
+
           if (onUploadSuccess) {
             try {
               await onUploadSuccess(file)
             } catch (err) {
               console.error('[ibook] post-upload hook failed:', err)
-              setError(`Cover-extraction: ${(err as Error).message}`)
+              setError(`Cover-extractie faalde: ${(err as Error).message}`)
             }
           }
           onChanged()
-        } else {
-          const map: Record<string, string> = {
-            no_file: 'Pas de fichier',
-            type_not_allowed: 'Type non autorisé',
-            too_large: 'Fichier trop volumineux',
-            invalid_slot: 'Slot invalide',
-          }
-          setError(map[r.error] ?? r.error)
+        } catch (err) {
+          setError(`Erreur: ${(err as Error).message}`)
         }
       })()
     })
