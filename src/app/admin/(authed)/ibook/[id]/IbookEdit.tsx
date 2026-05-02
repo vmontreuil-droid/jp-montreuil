@@ -12,12 +12,12 @@ import {
   FileText,
   Image as ImageIcon,
   QrCode,
-  ExternalLink,
   Trash2,
   Eye,
   EyeOff,
 } from 'lucide-react'
 import TranslateButton from '@/components/admin/TranslateButton'
+import IbookViewer from '@/components/site/IbookViewer'
 import {
   uploadIbookFile,
   clearIbookFile,
@@ -378,17 +378,14 @@ function SlotCard({
           <Loader2 className="w-6 h-6 animate-spin text-(--color-bronze)" />
         ) : url ? (
           slot === 'pdf' ? (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
+            <IbookViewer
+              pdfUrl={url}
+              title={label}
               className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-(--color-charcoal) hover:text-(--color-bronze) transition-colors"
             >
               <FileText className="w-12 h-12" />
-              <span className="inline-flex items-center gap-1 text-xs">
-                Ouvrir <ExternalLink className="w-3 h-3" />
-              </span>
-            </a>
+              <span className="text-xs">Aperçu</span>
+            </IbookViewer>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img
