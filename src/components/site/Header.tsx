@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Home, LayoutGrid, User, Share2, Mail } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
 import { getAltLocaleHref, getRequestPathname } from '@/i18n/server'
 import { localePath } from '@/lib/links'
 import ThemeToggle from './ThemeToggle'
 import MobileMenu from './MobileMenu'
+import DesktopNav from './DesktopNav'
 
 type Props = {
   locale: Locale
@@ -18,23 +18,15 @@ export default async function Header({ locale, t }: Props) {
   const altHref = getAltLocaleHref(pathname, locale)
   const altLabel = locale === 'fr' ? 'NL' : 'FR'
 
-  // Icon-naam (string) wordt in MobileMenu naar lucide-component gemapt;
-  // we geven geen React-components door over server→client grens (faalt
-  // serialization van forwardRef typeof). Desktop-nav rendert hier
-  // server-side met directe component-references — wel veilig.
+  // Icon-component wordt client-side gekozen via iconName-string —
+  // veilig over server→client grens (geen forwardRef-serialization).
   const navItems = [
-    { href: localePath(locale, '/'), label: t.nav.home, iconName: 'home' as const, Icon: Home },
-    { href: localePath(locale, '/galerie'), label: t.nav.collection, iconName: 'collection' as const, Icon: LayoutGrid },
-    { href: localePath(locale, '/a-propos'), label: t.nav.about, iconName: 'about' as const, Icon: User },
-    { href: localePath(locale, '/social'), label: t.nav.social, iconName: 'social' as const, Icon: Share2 },
-    { href: localePath(locale, '/contact'), label: t.nav.contact, iconName: 'contact' as const, Icon: Mail },
+    { href: localePath(locale, '/'), label: t.nav.home, iconName: 'home' as const },
+    { href: localePath(locale, '/galerie'), label: t.nav.collection, iconName: 'collection' as const },
+    { href: localePath(locale, '/a-propos'), label: t.nav.about, iconName: 'about' as const },
+    { href: localePath(locale, '/social'), label: t.nav.social, iconName: 'social' as const },
+    { href: localePath(locale, '/contact'), label: t.nav.contact, iconName: 'contact' as const },
   ]
-
-  // Active-detectie: home is exact match, andere items matchen op prefix
-  const isActive = (href: string): boolean => {
-    if (href === '/' || href === '/nl') return pathname === href
-    return pathname === href || pathname.startsWith(href + '/')
-  }
 
   return (
     <header className="sticky top-0 z-40 bg-(--color-canvas)/85 backdrop-blur-sm border-b border-(--color-frame)">
@@ -50,44 +42,7 @@ export default async function Header({ locale, t }: Props) {
           />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1 text-xs tracking-[0.15em] uppercase">
-          {navItems.map((item) => {
-            const Icon = item.Icon
-            const active = isActive(item.href)
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={active ? 'page' : undefined}
-                className={`group relative inline-flex items-center gap-1.5 px-3 py-2 transition-colors ${
-                  active
-                    ? 'text-(--color-ink) font-semibold'
-                    : 'text-(--color-charcoal) hover:text-(--color-bronze)'
-                }`}
-              >
-                <Icon
-                  className={`w-4 h-4 transition-colors ${
-                    active ? 'text-(--color-bronze)' : 'text-(--color-stone) group-hover:text-(--color-bronze)'
-                  }`}
-                  strokeWidth={active ? 2 : 1.5}
-                />
-                <span>{item.label}</span>
-                {/* Onderlijn — actieve pagina krijgt 2px volle balk; anders slide-in op hover */}
-                {active ? (
-                  <span
-                    aria-hidden="true"
-                    className="absolute left-2 right-2 bottom-0 h-[2px] bg-(--color-bronze)"
-                  />
-                ) : (
-                  <span
-                    aria-hidden="true"
-                    className="absolute left-3 right-3 bottom-0 h-px bg-(--color-bronze) origin-left scale-x-0 group-hover:scale-x-100 transition-transform"
-                  />
-                )}
-              </Link>
-            )
-          })}
-        </nav>
+        <DesktopNav items={navItems} />
 
         <div className="flex items-center gap-2">
           {/* Desktop: thema + taal-switch zichtbaar */}
@@ -105,14 +60,9 @@ export default async function Header({ locale, t }: Props) {
             </a>
           </div>
 
-          {/* Mobile: hamburger-menu — geef enkel serializeerbare velden door
-              (geen Icon-component refs over server→client grens) */}
+          {/* Mobile: hamburger-menu */}
           <MobileMenu
-            items={navItems.map(({ href, label, iconName }) => ({
-              href,
-              label,
-              iconName,
-            }))}
+            items={navItems}
             altHref={altHref}
             altLabel={altLabel}
             switchLabel={`Switch to ${altLabel}`}
