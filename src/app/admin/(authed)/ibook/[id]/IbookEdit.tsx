@@ -418,12 +418,15 @@ function SlotCard({
 
   function onClear() {
     if (!confirm('Supprimer ce fichier ?')) return
-    startTransition(() => {
-      void (async () => {
+    setPending(true)
+    void (async () => {
+      try {
         await clearIbookFile(ibookId, slot)
         onChanged()
-      })()
-    })
+      } finally {
+        setPending(false)
+      }
+    })()
   }
 
   return (
