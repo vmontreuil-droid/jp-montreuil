@@ -782,6 +782,33 @@ function SharePanel({ album, photoCount, publicUrl }: SharePanelProps) {
   const roleLine =
     locale === 'fr' ? 'Artiste peintre · Atelier Montreuil' : 'Kunstschilder · Atelier Montreuil'
 
+  // Portail-specifieke copy (matcht src/lib/email/templates/PortalInvite.tsx)
+  const portalIntroPreview =
+    locale === 'fr'
+      ? `J'ai créé pour vous un espace privé où retrouver vos photos de « ${album.title} » à tout moment.`
+      : `Ik heb een privé-ruimte voor u aangemaakt waar u uw foto's van "${album.title}" altijd kunt terugvinden.`
+  const portalExplainerPreview =
+    locale === 'fr'
+      ? photoCount
+        ? `L'album contient ${photoCount} photo${photoCount > 1 ? 's' : ''} en haute résolution.`
+        : 'Vos photos vous y attendent en haute résolution.'
+      : photoCount
+        ? `Het album bevat ${photoCount} foto${photoCount > 1 ? '\'s' : ''} in hoge resolutie.`
+        : "Uw foto's staan klaar in hoge resolutie."
+  const portalNotePreview =
+    locale === 'fr'
+      ? 'Cliquez sur le bouton ci-dessous — vous serez automatiquement connecté(e). Aucun mot de passe à retenir.'
+      : 'Klik op de knop hieronder — u wordt automatisch ingelogd. Geen wachtwoord om te onthouden.'
+  const portalButtonLabelPreview = locale === 'fr' ? 'Accéder à mes photos' : "Mijn foto's bekijken"
+  const portalValidityPreview =
+    locale === 'fr'
+      ? 'Ce lien est valide 1 heure. Si vous le manquez, demandez-en un nouveau sur montreuil.be/portail/login.'
+      : 'Deze link is 1 uur geldig. Mist u hem, vraag dan een nieuwe aan op montreuil.be/portail/login.'
+  const portalFuturePreview =
+    locale === 'fr'
+      ? "À l'avenir, vous pourrez vous reconnecter à tout moment via /portail pour retrouver tous vos albums en un clic."
+      : 'In de toekomst kunt u zich op elk moment opnieuw aanmelden via /portail om al uw albums in één klik terug te vinden.'
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* === LINKER KOLOM — form === */}
@@ -979,7 +1006,7 @@ function SharePanel({ album, photoCount, publicUrl }: SharePanelProps) {
           Aperçu
         </p>
 
-        {channel === 'email' ? (
+        {channel === 'email' || channel === 'portal' ? (
           <div
             className="border border-(--color-frame) overflow-hidden"
             style={{ backgroundColor: '#faf8f5' }}
@@ -1017,7 +1044,9 @@ function SharePanel({ album, photoCount, publicUrl }: SharePanelProps) {
               }}
             >
               <p className="mb-4">{greetingPreview}</p>
-              <p className="mb-3">{introPreview}</p>
+              <p className="mb-3">
+                {channel === 'portal' ? portalIntroPreview : introPreview}
+              </p>
 
               {message.trim() && (
                 <div
@@ -1032,7 +1061,13 @@ function SharePanel({ album, photoCount, publicUrl }: SharePanelProps) {
                 </div>
               )}
 
-              <p className="mb-6">{explainerPreview}</p>
+              <p className={channel === 'portal' ? 'mb-2' : 'mb-6'}>
+                {channel === 'portal' ? portalExplainerPreview : explainerPreview}
+              </p>
+
+              {channel === 'portal' && (
+                <p className="mb-6">{portalNotePreview}</p>
+              )}
 
               {/* CTA-knop */}
               <div className="text-center my-6">
@@ -1045,30 +1080,43 @@ function SharePanel({ album, photoCount, publicUrl }: SharePanelProps) {
                     borderRadius: 4,
                   }}
                 >
-                  {buttonLabelPreview}
+                  {channel === 'portal' ? portalButtonLabelPreview : buttonLabelPreview}
                 </span>
               </div>
 
-              <p className="text-[13px] mb-1.5" style={{ color: '#807870' }}>
-                {fallbackHintPreview}
-              </p>
-              <p
-                className="text-[12px] break-all px-3 py-2 mb-6"
-                style={{
-                  fontFamily: 'monospace',
-                  color: '#2a2622',
-                  backgroundColor: '#faf8f5',
-                  border: '1px solid rgba(128, 120, 112, 0.20)',
-                  borderRadius: 4,
-                }}
-              >
-                {localizedUrl}
-              </p>
-
-              <div className="border-t my-5" style={{ borderColor: 'rgba(128, 120, 112, 0.20)' }} />
-              <p className="text-[13px] italic mb-5" style={{ color: '#807870' }}>
-                {privateNotePreview}
-              </p>
+              {channel === 'portal' ? (
+                <>
+                  <p className="text-[13px] italic mb-5" style={{ color: '#807870' }}>
+                    {portalValidityPreview}
+                  </p>
+                  <div className="border-t my-5" style={{ borderColor: 'rgba(128, 120, 112, 0.20)' }} />
+                  <p className="text-[13px] mb-5" style={{ color: '#807870' }}>
+                    {portalFuturePreview}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[13px] mb-1.5" style={{ color: '#807870' }}>
+                    {fallbackHintPreview}
+                  </p>
+                  <p
+                    className="text-[12px] break-all px-3 py-2 mb-6"
+                    style={{
+                      fontFamily: 'monospace',
+                      color: '#2a2622',
+                      backgroundColor: '#faf8f5',
+                      border: '1px solid rgba(128, 120, 112, 0.20)',
+                      borderRadius: 4,
+                    }}
+                  >
+                    {localizedUrl}
+                  </p>
+                  <div className="border-t my-5" style={{ borderColor: 'rgba(128, 120, 112, 0.20)' }} />
+                  <p className="text-[13px] italic mb-5" style={{ color: '#807870' }}>
+                    {privateNotePreview}
+                  </p>
+                </>
+              )}
 
               <p className="mb-1">{signoffPreview}</p>
               <p
