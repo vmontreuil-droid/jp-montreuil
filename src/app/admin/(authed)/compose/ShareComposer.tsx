@@ -136,12 +136,20 @@ export default function ShareComposer({ categories, works }: Props) {
     return siteOrigin
   }, [linkTarget, customLink, pickedWorkCategory, categories, activeCat, siteOrigin])
 
-  // Auto-suggest category-link wanneer werk gekozen wordt
+  // Auto-suggest category-link wanneer een ander werk gekozen wordt.
+  // Eénmalig per nieuwe werk-pick — daarna respecteren we de keuze van
+  // de gebruiker (anders kon je 'Page d'accueil' niet meer aanklikken
+  // zolang er een werk geselecteerd was).
+  const lastAutoSuggestedFor = useRef<string | null>(null)
   useEffect(() => {
-    if (pickedWork && linkTarget === 'home') {
-      setLinkTarget('category')
+    if (!pickedWork) {
+      lastAutoSuggestedFor.current = null
+      return
     }
-  }, [pickedWork, linkTarget])
+    if (lastAutoSuggestedFor.current === pickedWork.id) return
+    lastAutoSuggestedFor.current = pickedWork.id
+    setLinkTarget((prev) => (prev === 'home' ? 'category' : prev))
+  }, [pickedWork])
 
   // Caption-suggestie bij werk-pick (alleen als beide caption-velden leeg zijn)
   useEffect(() => {
