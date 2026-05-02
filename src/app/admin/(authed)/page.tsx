@@ -328,7 +328,7 @@ function StatCard({
   return (
     <Link
       href={href}
-      className={`block p-5 border transition-colors group ${
+      className={`card-elev card-elev-lift block p-5 border group ${
         accent
           ? 'bg-(--color-bronze)/10 border-(--color-bronze)/40 hover:border-(--color-bronze)'
           : 'bg-(--color-paper) border-(--color-frame) hover:border-(--color-bronze)'

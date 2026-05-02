@@ -163,7 +163,7 @@ export default function ContactForm({ locale, t }: Props) {
           name="name"
           type="text"
           required
-          className="w-full px-4 py-3 bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
+          className="w-full px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
         />
       </div>
 
@@ -177,7 +177,7 @@ export default function ContactForm({ locale, t }: Props) {
             name="email"
             type="email"
             required
-            className="w-full px-4 py-3 bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
+            className="w-full px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
           />
         </div>
         <div>
@@ -189,7 +189,7 @@ export default function ContactForm({ locale, t }: Props) {
             name="phone"
             type="tel"
             required
-            className="w-full px-4 py-3 bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
+            className="w-full px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
           />
         </div>
       </div>
@@ -203,7 +203,7 @@ export default function ContactForm({ locale, t }: Props) {
           name="message"
           required
           rows={6}
-          className="w-full px-4 py-3 bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink) resize-y"
+          className="w-full px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink) resize-y"
         />
       </div>
 

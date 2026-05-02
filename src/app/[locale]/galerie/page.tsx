@@ -64,7 +64,7 @@ export default async function GaleriePage({ params }: Props) {
             <Link
               key={cat.id}
               href={href}
-              className="group relative aspect-[4/5] overflow-hidden bg-(--color-paper)"
+              className="card-elev card-elev-lift group relative aspect-[4/5] overflow-hidden bg-(--color-paper)"
             >
               {coverPath ? (
                 <Image

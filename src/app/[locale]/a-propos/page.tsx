@@ -70,7 +70,7 @@ export default async function AboutPage({ params }: Props) {
               >
                 {imgUrl && (
                   <div
-                    className={`relative aspect-[4/5] overflow-hidden bg-(--color-paper) ${
+                    className={`card-elev relative aspect-[4/5] overflow-hidden bg-(--color-paper) ${
                       imageRight ? 'md:order-2' : ''
                     }`}
                   >

@@ -13,6 +13,12 @@
   --color-bronze: #b89668;
   --color-bronze-dark: #8b6f47;
 
+  /* Shadows — subtiele elevatie. Donker thema gebruikt diepere zwart-shadow,
+     licht thema gebruikt zachte warm-grijze schaduw. */
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.35), 0 12px 32px -8px rgba(0, 0, 0, 0.5);
+  --shadow-soft-hover: 0 4px 12px rgba(0, 0, 0, 0.45), 0 20px 48px -12px rgba(0, 0, 0, 0.6);
+  --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+
   /* Defaults voor Tailwind background/foreground */
   --color-background: var(--color-canvas);
   --color-foreground: var(--color-ink);
@@ -42,6 +48,11 @@
     --color-ink: #1c1916;
     --color-bronze: #8b6f47;
     --color-bronze-dark: #6f5736;
+
+    /* Licht thema: zachte warm-grijze schaduwen */
+    --shadow-soft: 0 1px 3px rgba(28, 25, 22, 0.06), 0 12px 32px -8px rgba(28, 25, 22, 0.10);
+    --shadow-soft-hover: 0 4px 12px rgba(28, 25, 22, 0.10), 0 20px 48px -12px rgba(28, 25, 22, 0.18);
+    --shadow-inset: inset 0 1px 2px rgba(28, 25, 22, 0.06);
 
     --color-background: var(--color-canvas);
     --color-foreground: var(--color-ink);
@@ -92,6 +103,21 @@
   /* Logo is wit-op-transparant — invert in licht-modus zodat het zwart wordt. */
   html.light .logo-invert {
     filter: invert(1);
+  }
+
+  /* Card-elevatie utilities — theme-aware shadow via CSS-vars */
+  .card-elev {
+    box-shadow: var(--shadow-soft);
+    transition: box-shadow 250ms ease, transform 250ms ease;
+  }
+  .card-elev:hover {
+    box-shadow: var(--shadow-soft-hover);
+  }
+  .card-elev-lift:hover {
+    transform: translateY(-2px);
+  }
+  .input-elev {
+    box-shadow: var(--shadow-inset);
   }
 
   /* Anti-copy bescherming voor galerij-foto's. Geen 100%-bescherming

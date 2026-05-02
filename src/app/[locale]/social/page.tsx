@@ -91,7 +91,7 @@ export default async function SocialPage({ params }: Props) {
               href={c.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative p-8 bg-(--color-paper) border border-(--color-frame) hover:border-(--color-bronze) transition-colors flex flex-col"
+              className="card-elev card-elev-lift group relative p-8 bg-(--color-paper) border border-(--color-frame) hover:border-(--color-bronze) flex flex-col"
             >
               <div className="flex items-center justify-between mb-6">
                 <div
