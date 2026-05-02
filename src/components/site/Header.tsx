@@ -13,20 +13,20 @@ import PortailLocaleSwitch from './PortailLocaleSwitch'
 type Props = {
   locale: Locale
   t: Dictionary
+  /** Op /portail/* werkt URL-prefix routing niet (geen /nl/portail-route).
+   *  Schakel deze prop aan om de FR/NL-knop te vervangen door een
+   *  cookie-based switcher die alleen de pagina herlaadt in de andere
+   *  taal zonder de URL aan te passen. */
+  portailMode?: boolean
 }
 
-export default async function Header({ locale, t }: Props) {
+export default async function Header({ locale, t, portailMode = false }: Props) {
   const pathname = await getRequestPathname()
   const altHref = getAltLocaleHref(pathname, locale)
   const altLabel = locale === 'fr' ? 'NL' : 'FR'
   const altLocale: Locale = locale === 'fr' ? 'nl' : 'fr'
 
-  // Op /portail/* werkt URL-prefix routing niet (geen /nl/portail-route).
-  // We schakelen daar naar een cookie-based switcher die de pagina
-  // herlaadt in de andere taal zonder de URL te wijzigen.
-  const isPortail = pathname.startsWith('/portail') || pathname.startsWith('/nl/portail')
-
-  const localeSwitcher = isPortail ? (
+  const localeSwitcher = portailMode ? (
     <PortailLocaleSwitch
       altLocale={altLocale}
       altLabel={altLabel}

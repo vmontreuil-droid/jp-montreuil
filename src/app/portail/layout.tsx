@@ -22,7 +22,7 @@ export default async function PortailLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header locale={locale} t={t} />
+      <Header locale={locale} t={t} portailMode />
 
       {user && (
         <div className="border-b border-(--color-frame) bg-(--color-paper)/60">
