@@ -71,8 +71,8 @@ export default async function AuthedAdminLayout({
       badge: unreadCount ?? null,
       badgeStyle: 'accent' as const,
     },
-    { href: '/admin/compose', label: 'Composer & Partager', icon: Send },
     { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2 },
+    { href: '/admin/compose', label: 'Composer & Partager', icon: Send },
   ] as Array<{
     href: string
     label: string
