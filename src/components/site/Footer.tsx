@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Mail, Phone, MapPin } from 'lucide-react'
+import { Mail, Phone, MapPin, BookOpen } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
 import { localePath, whatsappHref } from '@/lib/links'
@@ -130,6 +130,14 @@ export default function Footer({ locale, t }: Props) {
               >
                 <WhatsAppIcon className="w-4 h-4" /> WhatsApp
               </a>
+            </li>
+            <li>
+              <Link
+                href={`${localePath(locale, '/social')}#ibook`}
+                className="inline-flex items-center gap-2 text-(--color-charcoal) hover:text-(--color-bronze)"
+              >
+                <BookOpen className="w-4 h-4" /> Ibook
+              </Link>
             </li>
           </ul>
         </div>

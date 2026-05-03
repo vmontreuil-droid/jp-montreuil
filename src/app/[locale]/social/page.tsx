@@ -146,7 +146,7 @@ export default async function SocialPage({ params }: Props) {
       </div>
 
       {ibooks.length > 0 && (
-        <div className="mt-16 md:mt-20">
+        <div id="ibook" className="mt-16 md:mt-20 scroll-mt-24">
           <header className="text-center mb-10">
             <p className="text-xs uppercase tracking-[0.2em] text-(--color-bronze) inline-flex items-center gap-2">
               <BookOpen className="w-3.5 h-3.5" />
