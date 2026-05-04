@@ -181,7 +181,7 @@ const dict = {
     messagePlaceholder: 'Sujet, ambiance, occasion, palette de couleurs, contraintes …',
 
     referencesLabel: 'Photos de référence',
-    referencesHint: 'Photo d’une personne, d’un lieu ou d’une inspiration. JPG/PNG/WEBP — 5 max, 10 Mo par fichier.',
+    referencesHint: 'Photos de la meilleure qualité possible — une photo trop floue ou de mauvaise qualité pourra être refusée. Tous formats d’image acceptés, 5 max, 10 Mo par fichier.',
     chooseFiles: 'Glissez vos photos ici ou cliquez pour les sélectionner.',
     removeFile: 'Supprimer',
 
@@ -194,11 +194,13 @@ const dict = {
     errors: {
       required: 'Tous les champs marqués d’un * sont obligatoires.',
       email: 'Adresse e-mail invalide.',
+      phone: 'Indiquez un numéro de téléphone.',
       tooShort: 'Décrivez votre projet en quelques mots.',
       tooLong: 'Message trop long.',
       tooManyFiles: 'Maximum 5 photos.',
       fileTooBig: 'Photo trop volumineuse (max 10 Mo).',
       unsupportedFile: 'Format non supporté.',
+      referencesRequired: 'Ajoutez au moins une photo de référence.',
       server: 'Une erreur est survenue. Veuillez réessayer.',
     },
 

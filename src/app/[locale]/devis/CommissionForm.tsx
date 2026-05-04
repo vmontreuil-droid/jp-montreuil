@@ -22,7 +22,7 @@ import { submitCommission, type CommissionState } from './actions'
 const initial: CommissionState = { status: 'idle' }
 const MAX_FILES = 5
 const MAX_FILE_SIZE = 10 * 1024 * 1024
-const ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif'
+const ACCEPT = 'image/*'
 const TECHNIQUES = ['crayon_nb', 'aquarelle_couleur', 'acrylique_toile'] as const
 const SUPPORTS = ['papier_aquarelle', 'toile_lin'] as const
 type FormatChoice = (typeof FORMATS)[number]['id'] | 'custom'
@@ -502,12 +502,13 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
         </div>
         <div className="min-w-0">
           <label htmlFor="phone" className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
-            {tt.phoneLabel}
+            {tt.phoneLabel} <span className="text-(--color-bronze)">*</span>
           </label>
           <input
             id="phone"
             name="phone"
             type="tel"
+            required
             placeholder={tt.phonePlaceholder}
             className="w-full min-w-0 px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
           />
@@ -565,7 +566,7 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
       {/* References */}
       <div>
         <label className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
-          {tt.referencesLabel}
+          {tt.referencesLabel} <span className="text-(--color-bronze)">*</span>
         </label>
 
         <div

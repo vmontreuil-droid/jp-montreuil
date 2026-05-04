@@ -26,14 +26,7 @@ export type CommissionState =
 const STORAGE_BUCKET = 'commission-references'
 const MAX_FILES = 5
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const ALLOWED_TYPES = new Set([
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/webp',
-  'image/heic',
-  'image/heif',
-])
+// Alle beeldformaten — we vertrouwen op MIME-type prefix.
 const TECHNIQUES = new Set(['crayon_nb', 'aquarelle_couleur', 'acrylique_toile'])
 const SUPPORTS = new Set(['papier_aquarelle', 'toile_lin'])
 const FRAME_TYPE_SET = new Set<string>(FRAME_TYPES as readonly string[])
@@ -72,11 +65,14 @@ export async function submitCommission(
   const message = String(formData.get('message') ?? '').trim()
   const discussOnly = formData.get('discuss_only') === 'on'
 
-  if (!name || !email || !message) {
+  if (!name || !email || !phone || !message) {
     return { status: 'error', message: t.errors.required }
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { status: 'error', message: t.errors.email }
+  }
+  if (phone.length < 6) {
+    return { status: 'error', message: t.errors.phone }
   }
   if (message.length < 5) {
     return { status: 'error', message: t.errors.tooShort }
@@ -142,8 +138,11 @@ export async function submitCommission(
     supplements = supplementsRaw.filter((s) => SUPPLEMENT_SET.has(s))
   }
 
-  // Files
+  // Files — minstens 1 verplicht
   const files = formData.getAll('files').filter((f): f is File => f instanceof File && f.size > 0)
+  if (files.length === 0) {
+    return { status: 'error', message: t.errors.referencesRequired }
+  }
   if (files.length > MAX_FILES) {
     return { status: 'error', message: t.errors.tooManyFiles }
   }
@@ -151,7 +150,7 @@ export async function submitCommission(
     if (f.size > MAX_FILE_SIZE) {
       return { status: 'error', message: t.errors.fileTooBig }
     }
-    if (!ALLOWED_TYPES.has(f.type.toLowerCase())) {
+    if (!f.type.toLowerCase().startsWith('image/')) {
       return { status: 'error', message: t.errors.unsupportedFile }
     }
   }

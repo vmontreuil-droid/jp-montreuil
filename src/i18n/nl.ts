@@ -183,7 +183,7 @@ const dict: Dictionary = {
     messagePlaceholder: 'Onderwerp, sfeer, gelegenheid, kleurenpalet, randvoorwaarden …',
 
     referencesLabel: 'Referentiefoto’s',
-    referencesHint: 'Foto van een persoon, plek of inspiratie. JPG/PNG/WEBP — max 5, 10 MB per bestand.',
+    referencesHint: 'Foto’s van de best mogelijke kwaliteit — een te wazige of te kleine foto kan geweigerd worden. Alle beeldformaten aanvaard, max 5, 10 MB per bestand.',
     chooseFiles: 'Sleep uw foto’s hier of klik om te selecteren.',
     removeFile: 'Verwijderen',
 
@@ -196,11 +196,13 @@ const dict: Dictionary = {
     errors: {
       required: 'Alle velden met een * zijn verplicht.',
       email: 'Ongeldig e-mailadres.',
+      phone: 'Geef een telefoonnummer op.',
       tooShort: 'Beschrijf uw project in een paar woorden.',
       tooLong: 'Bericht te lang.',
       tooManyFiles: 'Maximum 5 foto’s.',
       fileTooBig: 'Foto te groot (max 10 MB).',
       unsupportedFile: 'Niet-ondersteund formaat.',
+      referencesRequired: 'Voeg minstens één referentiefoto toe.',
       server: 'Er is een fout opgetreden. Probeer het opnieuw.',
     },
 
