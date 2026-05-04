@@ -25,10 +25,17 @@ type WorkRow = {
 
 export default async function DevisExamplesAdminPage() {
   const supabase = await createClient()
-  const { data: categoriesRaw } = await supabase
+  const { data: categoriesRaw, error } = await supabase
     .from('categories')
-    .select('id, label_fr, works(id, storage_path, title_fr, title_nl, technique_fr, category_id, sort_order, is_devis_example)')
+    .select(`
+      id, label_fr,
+      works:works!works_category_id_fkey(id, storage_path, title_fr, title_nl, technique_fr, category_id, sort_order, is_devis_example)
+    `)
     .order('sort_order', { ascending: true })
+
+  if (error) {
+    return <div className="p-8 text-red-400">Erreur: {error.message}</div>
+  }
 
   const categories: Category[] =
     (categoriesRaw ?? []).map((c) => ({
