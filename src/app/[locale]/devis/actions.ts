@@ -7,6 +7,7 @@ import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { sendEmail, ADMIN_EMAIL } from '@/lib/email/client'
 import { NewCommissionRequest } from '@/lib/email/templates/NewCommissionRequest'
+import { CommissionRequestReceived } from '@/lib/email/templates/CommissionRequestReceived'
 import {
   FORMATS,
   FRAME_TYPES,
@@ -304,6 +305,58 @@ export async function submitCommission(
     })
   } catch (err) {
     console.error('Commission notification email failed', err)
+  }
+
+  // Bevestigingsmail naar de klant — bedankt + samenvatting + sequentie
+  try {
+    const isFR = locale === 'fr'
+    const techniqueLabel = (t.techniqueOptions as Record<string, string>)[technique] || technique
+    const supportLabel = support
+      ? ((t.supportOptions as Record<string, string>)[support] || support)
+      : null
+    const frameTypeLabel = frameType
+      ? ((t.frameTypeOptions as Record<string, string>)[frameType] || frameType)
+      : null
+    const supplementLabels = supplements.map(
+      (s) => (t.supplementOptions as Record<string, string>)[s] || s
+    )
+
+    const customerSubject = isFR
+      ? 'Votre demande est bien arrivée — Atelier Montreuil'
+      : 'Uw aanvraag is goed aangekomen — Atelier Montreuil'
+
+    const customerHtml = await render(
+      CommissionRequestReceived({
+        recipientName: name,
+        email,
+        locale,
+        techniqueLabel,
+        supportLabel,
+        width: widthCm,
+        height: heightCm,
+        frameTypeLabel,
+        portraitCount,
+        supplements: supplementLabels,
+        message,
+        attachmentCount: attachmentInfo.length,
+        priceEstimate,
+        submittedAt: new Date(),
+      })
+    )
+
+    const customerText = isFR
+      ? `Bonjour ${name},\n\nVotre demande de devis est bien arrivée. Jean-Pierre vous reviendra avec une proposition détaillée — habituellement sous 48 heures ouvrables.\n\nÀ très bientôt,\nJean-Pierre Montreuil`
+      : `Beste ${name},\n\nUw offerteaanvraag is goed bij ons aangekomen. Jean-Pierre stuurt u een gedetailleerd voorstel — meestal binnen 48 werkuren.\n\nTot binnenkort,\nJean-Pierre Montreuil`
+
+    await sendEmail({
+      to: email,
+      subject: customerSubject,
+      html: customerHtml,
+      text: customerText,
+      replyTo: ADMIN_EMAIL,
+    })
+  } catch (err) {
+    console.error('Commission customer confirmation email failed', err)
   }
 
   return { status: 'success' }
