@@ -7,6 +7,13 @@ import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { sendEmail, ADMIN_EMAIL } from '@/lib/email/client'
 import { NewCommissionRequest } from '@/lib/email/templates/NewCommissionRequest'
+import {
+  FORMATS,
+  SUPPLEMENT_IDS,
+  PORTRAIT_COUNT_MIN,
+  PORTRAIT_COUNT_MAX,
+  estimatePrice,
+} from '@/lib/atelier-config'
 
 export type CommissionState =
   | { status: 'idle' }
@@ -24,9 +31,11 @@ const ALLOWED_TYPES = new Set([
   'image/heic',
   'image/heif',
 ])
-const TECHNIQUES = new Set(['crayon_nb', 'aquarelle_couleur', 'acrylique_toile', 'autre'])
-const SUPPORTS = new Set(['papier_aquarelle', 'toile_lin', 'peu_importe'])
-const FRAMINGS = new Set(['oui', 'non', 'peu_importe'])
+const TECHNIQUES = new Set(['crayon_nb', 'aquarelle_couleur', 'acrylique_toile'])
+const SUPPORTS = new Set(['papier_aquarelle', 'toile_lin'])
+const FRAMINGS = new Set(['oui', 'non'])
+const FORMAT_PRESET_IDS = new Set<string>(FORMATS.map((f) => f.id))
+const SUPPLEMENT_SET = new Set<string>(SUPPLEMENT_IDS as readonly string[])
 
 function safeFilename(name: string): string {
   return name
@@ -57,13 +66,8 @@ export async function submitCommission(
   const name = String(formData.get('name') ?? '').trim()
   const email = String(formData.get('email') ?? '').trim()
   const phone = String(formData.get('phone') ?? '').trim()
-  const technique = String(formData.get('technique') ?? '').trim()
-  const supportRaw = String(formData.get('support') ?? '').trim()
-  const framingRaw = String(formData.get('framing') ?? '').trim()
-  const widthRaw = String(formData.get('width_cm') ?? '').trim()
-  const heightRaw = String(formData.get('height_cm') ?? '').trim()
-  const budget = String(formData.get('budget') ?? '').trim()
   const message = String(formData.get('message') ?? '').trim()
+  const discussOnly = formData.get('discuss_only') === 'on'
 
   if (!name || !email || !message) {
     return { status: 'error', message: t.errors.required }
@@ -77,13 +81,63 @@ export async function submitCommission(
   if (message.length > 5000) {
     return { status: 'error', message: t.errors.tooLong }
   }
-  if (!TECHNIQUES.has(technique)) {
-    return { status: 'error', message: t.errors.required }
+
+  // In discuss-mode skippen we de structured validatie — JP behandelt manueel.
+  let technique: string
+  let support: string | null
+  let framing: 'oui' | 'non' | null
+  let widthCm: number | null = null
+  let heightCm: number | null = null
+  let formatChoice: string
+  let portraitCount: number
+  let supplements: string[]
+
+  if (discussOnly) {
+    technique = 'autre'
+    support = null
+    framing = null
+    formatChoice = 'custom'
+    portraitCount = 1
+    supplements = []
+  } else {
+    const techniqueRaw = String(formData.get('technique') ?? '').trim()
+    const supportRaw = String(formData.get('support') ?? '').trim()
+    const framingRaw = String(formData.get('framing') ?? '').trim()
+    formatChoice = String(formData.get('format_choice') ?? '').trim()
+    const widthRaw = String(formData.get('width_cm') ?? '').trim()
+    const heightRaw = String(formData.get('height_cm') ?? '').trim()
+    const portraitCountRaw = String(formData.get('portrait_count') ?? '1').trim()
+
+    if (!TECHNIQUES.has(techniqueRaw)) return { status: 'error', message: t.errors.required }
+    if (!SUPPORTS.has(supportRaw)) return { status: 'error', message: t.errors.required }
+    if (!FRAMINGS.has(framingRaw)) return { status: 'error', message: t.errors.required }
+    technique = techniqueRaw
+    support = supportRaw
+    framing = framingRaw as 'oui' | 'non'
+
+    // Format: ofwel preset (gebruik vaste afmetingen) ofwel custom (use input)
+    if (FORMAT_PRESET_IDS.has(formatChoice)) {
+      const preset = FORMATS.find((f) => (f.id as string) === formatChoice)!
+      widthCm = preset.width
+      heightCm = preset.height
+    } else if (formatChoice === 'custom') {
+      widthCm = parseNumber(widthRaw)
+      heightCm = parseNumber(heightRaw)
+      if (widthCm == null || heightCm == null) {
+        return { status: 'error', message: t.errors.required }
+      }
+    } else {
+      return { status: 'error', message: t.errors.required }
+    }
+
+    portraitCount = Math.min(
+      PORTRAIT_COUNT_MAX,
+      Math.max(PORTRAIT_COUNT_MIN, Number(portraitCountRaw) || PORTRAIT_COUNT_MIN)
+    )
+
+    const supplementsRaw = formData.getAll('supplements').map((v) => String(v))
+    supplements = supplementsRaw.filter((s) => SUPPLEMENT_SET.has(s))
   }
-  const support = SUPPORTS.has(supportRaw) ? supportRaw : null
-  const framing = FRAMINGS.has(framingRaw) ? framingRaw : null
-  const widthCm = parseNumber(widthRaw)
-  const heightCm = parseNumber(heightRaw)
 
   // Files
   const files = formData.getAll('files').filter((f): f is File => f instanceof File && f.size > 0)
@@ -117,7 +171,8 @@ export async function submitCommission(
       width_cm: widthCm,
       height_cm: heightCm,
       framing,
-      budget_indication: budget || null,
+      portrait_count: portraitCount,
+      supplements,
       message,
       ip,
       user_agent: userAgent,
@@ -162,15 +217,30 @@ export async function submitCommission(
     }
   }
 
+  // Schat de prijs voor in de mail naar JP (null voor discuss-mode of custom format)
+  const priceEstimate =
+    discussOnly || framing == null
+      ? null
+      : estimatePrice({
+          formatId: formatChoice,
+          technique,
+          portraitCount,
+          supplements,
+          framing,
+        })
+
   // Notify JP
   try {
     const techniqueLabel = (t.techniqueOptions as Record<string, string>)[technique] || technique
     const supportLabel = support
-      ? (t.supportOptions as Record<string, string>)[support] || support
+      ? ((t.supportOptions as Record<string, string>)[support] || support)
       : null
     const framingLabel = framing
-      ? (t.framingOptions as Record<string, string>)[framing] || framing
+      ? ((t.framingOptions as Record<string, string>)[framing] || framing)
       : null
+    const supplementLabels = supplements.map(
+      (s) => (t.supplementOptions as Record<string, string>)[s] || s
+    )
 
     const isFR = locale === 'fr'
     const subject = isFR
@@ -192,7 +262,9 @@ export async function submitCommission(
         height: heightCm,
         framing,
         framingLabel,
-        budget: budget || null,
+        portraitCount,
+        supplements: supplementLabels,
+        priceEstimate,
         message,
         attachments: attachmentInfo,
         submittedAt: new Date(),
@@ -204,10 +276,16 @@ export async function submitCommission(
       `Email: ${email}`,
       phone ? `${isFR ? 'Téléphone' : 'Telefoon'}: ${phone}` : '',
       `${isFR ? 'Technique' : 'Techniek'}: ${techniqueLabel}`,
-      supportLabel ? `${isFR ? 'Support' : 'Drager'}: ${supportLabel}` : '',
+      `${isFR ? 'Support' : 'Drager'}: ${supportLabel}`,
       widthCm && heightCm ? `${isFR ? 'Format' : 'Formaat'}: ${widthCm} × ${heightCm} cm` : '',
-      framingLabel ? `${isFR ? 'Encadrement' : 'Inkadering'}: ${framingLabel}` : '',
-      budget ? `${isFR ? 'Budget' : 'Budget'}: ${budget}` : '',
+      `${isFR ? 'Encadrement' : 'Inkadering'}: ${framingLabel}`,
+      `${isFR ? 'Portraits' : 'Portretten'}: ${portraitCount}`,
+      supplementLabels.length > 0
+        ? `${isFR ? 'Suppléments' : 'Supplementen'}: ${supplementLabels.join(', ')}`
+        : '',
+      priceEstimate != null
+        ? `${isFR ? 'Estimation' : 'Schatting'}: ${priceEstimate} €`
+        : `${isFR ? 'Estimation' : 'Schatting'}: sur devis`,
       '',
       message,
     ]

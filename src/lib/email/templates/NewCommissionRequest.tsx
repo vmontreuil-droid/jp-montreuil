@@ -18,7 +18,9 @@ type Props = {
   height: number | null
   framing: string | null
   framingLabel: string | null
-  budget: string | null
+  portraitCount: number
+  supplements: string[]
+  priceEstimate: number | null
   message: string
   attachments: Attachment[]
   submittedAt: Date
@@ -118,12 +120,24 @@ export function NewCommissionRequest(p: Props) {
           </>
         )}
 
-        {p.budget && (
+        <Text style={labelStyle}>{isFR ? 'Portraits' : 'Portretten'}</Text>
+        <Text style={valueStyle}>{p.portraitCount}</Text>
+
+        {p.supplements.length > 0 && (
           <>
-            <Text style={labelStyle}>{isFR ? 'Budget indicatif' : 'Indicatief budget'}</Text>
-            <Text style={valueStyle}>{p.budget}</Text>
+            <Text style={labelStyle}>{isFR ? 'Suppléments' : 'Supplementen'}</Text>
+            <Text style={valueStyle}>{p.supplements.join(' · ')}</Text>
           </>
         )}
+
+        <Text style={labelStyle}>{isFR ? 'Estimation' : 'Schatting'}</Text>
+        <Text style={{ ...valueStyle, color: colors.bronze, fontWeight: 600 }}>
+          {p.priceEstimate != null
+            ? `${p.priceEstimate.toLocaleString(isFR ? 'fr-BE' : 'nl-BE')} €`
+            : isFR
+              ? 'Sur devis (format personnalisé)'
+              : 'Op aanvraag (formaat op maat)'}
+        </Text>
 
         <Text style={labelStyle}>{isFR ? 'Description' : 'Beschrijving'}</Text>
         <Text

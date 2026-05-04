@@ -116,29 +116,47 @@ const dict = {
       'Chaque commande fait l’objet d’un devis sur mesure. Un acompte est demandé pour validation avant exécution.',
     ],
 
+    discussModeLabel: 'Je préfère tout discuter directement avec Jean-Pierre',
+    discussModeHint: 'Idéal pour un projet entièrement sur mesure, hors gabarits standards. Décrivez ce que vous avez en tête dans le message ci-dessous.',
+
     techniqueLabel: 'Technique souhaitée',
     techniqueOptions: {
       crayon_nb: 'Crayon noir & blanc',
       aquarelle_couleur: 'Aquarelle couleur',
       acrylique_toile: 'Acrylique sur toile',
-      autre: 'À discuter',
     },
     supportLabel: 'Support',
     supportOptions: {
       papier_aquarelle: 'Papier aquarelle',
       toile_lin: 'Toile de lin',
-      peu_importe: 'Peu importe — à discuter',
     },
     sizeLabel: 'Format souhaité',
+    formatOptions: {
+      '40x60': '40 × 60 cm',
+      '57x77': '57 × 77 cm',
+      '60x90': '60 × 90 cm',
+      '130x160': '130 × 160 cm',
+      custom: 'Autre format',
+    },
     widthLabel: 'Largeur (cm)',
     heightLabel: 'Hauteur (cm)',
-    sizeHint: 'Optionnel — laissez vide si vous hésitez encore, nous en discuterons ensemble.',
+    sizeHint: 'Indiquez les dimensions exactes pour un format sur mesure.',
+
+    portraitCountLabel: 'Nombre de portraits',
+    portraitCountHint: 'Indiquez combien de personnes ou animaux apparaîtront sur l’œuvre.',
+
+    supplementsLabel: 'Suppléments souhaités',
+    supplementsHint: 'Cochez les options qui s’appliquent — elles seront prises en compte dans le devis.',
+    supplementOptions: {
+      background: 'Arrière-plan travaillé / décor',
+      high_detail: 'Niveau de détail élevé',
+      rush: 'Délai express',
+    },
 
     framingLabel: 'Encadrement',
     framingOptions: {
       oui: 'Oui, je souhaite un encadrement',
       non: 'Non, sans encadrement',
-      peu_importe: 'À discuter',
     },
 
     nameLabel: 'Nom complet',
@@ -147,8 +165,9 @@ const dict = {
     emailPlaceholder: 'jean@exemple.be',
     phoneLabel: 'Numéro de téléphone',
     phonePlaceholder: '+32 470 12 34 56',
-    budgetLabel: 'Budget indicatif (optionnel)',
-    budgetPlaceholder: 'Ex. 500–800 €',
+    estimateLabel: 'Prix indicatif',
+    estimateHint: 'Estimation calculée d’après vos choix. Le prix final figure dans le devis sur mesure que Jean-Pierre vous enverra.',
+    estimateCustom: 'Sur devis (format personnalisé)',
 
     messageLabel: 'Décrivez votre projet',
     messagePlaceholder: 'Sujet, ambiance, occasion, palette de couleurs, contraintes …',

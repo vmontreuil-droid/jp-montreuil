@@ -104,6 +104,8 @@ type CommissionRow = {
   height_cm: number | null
   framing: string | null
   budget_indication: string | null
+  portrait_count: number | null
+  supplements: string[] | null
   message: string
   status: StatusKey
   admin_notes: string | null
@@ -276,12 +278,30 @@ export default async function CommissionDetailPage({ params }: Props) {
                   </dd>
                 </div>
               )}
-              {req.budget_indication && (
+              {req.portrait_count != null && req.portrait_count > 0 && (
+                <div>
+                  <dt className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5">
+                    Nb de portraits
+                  </dt>
+                  <dd className="text-(--color-ink)">{req.portrait_count}</dd>
+                </div>
+              )}
+              {req.supplements && req.supplements.length > 0 && (
                 <div className="sm:col-span-2">
                   <dt className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5">
-                    Budget indicatif
+                    Suppléments
                   </dt>
-                  <dd className="text-(--color-ink)">{req.budget_indication}</dd>
+                  <dd className="text-(--color-ink)">
+                    {req.supplements
+                      .map((s) =>
+                        ({
+                          background: 'Arrière-plan travaillé',
+                          high_detail: 'Niveau de détail élevé',
+                          rush: 'Délai express',
+                        }[s] ?? s)
+                      )
+                      .join(' · ')}
+                  </dd>
                 </div>
               )}
             </dl>

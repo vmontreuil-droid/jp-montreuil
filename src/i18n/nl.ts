@@ -118,29 +118,47 @@ const dict: Dictionary = {
       'Elke opdracht krijgt een offerte op maat. Een voorschot wordt gevraagd ter validatie vóór de uitvoering.',
     ],
 
+    discussModeLabel: 'Ik bespreek het liever rechtstreeks met Jean-Pierre',
+    discussModeHint: 'Ideaal voor een volledig op maat gemaakt project, buiten de standaardopties. Beschrijf hieronder wat u in gedachten heeft.',
+
     techniqueLabel: 'Gewenste techniek',
     techniqueOptions: {
       crayon_nb: 'Zwart-wit potlood',
       aquarelle_couleur: 'Kleur aquarel',
       acrylique_toile: 'Acryl op linnen',
-      autre: 'Te bespreken',
     },
     supportLabel: 'Drager',
     supportOptions: {
       papier_aquarelle: 'Aquarelpapier',
       toile_lin: 'Linnen doek',
-      peu_importe: 'Maakt niet uit — te bespreken',
     },
     sizeLabel: 'Gewenst formaat',
+    formatOptions: {
+      '40x60': '40 × 60 cm',
+      '57x77': '57 × 77 cm',
+      '60x90': '60 × 90 cm',
+      '130x160': '130 × 160 cm',
+      custom: 'Ander formaat',
+    },
     widthLabel: 'Breedte (cm)',
     heightLabel: 'Hoogte (cm)',
-    sizeHint: 'Optioneel — laat leeg als u nog twijfelt, we bespreken het samen.',
+    sizeHint: 'Geef exacte afmetingen voor een formaat op maat.',
+
+    portraitCountLabel: 'Aantal portretten',
+    portraitCountHint: 'Geef aan hoeveel personen of dieren op het werk staan.',
+
+    supplementsLabel: 'Gewenste supplementen',
+    supplementsHint: 'Vink aan wat van toepassing is — deze worden verwerkt in de offerte.',
+    supplementOptions: {
+      background: 'Bewerkte achtergrond / decor',
+      high_detail: 'Hoog detailniveau',
+      rush: 'Spoedlevering',
+    },
 
     framingLabel: 'Inkadering',
     framingOptions: {
       oui: 'Ja, ik wens een inkadering',
       non: 'Nee, zonder inkadering',
-      peu_importe: 'Te bespreken',
     },
 
     nameLabel: 'Volledige naam',
@@ -149,8 +167,9 @@ const dict: Dictionary = {
     emailPlaceholder: 'jan@voorbeeld.be',
     phoneLabel: 'Telefoonnummer',
     phonePlaceholder: '+32 470 12 34 56',
-    budgetLabel: 'Indicatief budget (optioneel)',
-    budgetPlaceholder: 'Bv. 500–800 €',
+    estimateLabel: 'Indicatieve prijs',
+    estimateHint: 'Schatting op basis van uw keuzes. De definitieve prijs staat in de offerte op maat die Jean-Pierre u stuurt.',
+    estimateCustom: 'Op aanvraag (formaat op maat)',
 
     messageLabel: 'Beschrijf uw project',
     messagePlaceholder: 'Onderwerp, sfeer, gelegenheid, kleurenpalet, randvoorwaarden …',

@@ -2,18 +2,27 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
-import { Send, CheckCircle2, AlertCircle, ImagePlus, X, Upload, Clock } from 'lucide-react'
+import { Send, CheckCircle2, AlertCircle, ImagePlus, X, Upload, Minus, Plus, Clock } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import type { Dictionary } from '@/i18n/dictionaries'
+import {
+  FORMATS,
+  SUPPLEMENT_IDS,
+  PORTRAIT_COUNT_MIN,
+  PORTRAIT_COUNT_MAX,
+  estimatePrice,
+  type SupplementId,
+} from '@/lib/atelier-config'
 import { submitCommission, type CommissionState } from './actions'
 
 const initial: CommissionState = { status: 'idle' }
 const MAX_FILES = 5
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif'
-const TECHNIQUES = ['crayon_nb', 'aquarelle_couleur', 'acrylique_toile', 'autre'] as const
-const SUPPORTS = ['papier_aquarelle', 'toile_lin', 'peu_importe'] as const
-const FRAMINGS = ['oui', 'non', 'peu_importe'] as const
+const TECHNIQUES = ['crayon_nb', 'aquarelle_couleur', 'acrylique_toile'] as const
+const SUPPORTS = ['papier_aquarelle', 'toile_lin'] as const
+const FRAMINGS = ['oui', 'non'] as const
+type FormatChoice = (typeof FORMATS)[number]['id'] | 'custom'
 
 function formatBytes(b: number): string {
   if (b < 1024) return `${b} B`
@@ -53,8 +62,37 @@ export default function CommissionForm({ locale, t }: Props) {
   const [dragOver, setDragOver] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const [selectedTechnique, setSelectedTechnique] = useState<typeof TECHNIQUES[number]>('aquarelle_couleur')
-  const [selectedSupport, setSelectedSupport] = useState<typeof SUPPORTS[number]>('peu_importe')
-  const [selectedFraming, setSelectedFraming] = useState<typeof FRAMINGS[number]>('peu_importe')
+  const [selectedSupport, setSelectedSupport] = useState<typeof SUPPORTS[number]>('papier_aquarelle')
+  const [selectedFraming, setSelectedFraming] = useState<typeof FRAMINGS[number]>('non')
+  const [selectedFormat, setSelectedFormat] = useState<FormatChoice>('40x60')
+  const [customWidth, setCustomWidth] = useState('')
+  const [customHeight, setCustomHeight] = useState('')
+  const [portraitCount, setPortraitCount] = useState(1)
+  const [selectedSupplements, setSelectedSupplements] = useState<Set<SupplementId>>(new Set())
+  const [discussMode, setDiscussMode] = useState(false)
+
+  const toggleSupplement = (id: SupplementId) => {
+    setSelectedSupplements((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const formatPreset = FORMATS.find((f) => f.id === selectedFormat)
+  const effectiveWidth =
+    selectedFormat === 'custom' ? customWidth : formatPreset ? String(formatPreset.width) : ''
+  const effectiveHeight =
+    selectedFormat === 'custom' ? customHeight : formatPreset ? String(formatPreset.height) : ''
+
+  const estimatedPrice = estimatePrice({
+    formatId: selectedFormat,
+    technique: selectedTechnique,
+    portraitCount,
+    supplements: Array.from(selectedSupplements),
+    framing: selectedFraming,
+  })
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const hiddenInputRef = useRef<HTMLInputElement>(null)
@@ -149,6 +187,31 @@ export default function CommissionForm({ locale, t }: Props) {
         aria-hidden="true"
       />
 
+      {/* Discuss-mode toggle */}
+      <label
+        className={`flex items-start gap-3 cursor-pointer px-4 py-3 border transition-colors ${
+          discussMode
+            ? 'border-(--color-bronze) bg-(--color-bronze)/10'
+            : 'border-(--color-frame) bg-(--color-paper) hover:border-(--color-stone)'
+        }`}
+      >
+        <input
+          type="checkbox"
+          name="discuss_only"
+          checked={discussMode}
+          onChange={(e) => setDiscussMode(e.target.checked)}
+          className="w-4 h-4 mt-0.5 accent-(--color-bronze)"
+        />
+        <div>
+          <span className="block text-sm text-(--color-ink)">{tt.discussModeLabel}</span>
+          <span className="block mt-1 text-xs text-(--color-stone) leading-relaxed">
+            {tt.discussModeHint}
+          </span>
+        </div>
+      </label>
+
+      {!discussMode && (
+        <>
       {/* Technique */}
       <div>
         <label className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
@@ -216,27 +279,129 @@ export default function CommissionForm({ locale, t }: Props) {
       {/* Format */}
       <div>
         <label className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
-          {tt.sizeLabel}
+          {tt.sizeLabel} <span className="text-(--color-bronze)">*</span>
         </label>
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            name="width_cm"
-            type="number"
-            min="1"
-            step="0.1"
-            placeholder={tt.widthLabel}
-            className="w-full px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
-          />
-          <input
-            name="height_cm"
-            type="number"
-            min="1"
-            step="0.1"
-            placeholder={tt.heightLabel}
-            className="w-full px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
-          />
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          {([...FORMATS.map((f) => f.id), 'custom'] as FormatChoice[]).map((fid) => {
+            const active = selectedFormat === fid
+            const label =
+              fid === 'custom' ? tt.formatOptions.custom : tt.formatOptions[fid]
+            return (
+              <label
+                key={fid}
+                className={`cursor-pointer text-center px-2 py-3 text-xs sm:text-sm border transition-colors ${
+                  active
+                    ? 'border-(--color-bronze) bg-(--color-bronze)/10 text-(--color-ink)'
+                    : 'border-(--color-frame) bg-(--color-paper) text-(--color-charcoal) hover:border-(--color-stone)'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="format_choice"
+                  value={fid}
+                  checked={active}
+                  onChange={() => setSelectedFormat(fid)}
+                  className="sr-only"
+                />
+                {label}
+              </label>
+            )
+          })}
         </div>
-        <p className="mt-2 text-xs text-(--color-stone)">{tt.sizeHint}</p>
+        <input type="hidden" name="width_cm" value={effectiveWidth} />
+        <input type="hidden" name="height_cm" value={effectiveHeight} />
+        {selectedFormat === 'custom' && (
+          <>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <input
+                type="number"
+                min="1"
+                step="0.1"
+                value={customWidth}
+                onChange={(e) => setCustomWidth(e.target.value)}
+                placeholder={tt.widthLabel}
+                required
+                className="w-full px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
+              />
+              <input
+                type="number"
+                min="1"
+                step="0.1"
+                value={customHeight}
+                onChange={(e) => setCustomHeight(e.target.value)}
+                placeholder={tt.heightLabel}
+                required
+                className="w-full px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
+              />
+            </div>
+            <p className="mt-2 text-xs text-(--color-stone)">{tt.sizeHint}</p>
+          </>
+        )}
+      </div>
+
+      {/* Aantal portretten */}
+      <div>
+        <label className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
+          {tt.portraitCountLabel}
+        </label>
+        <div className="inline-flex items-center border border-(--color-frame) bg-(--color-paper)">
+          <button
+            type="button"
+            onClick={() => setPortraitCount((v) => Math.max(PORTRAIT_COUNT_MIN, v - 1))}
+            disabled={portraitCount <= PORTRAIT_COUNT_MIN}
+            className="px-3 py-2.5 text-(--color-charcoal) hover:bg-(--color-canvas) disabled:opacity-30"
+            aria-label="−"
+          >
+            <Minus className="w-4 h-4" />
+          </button>
+          <span className="w-12 text-center text-(--color-ink) tabular-nums">
+            {portraitCount}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPortraitCount((v) => Math.min(PORTRAIT_COUNT_MAX, v + 1))}
+            disabled={portraitCount >= PORTRAIT_COUNT_MAX}
+            className="px-3 py-2.5 text-(--color-charcoal) hover:bg-(--color-canvas) disabled:opacity-30"
+            aria-label="+"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+        <input type="hidden" name="portrait_count" value={portraitCount} />
+        <p className="mt-2 text-xs text-(--color-stone)">{tt.portraitCountHint}</p>
+      </div>
+
+      {/* Supplementen */}
+      <div>
+        <label className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
+          {tt.supplementsLabel}
+        </label>
+        <div className="space-y-2">
+          {SUPPLEMENT_IDS.map((sid) => {
+            const active = selectedSupplements.has(sid)
+            return (
+              <label
+                key={sid}
+                className={`flex items-center gap-3 cursor-pointer px-4 py-3 border transition-colors ${
+                  active
+                    ? 'border-(--color-bronze) bg-(--color-bronze)/10 text-(--color-ink)'
+                    : 'border-(--color-frame) bg-(--color-paper) text-(--color-charcoal) hover:border-(--color-stone)'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  name="supplements"
+                  value={sid}
+                  checked={active}
+                  onChange={() => toggleSupplement(sid)}
+                  className="w-4 h-4 accent-(--color-bronze)"
+                />
+                <span className="text-sm">{tt.supplementOptions[sid]}</span>
+              </label>
+            )
+          })}
+        </div>
+        <p className="mt-2 text-xs text-(--color-stone)">{tt.supplementsHint}</p>
       </div>
 
       {/* Framing */}
@@ -314,18 +479,24 @@ export default function CommissionForm({ locale, t }: Props) {
         </div>
       </div>
 
-      <div>
-        <label htmlFor="budget" className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
-          {tt.budgetLabel}
-        </label>
-        <input
-          id="budget"
-          name="budget"
-          type="text"
-          placeholder={tt.budgetPlaceholder}
-          className="w-full px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
-        />
+      {/* Prix indicatif (live) */}
+      <div className="bg-(--color-bronze)/10 border border-(--color-bronze)/40 px-5 py-4">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1">
+          {tt.estimateLabel}
+        </p>
+        <p className="text-2xl font-[family-name:var(--font-display)] text-(--color-ink)">
+          {estimatedPrice == null
+            ? tt.estimateCustom
+            : new Intl.NumberFormat(locale === 'fr' ? 'fr-BE' : 'nl-BE', {
+                style: 'currency',
+                currency: 'EUR',
+                maximumFractionDigits: 0,
+              }).format(estimatedPrice)}
+        </p>
+        <p className="mt-1.5 text-xs text-(--color-stone) leading-relaxed">{tt.estimateHint}</p>
       </div>
+        </>
+      )}
 
       {/* Message */}
       <div>
