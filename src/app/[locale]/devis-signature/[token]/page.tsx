@@ -113,6 +113,23 @@ export default async function DevisSignaturePage({ params }: Props) {
     )
   }
 
+  // Eerste referentiefoto voor de devis-hero
+  const { data: firstAttachment } = await admin
+    .from('commission_attachments')
+    .select('storage_path, filename')
+    .eq('request_id', data.id)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle<{ storage_path: string; filename: string }>()
+
+  let heroImageUrl: string | null = null
+  if (firstAttachment?.storage_path) {
+    const { data: signed } = await admin.storage
+      .from('commission-references')
+      .createSignedUrl(firstAttachment.storage_path, 60 * 60)
+    heroImageUrl = signed?.signedUrl ?? null
+  }
+
   const isSigned = !!data.signed_at
   const techniqueLabels = locale === 'fr' ? TECHNIQUE_LABEL_FR : TECHNIQUE_LABEL_NL
   const supportLabels = locale === 'fr' ? SUPPORT_LABEL_FR : SUPPORT_LABEL_NL
@@ -147,7 +164,18 @@ export default async function DevisSignaturePage({ params }: Props) {
       </div>
 
       {/* Devis details */}
-      <section className="bg-(--color-paper) border border-(--color-frame) p-6 md:p-8">
+      <section className="bg-(--color-paper) border border-(--color-frame) overflow-hidden">
+        {heroImageUrl && (
+          <div className="aspect-[16/9] w-full bg-(--color-canvas) overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={heroImageUrl}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+        <div className="p-6 md:p-8">
         <header className="flex flex-wrap items-end justify-between gap-3 mb-6 pb-4 border-b border-(--color-frame)">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
@@ -255,6 +283,7 @@ export default async function DevisSignaturePage({ params }: Props) {
         </div>
         <p className="mt-2 text-xs text-(--color-stone)">{tt.acompteHint}</p>
         <p className="mt-1 text-xs text-(--color-stone)">{tt.deliveryNote}</p>
+        </div>
       </section>
 
       {/* Sign / Payment block */}

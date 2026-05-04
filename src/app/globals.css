@@ -186,4 +186,13 @@
   .no-save img {
     pointer-events: none;
   }
+
+  /* Indeterminate progress bar voor /devis form submit. */
+  @keyframes devis-progress {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+  }
+  .devis-progress-bar {
+    animation: devis-progress 1.4s ease-in-out infinite;
+  }
 }

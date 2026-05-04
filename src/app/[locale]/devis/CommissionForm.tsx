@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
-import { Send, CheckCircle2, AlertCircle, ImagePlus, X, Upload, Minus, Plus, Clock } from 'lucide-react'
+import { Send, CheckCircle2, AlertCircle, ImagePlus, X, Upload, Minus, Plus, Clock, Loader2 } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import type { Dictionary } from '@/i18n/dictionaries'
 import {
@@ -42,14 +42,21 @@ function scrollIntoView(el: HTMLElement | null) {
 function SubmitButton({ label, sendingLabel }: { label: string; sendingLabel: string }) {
   const { pending } = useFormStatus()
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="inline-flex items-center gap-2 px-7 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors text-sm uppercase tracking-[0.2em] disabled:opacity-50"
-    >
-      <Send className="w-4 h-4" />
-      {pending ? sendingLabel : label}
-    </button>
+    <div className="flex flex-col items-start gap-2">
+      <button
+        type="submit"
+        disabled={pending}
+        className="inline-flex items-center gap-2 px-7 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors text-sm uppercase tracking-[0.2em] disabled:opacity-50"
+      >
+        {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        {pending ? sendingLabel : label}
+      </button>
+      {pending && (
+        <div className="w-full max-w-xs h-1 bg-(--color-frame) overflow-hidden rounded-full">
+          <div className="h-full w-1/3 bg-(--color-bronze) rounded-full devis-progress-bar" />
+        </div>
+      )}
+    </div>
   )
 }
 

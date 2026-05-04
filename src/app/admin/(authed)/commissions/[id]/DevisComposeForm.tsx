@@ -2,7 +2,9 @@
 
 import { useActionState, useState } from 'react'
 import { useFormStatus } from 'react-dom'
-import { Plus, Trash2, Send, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, Send, AlertCircle, ImageIcon } from 'lucide-react'
+import BiTranslate from '@/components/admin/BiTranslate'
+import TranslateButton from '@/components/admin/TranslateButton'
 import { composeDevis, type ComposeDevisState } from '../actions'
 
 const initial: ComposeDevisState = { status: 'idle' }
@@ -14,12 +16,19 @@ type LineDraft = {
   unitPrice: number
 }
 
+type Attachment = {
+  id: string
+  filename: string
+  url: string | null
+}
+
 type Props = {
   id: string
   defaultSubject: string
   defaultIntro: string
   defaultAcomptePct: number
   initialLines?: LineDraft[]
+  attachments?: Attachment[]
 }
 
 let counter = 1
@@ -44,8 +53,11 @@ export default function DevisComposeForm({
   defaultIntro,
   defaultAcomptePct,
   initialLines,
+  attachments,
 }: Props) {
   const [state, action] = useActionState(composeDevis, initial)
+  const [subject, setSubject] = useState(defaultSubject)
+  const [intro, setIntro] = useState(defaultIntro)
   const [lines, setLines] = useState<LineDraft[]>(
     initialLines && initialLines.length > 0
       ? initialLines
@@ -66,41 +78,114 @@ export default function DevisComposeForm({
     setLines((prev) => prev.map((l) => (l.id === lid ? { ...l, ...patch } : l)))
   }
 
+  const translateAllLines = (target: 'fr' | 'nl') => {
+    const sources = lines.map((l) => l.description.trim()).filter(Boolean)
+    if (sources.length === 0) return
+    Promise.all(
+      lines.map(async (l) => {
+        if (!l.description.trim()) return l
+        try {
+          const res = await fetch('/api/admin/translate', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ text: l.description, to: target }),
+          })
+          if (!res.ok) return l
+          const data = (await res.json()) as { translation: string }
+          return { ...l, description: data.translation }
+        } catch {
+          return l
+        }
+      })
+    ).then(setLines)
+  }
+
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="id" value={id} />
 
+      {/* Foto-rappel */}
+      {attachments && attachments.length > 0 && (
+        <div className="border border-(--color-frame) bg-(--color-canvas) p-3">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-2 inline-flex items-center gap-1.5">
+            <ImageIcon className="w-3 h-3" />
+            Photos de référence
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            {attachments.map((a) => (
+              <a
+                key={a.id}
+                href={a.url ?? '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-20 h-20 overflow-hidden border border-(--color-frame) bg-(--color-paper)"
+                title={a.filename}
+              >
+                {a.url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={a.url} alt={a.filename} className="w-full h-full object-cover" />
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div>
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1.5">
-          Titre du devis
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
+            Titre du devis
+          </label>
+          <BiTranslate getSource={() => subject} onTranslated={setSubject} />
+        </div>
         <input
           name="devis_subject"
           type="text"
           required
-          defaultValue={defaultSubject}
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
           placeholder="Ex. Aquarelle sur mesure — chien de famille"
           className="w-full px-3 py-2 input-elev bg-(--color-canvas) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink) text-sm"
         />
       </div>
 
       <div>
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1.5">
-          Introduction (optionnel)
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
+            Introduction (optionnel)
+          </label>
+          <BiTranslate getSource={() => intro} onTranslated={setIntro} />
+        </div>
         <textarea
           name="devis_intro"
           rows={3}
-          defaultValue={defaultIntro}
+          value={intro}
+          onChange={(e) => setIntro(e.target.value)}
           placeholder="Mot personnel pour le client, contexte du projet…"
           className="w-full px-3 py-2 input-elev bg-(--color-canvas) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink) text-sm resize-y"
         />
       </div>
 
       <div>
-        <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1.5">
-          Lignes
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
+            Lignes
+          </label>
+          <div className="inline-flex gap-1">
+            <TranslateButton
+              getSource={() => lines.map((l) => l.description).join('\n')}
+              to="fr"
+              onTranslated={() => translateAllLines('fr')}
+              label="Lignes → FR"
+            />
+            <TranslateButton
+              getSource={() => lines.map((l) => l.description).join('\n')}
+              to="nl"
+              onTranslated={() => translateAllLines('nl')}
+              label="Lignes → NL"
+            />
+          </div>
+        </div>
         <div className="space-y-2">
           {lines.map((l) => (
             <div key={l.id} className="grid grid-cols-12 gap-2">

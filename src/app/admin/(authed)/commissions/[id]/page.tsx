@@ -496,6 +496,11 @@ export default async function CommissionDetailPage({ params }: Props) {
                       }))
                     : undefined
                 }
+                attachments={signed.map((a) => ({
+                  id: a.id,
+                  filename: a.filename,
+                  url: a.url,
+                }))}
               />
             ) : (
               <div className="space-y-4 text-sm">
