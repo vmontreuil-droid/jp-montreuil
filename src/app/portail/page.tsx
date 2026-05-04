@@ -188,7 +188,7 @@ export default async function PortailDashboardPage() {
           <p className="mt-2 text-xs text-(--color-stone)">{t.dashboard.emptyHint}</p>
         </div>
       ) : albums.length === 0 ? null : (
-        <section>
+        <section id="albums" className="scroll-mt-24">
           <div className="mb-4">
             <h2 className="text-2xl text-(--color-ink) font-[family-name:var(--font-display)] inline-flex items-center gap-2">
               <Camera className="w-5 h-5 text-(--color-bronze)" />

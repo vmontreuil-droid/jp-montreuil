@@ -6,6 +6,7 @@ import Header from '@/components/site/Header'
 import Footer from '@/components/site/Footer'
 import { getDictionary } from '@/i18n/dictionaries'
 import { getPortailLocale } from './locale'
+import PortailNav from './PortailNav'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,18 +28,21 @@ export default async function PortailLayout({
       <Header locale={locale} t={t} portailMode />
 
       {user && (
-        <div className="border-b border-(--color-frame) bg-(--color-paper)/60">
-          <div className="max-w-5xl mx-auto px-6 py-2 flex items-center justify-end gap-3 text-xs">
-            <Link
-              href="/portail/compte"
-              className="inline-flex items-center gap-1.5 text-(--color-stone) hover:text-(--color-ink) transition-colors"
-            >
-              <UserCircle className="w-3.5 h-3.5" />
-              <span className="truncate max-w-[200px]">{user.email}</span>
-            </Link>
-            <SignOutButton label={t.portail.signOut} />
+        <>
+          <div className="border-b border-(--color-frame) bg-(--color-paper)/60">
+            <div className="max-w-5xl mx-auto px-6 py-2 flex items-center justify-end gap-3 text-xs">
+              <Link
+                href="/portail/compte"
+                className="inline-flex items-center gap-1.5 text-(--color-stone) hover:text-(--color-ink) transition-colors"
+              >
+                <UserCircle className="w-3.5 h-3.5" />
+                <span className="truncate max-w-[200px]">{user.email}</span>
+              </Link>
+              <SignOutButton label={t.portail.signOut} />
+            </div>
           </div>
-        </div>
+          <PortailNav labels={t.portail.nav} />
+        </>
       )}
 
       <main className="flex-1">{children}</main>

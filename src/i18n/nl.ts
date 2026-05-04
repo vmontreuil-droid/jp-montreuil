@@ -62,6 +62,11 @@ const dict: Dictionary = {
   portail: {
     espaceClient: 'Klantenportaal',
     signOut: 'Afmelden',
+    nav: {
+      orders: 'Mijn bestellingen',
+      albums: 'Mijn albums',
+      account: 'Mijn account',
+    },
     login: {
       titlePassword: 'Inloggen',
       titleMagic: 'Magische link',

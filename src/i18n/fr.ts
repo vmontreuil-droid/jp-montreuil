@@ -60,6 +60,11 @@ const dict = {
   portail: {
     espaceClient: 'Espace client',
     signOut: 'Déconnexion',
+    nav: {
+      orders: 'Mes commandes',
+      albums: 'Mes albums',
+      account: 'Mon compte',
+    },
     login: {
       titlePassword: 'Connexion',
       titleMagic: 'Lien magique',
