@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, MessageCircle, ChevronDown } from 'lucide-react'
+import { ArrowRight, MessageCircle, ChevronDown, Brush } from 'lucide-react'
 
 export type HeroSlide = {
   src: string
@@ -19,6 +19,8 @@ type Props = {
   ctaHref: string
   contactLabel: string
   contactHref: string
+  devisLabel?: string
+  devisHref?: string
   indicatorLabel: string
   intervalMs?: number
   fadeMs?: number
@@ -32,6 +34,8 @@ export default function HeroSlideshow({
   ctaHref,
   contactLabel,
   contactHref,
+  devisLabel,
+  devisHref,
   indicatorLabel,
   intervalMs = 5000,
   fadeMs = 1500,
@@ -100,6 +104,23 @@ export default function HeroSlideshow({
               {ctaLabel}
               <ArrowRight className="w-4 h-4" />
             </Link>
+            {devisLabel && devisHref && (
+              <Link
+                href={devisHref}
+                className="group relative inline-flex items-center gap-2 px-6 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors text-sm uppercase tracking-[0.2em] shadow-lg shadow-(--color-bronze)/30"
+              >
+                <Brush className="w-4 h-4" />
+                {devisLabel}
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-1.5 -right-1.5 inline-flex h-3 w-3 rounded-full bg-white animate-ping"
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-1.5 -right-1.5 inline-flex h-3 w-3 rounded-full bg-white"
+                />
+              </Link>
+            )}
             <Link
               href={contactHref}
               className="inline-flex items-center gap-2 px-6 py-3 border border-white/40 text-white hover:bg-white/10 transition-colors text-sm uppercase tracking-[0.2em]"
