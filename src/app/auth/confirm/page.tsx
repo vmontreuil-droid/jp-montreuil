@@ -1,8 +1,8 @@
-import { ArrowRight } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { defaultLocale, isLocale, type Locale } from '@/i18n/config'
 import { headers } from 'next/headers'
+import ConfirmButton from './ConfirmButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,6 +76,7 @@ export default async function ConfirmPage({ searchParams }: Props) {
     : isFR
       ? 'Continuer'
       : 'Doorgaan'
+  const pendingLabel = isFR ? 'Connexion en cours…' : 'Bezig met aanmelden…'
   const note = isFR
     ? 'Une étape supplémentaire — ce clic est nécessaire pour empêcher les filtres anti-spam de consommer votre lien.'
     : 'Een extra klik — dit voorkomt dat spamfilters uw link verbruiken voordat u hem opent.'
@@ -91,13 +92,7 @@ export default async function ConfirmPage({ searchParams }: Props) {
         </h1>
         <p className="text-sm text-(--color-charcoal) mb-7">{body}</p>
         <form action={confirmAction}>
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-xs uppercase tracking-[0.18em]"
-          >
-            {button}
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <ConfirmButton label={button} pendingLabel={pendingLabel} />
         </form>
         <p className="mt-6 text-[11px] text-(--color-stone) leading-relaxed">{note}</p>
       </div>
