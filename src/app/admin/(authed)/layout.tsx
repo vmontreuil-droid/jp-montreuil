@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera, BookOpen, Activity, PenTool, User as UserIcon, CalendarDays, Brush, Tags } from 'lucide-react'
+import { LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera, BookOpen, Activity, PenTool, User as UserIcon, CalendarDays, Brush, Tags, Sparkles } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './SignOutButton'
 import ThemeToggle from '@/components/site/ThemeToggle'
@@ -96,6 +96,11 @@ export default async function AuthedAdminLayout({
       href: '/admin/commissions/pricing',
       label: 'Tarifs des commandes',
       icon: Tags,
+    },
+    {
+      href: '/admin/commissions/devis-examples',
+      label: 'Exemples /devis',
+      icon: Sparkles,
     },
     {
       href: '/admin/events',
