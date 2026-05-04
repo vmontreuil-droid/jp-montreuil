@@ -24,6 +24,7 @@ const NUMERIC_FIELDS = [
   'supplement_high_detail',
   'supplement_hyperrealism',
   'extra_portrait',
+  'default_vat_rate',
 ] as const
 
 async function requireAdmin() {

@@ -15,6 +15,7 @@ type PricingRow = {
   supplement_high_detail: number
   supplement_hyperrealism: number
   extra_portrait: number
+  default_vat_rate: number | null
 }
 
 function rowToPricing(row: PricingRow): Pricing {
@@ -38,6 +39,7 @@ function rowToPricing(row: PricingRow): Pricing {
       hyperrealism: Number(row.supplement_hyperrealism),
     },
     extraPortrait: Number(row.extra_portrait),
+    defaultVatRate: Number(row.default_vat_rate ?? 0),
   }
 }
 
@@ -54,7 +56,7 @@ export async function loadPricing(): Promise<Pricing> {
         'format_40x60, format_57x77, format_60x90, format_130x160,' +
           ' frame_40x60, frame_57x77, frame_60x90, frame_130x160,' +
           ' supplement_background, supplement_complex_decor, supplement_high_detail,' +
-          ' supplement_hyperrealism, extra_portrait'
+          ' supplement_hyperrealism, extra_portrait, default_vat_rate'
       )
       .eq('id', 1)
       .single<PricingRow>()

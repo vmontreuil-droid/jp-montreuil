@@ -21,6 +21,7 @@ type Defaults = {
   supplement_high_detail: number
   supplement_hyperrealism: number
   extra_portrait: number
+  default_vat_rate: number
 }
 
 type Props = {
@@ -169,6 +170,38 @@ export default function PricingForm({ defaults }: Props) {
           label="Par portrait en plus sur la même œuvre"
           defaultValue={defaults.extra_portrait}
         />
+      </section>
+
+      {/* Section 5: BTW */}
+      <section className="border border-(--color-frame) bg-(--color-paper) p-6 space-y-3">
+        <header className="mb-3">
+          <h2 className="text-base text-(--color-ink) font-[family-name:var(--font-display)]">
+            5. Taux de TVA par défaut
+          </h2>
+          <p className="text-xs text-(--color-stone) mt-1">
+            Pourcentage qui se pré-remplit lorsque vous créez un nouveau devis.
+            Mettez 0 si vous êtes en franchise. Modifiable par devis.
+          </p>
+        </header>
+        <div className="grid grid-cols-2 gap-3 items-center">
+          <p className="text-sm text-(--color-ink)">TVA par défaut</p>
+          <div className="relative">
+            <input
+              type="number"
+              name="default_vat_rate"
+              min="0"
+              max="100"
+              step="0.01"
+              required
+              defaultValue={defaults.default_vat_rate}
+              placeholder="0"
+              className="w-full px-4 py-2 pr-10 input-elev bg-(--color-canvas) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink) text-right tabular-nums"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-(--color-stone) text-sm">
+              %
+            </span>
+          </div>
+        </div>
       </section>
 
       {state.status === 'error' && (

@@ -31,6 +31,8 @@ type Commission = {
   devis_subject: string | null
   devis_intro: string | null
   devis_lines: DevisLine[]
+  devis_subtotal_eur: number | null
+  devis_vat_rate: number | null
   devis_total_eur: number | null
   devis_acompte_pct: number | null
   devis_acompte_eur: number | null
@@ -96,7 +98,8 @@ export default async function DevisSignaturePage({ params }: Props) {
     .from('commission_requests')
     .select(
       'id, name, email, locale, status, technique, width_cm, height_cm, support, framing,' +
-        ' devis_subject, devis_intro, devis_lines, devis_total_eur, devis_acompte_pct, devis_acompte_eur,' +
+        ' devis_subject, devis_intro, devis_lines, devis_subtotal_eur, devis_vat_rate,' +
+        ' devis_total_eur, devis_acompte_pct, devis_acompte_eur,' +
         ' devis_valid_until, devis_payment_reference, signature_token, signed_at, signer_name'
     )
     .eq('signature_token', token)
@@ -142,8 +145,12 @@ export default async function DevisSignaturePage({ params }: Props) {
       : locale === 'fr' ? 'À discuter' : 'Te bespreken'
 
   const lines = (data.devis_lines ?? []) as DevisLine[]
-  const subtotal = lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0)
-  const total = data.devis_total_eur ?? subtotal
+  const subtotalHt =
+    data.devis_subtotal_eur ??
+    lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0)
+  const vatRate = Number(data.devis_vat_rate ?? 0)
+  const total = data.devis_total_eur ?? subtotalHt
+  const vatAmount = Math.round((total - subtotalHt) * 100) / 100
   const acompteEur = data.devis_acompte_eur ?? Math.round(total * 0.5 * 100) / 100
   const acomptePct = data.devis_acompte_pct ?? 50
   const reference = data.devis_payment_reference || `Devis #${data.id.slice(0, 8)}`
@@ -271,9 +278,41 @@ export default async function DevisSignaturePage({ params }: Props) {
 
         {/* Totals */}
         <div className="bg-(--color-canvas) border border-(--color-frame) px-4 py-3 space-y-1.5 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-(--color-charcoal)">{tt.total}</span>
-            <span className="text-(--color-ink) font-semibold text-base">{formatEur(total)}</span>
+          {vatRate > 0 && (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-(--color-stone) text-xs">
+                  {locale === 'fr' ? 'Sous-total HT' : 'Subtotaal excl. BTW'}
+                </span>
+                <span className="text-(--color-charcoal) tabular-nums">
+                  {formatEur(subtotalHt)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-(--color-stone) text-xs">
+                  {locale === 'fr' ? `TVA (${vatRate}%)` : `BTW (${vatRate}%)`}
+                </span>
+                <span className="text-(--color-charcoal) tabular-nums">
+                  {formatEur(vatAmount)}
+                </span>
+              </div>
+            </>
+          )}
+          <div
+            className={`flex items-center justify-between ${
+              vatRate > 0 ? 'pt-1.5 border-t border-(--color-frame)/50' : ''
+            }`}
+          >
+            <span className="text-(--color-charcoal)">
+              {vatRate > 0
+                ? locale === 'fr'
+                  ? 'Total TTC'
+                  : 'Totaal incl. BTW'
+                : tt.total}
+            </span>
+            <span className="text-(--color-ink) font-semibold text-base">
+              {formatEur(total)}
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-(--color-stone) text-xs">

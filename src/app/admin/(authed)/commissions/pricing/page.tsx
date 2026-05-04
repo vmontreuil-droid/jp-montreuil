@@ -20,6 +20,7 @@ type Row = {
   supplement_high_detail: number
   supplement_hyperrealism: number
   extra_portrait: number
+  default_vat_rate: number | null
   updated_at: string
 }
 
@@ -31,28 +32,31 @@ export default async function PricingPage() {
       'format_40x60, format_57x77, format_60x90, format_130x160,' +
         ' frame_40x60, frame_57x77, frame_60x90, frame_130x160,' +
         ' supplement_background, supplement_complex_decor, supplement_high_detail,' +
-        ' supplement_hyperrealism, extra_portrait, updated_at'
+        ' supplement_hyperrealism, extra_portrait, default_vat_rate, updated_at'
     )
     .eq('id', 1)
     .maybeSingle<Row>()
 
   // Fallback naar defaults als rij nog niet bestaat
-  const defaults = data ?? {
-    format_40x60: DEFAULT_PRICING.format['40x60'],
-    format_57x77: DEFAULT_PRICING.format['57x77'],
-    format_60x90: DEFAULT_PRICING.format['60x90'],
-    format_130x160: DEFAULT_PRICING.format['130x160'],
-    frame_40x60: DEFAULT_PRICING.frameByFormat['40x60'],
-    frame_57x77: DEFAULT_PRICING.frameByFormat['57x77'],
-    frame_60x90: DEFAULT_PRICING.frameByFormat['60x90'],
-    frame_130x160: DEFAULT_PRICING.frameByFormat['130x160'],
-    supplement_background: DEFAULT_PRICING.supplement.background,
-    supplement_complex_decor: DEFAULT_PRICING.supplement.complex_decor,
-    supplement_high_detail: DEFAULT_PRICING.supplement.high_detail,
-    supplement_hyperrealism: DEFAULT_PRICING.supplement.hyperrealism,
-    extra_portrait: DEFAULT_PRICING.extraPortrait,
-    updated_at: '',
-  }
+  const defaults = data
+    ? { ...data, default_vat_rate: Number(data.default_vat_rate ?? 0) }
+    : {
+        format_40x60: DEFAULT_PRICING.format['40x60'],
+        format_57x77: DEFAULT_PRICING.format['57x77'],
+        format_60x90: DEFAULT_PRICING.format['60x90'],
+        format_130x160: DEFAULT_PRICING.format['130x160'],
+        frame_40x60: DEFAULT_PRICING.frameByFormat['40x60'],
+        frame_57x77: DEFAULT_PRICING.frameByFormat['57x77'],
+        frame_60x90: DEFAULT_PRICING.frameByFormat['60x90'],
+        frame_130x160: DEFAULT_PRICING.frameByFormat['130x160'],
+        supplement_background: DEFAULT_PRICING.supplement.background,
+        supplement_complex_decor: DEFAULT_PRICING.supplement.complex_decor,
+        supplement_high_detail: DEFAULT_PRICING.supplement.high_detail,
+        supplement_hyperrealism: DEFAULT_PRICING.supplement.hyperrealism,
+        extra_portrait: DEFAULT_PRICING.extraPortrait,
+        default_vat_rate: DEFAULT_PRICING.defaultVatRate,
+        updated_at: '',
+      }
 
   const updatedStr = defaults.updated_at
     ? new Date(defaults.updated_at).toLocaleString('fr-BE', {

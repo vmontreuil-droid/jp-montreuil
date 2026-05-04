@@ -137,6 +137,8 @@ export async function composeDevis(
   const intro = String(formData.get('devis_intro') || '').trim()
   const acomptePctRaw = String(formData.get('devis_acompte_pct') || ATELIER.defaultAcomptePct)
   const acomptePct = Math.max(0, Math.min(100, Number(acomptePctRaw) || ATELIER.defaultAcomptePct))
+  const vatRateRaw = String(formData.get('devis_vat_rate') || '0')
+  const vatRate = Math.max(0, Math.min(100, Number(vatRateRaw) || 0))
   const validUntil = String(formData.get('devis_valid_until') || '').trim()
   const lines = parseLines(formData)
 
@@ -146,7 +148,9 @@ export async function composeDevis(
     return { status: 'error', message: 'Ajoutez au moins une ligne avec un montant.' }
   }
 
-  const total = lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0)
+  const subtotalHt = lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0)
+  const vatAmount = Math.round(subtotalHt * (vatRate / 100) * 100) / 100
+  const total = Math.round((subtotalHt + vatAmount) * 100) / 100
   const acompteEur = Math.round(total * (acomptePct / 100) * 100) / 100
 
   const admin = createAdminClient()
@@ -185,6 +189,8 @@ export async function composeDevis(
       devis_subject: subject,
       devis_intro: intro || null,
       devis_lines: lines,
+      devis_subtotal_eur: subtotalHt,
+      devis_vat_rate: vatRate,
       devis_total_eur: total,
       devis_acompte_pct: acomptePct,
       devis_acompte_eur: acompteEur,
@@ -268,6 +274,9 @@ export async function composeDevis(
         subject,
         intro: intro || null,
         lines,
+        subtotalHt,
+        vatRate,
+        vatAmount,
         total,
         acomptePct,
         acompteEur,

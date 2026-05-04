@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Mail,
   ArrowRight,
+  ChevronDown,
 } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
@@ -59,15 +60,27 @@ export default async function DevisPage({ params }: Props) {
   const isFR = locale === 'fr'
   const pricing = await loadPricing()
 
-  // Voorbeeld-werken voor de inspiratie-grid
+  // Voorbeeld-werken voor de inspiratie-grid — JP kiest deze in admin.
+  // Als er nog geen geselecteerd zijn, valt de query terug op de eerste 8.
   const supabase = await createClient()
-  const { data: worksData } = await supabase
+  const { data: selectedWorks } = await supabase
     .from('works')
     .select('id, storage_path, title_fr, title_nl, technique_fr, technique_nl')
+    .eq('is_devis_example', true)
     .order('sort_order', { ascending: true })
-    .limit(8)
+    .limit(12)
     .returns<WorkRow[]>()
-  const works = worksData ?? []
+
+  let works: WorkRow[] = selectedWorks ?? []
+  if (works.length === 0) {
+    const { data: fallback } = await supabase
+      .from('works')
+      .select('id, storage_path, title_fr, title_nl, technique_fr, technique_nl')
+      .order('sort_order', { ascending: true })
+      .limit(8)
+      .returns<WorkRow[]>()
+    works = fallback ?? []
+  }
 
   // Hero-foto: eerste werk als achtergrond
   const heroPhoto = works[0]?.storage_path ? workImageUrl(works[0].storage_path) : null
@@ -109,28 +122,24 @@ export default async function DevisPage({ params }: Props) {
             <ArrowRight className="w-4 h-4" />
           </a>
         </div>
-      </section>
 
-      {/* SUPPORTS & TECHNIEKEN */}
-      <section className="border-y border-(--color-frame) bg-(--color-paper)">
-        <div className="max-w-4xl mx-auto px-6 py-16">
-          <div className="flex items-center gap-3 mb-6 text-(--color-bronze)">
-            <Brush className="w-5 h-5" />
-            <h2 className="text-sm uppercase tracking-[0.2em]">{tt.introTitle}</h2>
-          </div>
-          <ul className="grid sm:grid-cols-2 gap-4">
-            {tt.introBody.map((line, i) => (
-              <li key={i} className="flex items-start gap-3 text-sm text-(--color-charcoal)">
-                <Check className="w-4 h-4 text-(--color-bronze) shrink-0 mt-0.5" />
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Scroll-indicator onderaan de hero */}
+        <a
+          href="#how-it-works"
+          aria-label={isFR ? 'Faire défiler' : 'Scrollen'}
+          className="group absolute left-1/2 -translate-x-1/2 bottom-6 inline-flex flex-col items-center gap-2 text-(--color-stone) hover:text-(--color-bronze) transition-colors"
+        >
+          <span className="text-[10px] uppercase tracking-[0.3em]">
+            {isFR ? 'Découvrir' : 'Ontdek'}
+          </span>
+          <span className="flex h-9 w-9 items-center justify-center border border-current rounded-full animate-bounce">
+            <ChevronDown className="w-4 h-4" />
+          </span>
+        </a>
       </section>
 
       {/* HOE WERKT HET */}
-      <section className="bg-(--color-canvas)">
+      <section id="how-it-works" className="scroll-mt-20 bg-(--color-canvas)">
         <div className="max-w-5xl mx-auto px-6 py-20">
           <header className="text-center mb-12">
             <p className="text-xs uppercase tracking-[0.3em] text-(--color-bronze) mb-3">
@@ -211,9 +220,9 @@ export default async function DevisPage({ params }: Props) {
         </section>
       )}
 
-      {/* FORM */}
+      {/* FORM SECTIE — 2 kolommen : voorwaarden links, formulier rechts */}
       <section id="commande" className="bg-(--color-canvas)">
-        <div className="max-w-3xl mx-auto px-6 py-20">
+        <div className="max-w-6xl mx-auto px-6 pt-[105px] pb-20">
           <header className="text-center mb-10">
             <p className="text-xs uppercase tracking-[0.3em] text-(--color-bronze) mb-3">
               {isFR ? 'Commande' : 'Bestelling'}
@@ -224,8 +233,29 @@ export default async function DevisPage({ params }: Props) {
             <p className="text-(--color-charcoal) max-w-xl mx-auto">{tt.ctaLead}</p>
           </header>
 
-          <div className="bg-(--color-paper) border border-(--color-frame) p-6 md:p-8">
-            <CommissionForm locale={locale as Locale} t={t} pricing={pricing} />
+          <div className="grid lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] gap-8">
+            {/* Voorwaarden / supports & techniques (links) */}
+            <aside className="lg:sticky lg:top-6 lg:self-start">
+              <div className="bg-(--color-paper) border border-(--color-frame) p-6">
+                <div className="flex items-center gap-2 mb-4 text-(--color-bronze)">
+                  <Brush className="w-4 h-4" />
+                  <h3 className="text-xs uppercase tracking-[0.2em]">{tt.introTitle}</h3>
+                </div>
+                <ul className="space-y-3 text-sm text-(--color-charcoal)">
+                  {tt.introBody.map((line, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-(--color-bronze) shrink-0 mt-0.5" />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </aside>
+
+            {/* Formulier (rechts) */}
+            <div className="bg-(--color-paper) border border-(--color-frame) p-6 md:p-8">
+              <CommissionForm locale={locale as Locale} t={t} pricing={pricing} />
+            </div>
           </div>
         </div>
       </section>

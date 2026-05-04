@@ -27,6 +27,7 @@ type Props = {
   defaultSubject: string
   defaultIntro: string
   defaultAcomptePct: number
+  defaultVatRate: number
   initialLines?: LineDraft[]
   attachments?: Attachment[]
 }
@@ -52,6 +53,7 @@ export default function DevisComposeForm({
   defaultSubject,
   defaultIntro,
   defaultAcomptePct,
+  defaultVatRate,
   initialLines,
   attachments,
 }: Props) {
@@ -64,9 +66,12 @@ export default function DevisComposeForm({
       : [{ id: counter++, description: '', quantity: 1, unitPrice: 0 }]
   )
   const [acomptePct, setAcomptePct] = useState(defaultAcomptePct)
+  const [vatRate, setVatRate] = useState(defaultVatRate)
 
-  const subtotal = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0)
-  const acompteEur = Math.round(subtotal * (acomptePct / 100) * 100) / 100
+  const subtotalHt = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0)
+  const vatAmount = Math.round(subtotalHt * (vatRate / 100) * 100) / 100
+  const totalTtc = Math.round((subtotalHt + vatAmount) * 100) / 100
+  const acompteEur = Math.round(totalTtc * (acomptePct / 100) * 100) / 100
 
   const addLine = () => {
     setLines((prev) => [...prev, { id: counter++, description: '', quantity: 1, unitPrice: 0 }])
@@ -242,7 +247,24 @@ export default function DevisComposeForm({
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1.5">
+            TVA (%)
+          </label>
+          <input
+            type="number"
+            name="devis_vat_rate"
+            min="0"
+            max="100"
+            step="0.01"
+            value={vatRate}
+            onChange={(e) =>
+              setVatRate(Math.max(0, Math.min(100, Number(e.target.value) || 0)))
+            }
+            className="w-full px-3 py-2 input-elev bg-(--color-canvas) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink) text-sm"
+          />
+        </div>
         <div>
           <label className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1.5">
             Acompte (%)
@@ -273,12 +295,20 @@ export default function DevisComposeForm({
       {/* Récap */}
       <div className="bg-(--color-canvas) border border-(--color-frame) px-4 py-3 text-sm space-y-1">
         <div className="flex items-center justify-between">
-          <span className="text-(--color-charcoal)">Total</span>
-          <span className="text-(--color-ink) font-semibold">{subtotal.toFixed(2)} €</span>
+          <span className="text-(--color-charcoal)">Sous-total HT</span>
+          <span className="text-(--color-ink) tabular-nums">{subtotalHt.toFixed(2)} €</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-(--color-stone) text-xs">TVA ({vatRate}%)</span>
+          <span className="text-(--color-stone) tabular-nums">{vatAmount.toFixed(2)} €</span>
+        </div>
+        <div className="flex items-center justify-between pt-1 border-t border-(--color-frame)/50">
+          <span className="text-(--color-charcoal) font-semibold">Total TTC</span>
+          <span className="text-(--color-ink) font-semibold tabular-nums">{totalTtc.toFixed(2)} €</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-(--color-stone) text-xs">Acompte ({acomptePct}%)</span>
-          <span className="text-(--color-bronze) font-semibold">{acompteEur.toFixed(2)} €</span>
+          <span className="text-(--color-bronze) font-semibold tabular-nums">{acompteEur.toFixed(2)} €</span>
         </div>
       </div>
 

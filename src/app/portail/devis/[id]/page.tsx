@@ -58,6 +58,8 @@ type Commission = {
   devis_subject: string | null
   devis_intro: string | null
   devis_lines: { description: string; quantity: number; unit_price: number }[]
+  devis_subtotal_eur: number | null
+  devis_vat_rate: number | null
   devis_total_eur: number | null
   devis_acompte_pct: number | null
   devis_acompte_eur: number | null
@@ -161,6 +163,12 @@ export default async function PortailDevisDetailPage({ params }: Props) {
   // Devis lines (zoals JP ze heeft samengesteld) — bron van waarheid voor totaal
   const devisLines = (req.devis_lines ?? []) as Commission['devis_lines']
   const devisTotal = req.devis_total_eur ?? null
+  const devisSubtotal = req.devis_subtotal_eur ?? null
+  const vatRate = Number(req.devis_vat_rate ?? 0)
+  const vatAmount =
+    devisTotal != null && devisSubtotal != null
+      ? Math.round((devisTotal - devisSubtotal) * 100) / 100
+      : null
   const acompteEur = req.devis_acompte_eur ?? null
   const reference = req.devis_payment_reference ?? null
 
@@ -381,9 +389,39 @@ export default async function PortailDevisDetailPage({ params }: Props) {
           </ul>
 
           <div className="bg-(--color-canvas) border border-(--color-frame) px-4 py-3 space-y-1 text-sm">
-            <div className="flex items-center justify-between">
+            {vatRate > 0 && devisSubtotal != null && vatAmount != null && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-(--color-stone) text-xs">
+                    {isFR ? 'Sous-total HT' : 'Subtotaal excl. BTW'}
+                  </span>
+                  <span className="text-(--color-charcoal) tabular-nums">
+                    {formatEur(devisSubtotal)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-(--color-stone) text-xs">
+                    {isFR ? `TVA (${vatRate}%)` : `BTW (${vatRate}%)`}
+                  </span>
+                  <span className="text-(--color-charcoal) tabular-nums">
+                    {formatEur(vatAmount)}
+                  </span>
+                </div>
+              </>
+            )}
+            <div
+              className={`flex items-center justify-between ${
+                vatRate > 0 ? 'pt-1.5 border-t border-(--color-frame)/50' : ''
+              }`}
+            >
               <span className="text-(--color-charcoal)">
-                {isFR ? 'Total' : 'Totaal'}
+                {vatRate > 0
+                  ? isFR
+                    ? 'Total TTC'
+                    : 'Totaal incl. BTW'
+                  : isFR
+                    ? 'Total'
+                    : 'Totaal'}
               </span>
               <span className="text-(--color-ink) font-semibold">
                 {devisTotal != null ? formatEur(devisTotal) : '—'}

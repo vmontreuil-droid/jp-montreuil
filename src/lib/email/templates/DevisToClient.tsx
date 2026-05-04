@@ -16,6 +16,9 @@ type Props = {
   subject: string
   intro: string | null
   lines: DevisLine[]
+  subtotalHt: number
+  vatRate: number
+  vatAmount: number
   total: number
   acomptePct: number
   acompteEur: number
@@ -121,6 +124,56 @@ export function DevisToClient(p: Props) {
       >
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <tbody>
+            {p.vatRate > 0 && (
+              <>
+                <tr>
+                  <td
+                    style={{
+                      fontFamily: text.body.fontFamily,
+                      fontSize: 12,
+                      color: colors.stone,
+                      padding: '4px 0',
+                    }}
+                  >
+                    {isFR ? 'Sous-total HT' : 'Subtotaal excl. BTW'}
+                  </td>
+                  <td
+                    style={{
+                      fontFamily: text.body.fontFamily,
+                      fontSize: 13,
+                      color: colors.charcoal,
+                      textAlign: 'right',
+                      padding: '4px 0',
+                    }}
+                  >
+                    {formatEur(p.subtotalHt)}
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    style={{
+                      fontFamily: text.body.fontFamily,
+                      fontSize: 12,
+                      color: colors.stone,
+                      padding: '4px 0',
+                    }}
+                  >
+                    {isFR ? `TVA (${p.vatRate}%)` : `BTW (${p.vatRate}%)`}
+                  </td>
+                  <td
+                    style={{
+                      fontFamily: text.body.fontFamily,
+                      fontSize: 13,
+                      color: colors.charcoal,
+                      textAlign: 'right',
+                      padding: '4px 0',
+                    }}
+                  >
+                    {formatEur(p.vatAmount)}
+                  </td>
+                </tr>
+              </>
+            )}
             <tr>
               <td
                 style={{
@@ -128,9 +181,16 @@ export function DevisToClient(p: Props) {
                   fontSize: 13,
                   color: colors.charcoal,
                   padding: '4px 0',
+                  borderTop: p.vatRate > 0 ? `1px solid ${colors.border}` : undefined,
                 }}
               >
-                {isFR ? 'Total' : 'Totaal'}
+                {isFR
+                  ? p.vatRate > 0
+                    ? 'Total TTC'
+                    : 'Total'
+                  : p.vatRate > 0
+                    ? 'Totaal incl. BTW'
+                    : 'Totaal'}
               </td>
               <td
                 style={{
@@ -140,6 +200,7 @@ export function DevisToClient(p: Props) {
                   textAlign: 'right',
                   fontWeight: 600,
                   padding: '4px 0',
+                  borderTop: p.vatRate > 0 ? `1px solid ${colors.border}` : undefined,
                 }}
               >
                 {formatEur(p.total)}

@@ -20,6 +20,7 @@ import {
   ATELIER,
   formatEur,
   priceBreakdown,
+  seedDevisLinesFromRequest,
   FORMATS,
   type FrameType,
   type PriceLineItem,
@@ -179,6 +180,8 @@ type CommissionRow = {
   devis_intro: string | null
   devis_lines: DevisLine[]
   devis_total_eur: number | null
+  devis_subtotal_eur: number | null
+  devis_vat_rate: number | null
   devis_acompte_pct: number | null
   devis_acompte_eur: number | null
   devis_valid_until: string | null
@@ -506,6 +509,7 @@ export default async function CommissionDetailPage({ params }: Props) {
                 defaultSubject={req.devis_subject || ''}
                 defaultIntro={req.devis_intro || ''}
                 defaultAcomptePct={req.devis_acompte_pct ?? ATELIER.defaultAcomptePct}
+                defaultVatRate={req.devis_vat_rate ?? pricing.defaultVatRate}
                 initialLines={
                   devisLines.length > 0
                     ? devisLines.map((l, i) => ({
@@ -514,7 +518,20 @@ export default async function CommissionDetailPage({ params }: Props) {
                         quantity: l.quantity,
                         unitPrice: l.unit_price,
                       }))
-                    : undefined
+                    : seedDevisLinesFromRequest({
+                        technique: req.technique,
+                        width_cm: req.width_cm,
+                        height_cm: req.height_cm,
+                        frame_type: (req.frame_type as FrameType | null) ?? 'aucun',
+                        portrait_count: req.portrait_count,
+                        supplements: req.supplements,
+                        pricing,
+                      }).map((l, i) => ({
+                        id: i + 1,
+                        description: l.description,
+                        quantity: l.quantity,
+                        unitPrice: l.unit_price,
+                      }))
                 }
                 attachments={signed.map((a) => ({
                   id: a.id,

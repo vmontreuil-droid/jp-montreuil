@@ -78,6 +78,8 @@ export type Pricing = {
   frameByFormat: Record<PresetFormatId, number>
   supplement: Record<SupplementId, number>
   extraPortrait: number
+  /** Standaard BTW-tarief in % (bv. 0, 6, 21). Wordt voor-ingevuld bij nieuwe devis. */
+  defaultVatRate: number
 }
 
 export const DEFAULT_PRICING: Pricing = {
@@ -100,6 +102,7 @@ export const DEFAULT_PRICING: Pricing = {
     hyperrealism: 250,
   },
   extraPortrait: 200,
+  defaultVatRate: 0,
 } as const
 
 /** Een lijn in de prijsdetail-tabel. */
@@ -190,4 +193,118 @@ export function estimatePrice(opts: {
   pricing: Pricing
 }): number | null {
   return priceBreakdown(opts).total
+}
+
+/**
+ * Bouw een initiële set devis-lijnen op basis van wat de klant koos in
+ * z'n aanvraag. JP kan deze daarna gewoon bijwerken / aanpassen / lijntje
+ * toevoegen, geen overtypen meer nodig.
+ */
+export type SeededLine = {
+  description: string
+  quantity: number
+  unit_price: number
+}
+
+const FORMAT_LABELS: Record<string, string> = {
+  '40x60': '40 × 60 cm',
+  '57x77': '57 × 77 cm',
+  '60x90': '60 × 90 cm',
+  '130x160': '130 × 160 cm',
+}
+
+const TECHNIQUE_FR: Record<string, string> = {
+  crayon_nb: 'Crayon noir & blanc',
+  aquarelle_couleur: 'Aquarelle couleur',
+  acrylique_toile: 'Acrylique sur toile',
+  autre: 'Œuvre sur mesure',
+}
+
+const SUPPLEMENT_FR: Record<string, string> = {
+  background: 'Arrière-plan travaillé',
+  complex_decor: 'Décor complexe',
+  high_detail: 'Niveau de détail élevé',
+  hyperrealism: 'Hyper-réalisme',
+}
+
+export function seedDevisLinesFromRequest(opts: {
+  technique: string
+  width_cm: number | null
+  height_cm: number | null
+  frame_type: FrameType | null
+  portrait_count: number | null
+  supplements: readonly string[] | null
+  pricing: Pricing
+}): SeededLine[] {
+  const lines: SeededLine[] = []
+
+  // Format
+  let formatId: string = 'custom'
+  if (opts.width_cm && opts.height_cm) {
+    for (const f of FORMATS) {
+      if (f.width === opts.width_cm && f.height === opts.height_cm) {
+        formatId = f.id
+        break
+      }
+    }
+  }
+
+  const techniqueLabel = TECHNIQUE_FR[opts.technique] || opts.technique
+  if (formatId !== 'custom') {
+    const presetId = formatId as PresetFormatId
+    lines.push({
+      description: `${techniqueLabel} — ${FORMAT_LABELS[formatId]}`,
+      quantity: 1,
+      unit_price: opts.pricing.format[presetId] ?? 0,
+    })
+  } else if (opts.width_cm && opts.height_cm) {
+    lines.push({
+      description: `${techniqueLabel} — ${opts.width_cm} × ${opts.height_cm} cm (sur mesure)`,
+      quantity: 1,
+      unit_price: 0,
+    })
+  } else {
+    lines.push({
+      description: techniqueLabel,
+      quantity: 1,
+      unit_price: 0,
+    })
+  }
+
+  // Frame
+  if (opts.frame_type && opts.frame_type !== 'aucun') {
+    const framePrice =
+      formatId !== 'custom'
+        ? opts.pricing.frameByFormat[formatId as PresetFormatId] ?? 0
+        : 0
+    lines.push({
+      description: `Encadrement${formatId !== 'custom' ? ` (${FORMAT_LABELS[formatId]})` : ''}`,
+      quantity: 1,
+      unit_price: framePrice,
+    })
+  }
+
+  // Extra portraits
+  const extra = Math.max(0, (opts.portrait_count ?? 1) - 1)
+  if (extra > 0) {
+    lines.push({
+      description: `Portrait${extra > 1 ? 's' : ''} supplémentaire${extra > 1 ? 's' : ''}`,
+      quantity: extra,
+      unit_price: opts.pricing.extraPortrait,
+    })
+  }
+
+  // Supplements
+  for (const sid of opts.supplements ?? []) {
+    const price = opts.pricing.supplement[sid as SupplementId] ?? 0
+    if (price > 0) {
+      lines.push({
+        description: SUPPLEMENT_FR[sid] || sid,
+        quantity: 1,
+        unit_price: price,
+      })
+    }
+  }
+
+  return lines
 }

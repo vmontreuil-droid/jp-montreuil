@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Sparkles, X } from 'lucide-react'
 
-const STORAGE_KEY = 'announcement-devis-v1-dismissed'
+const STORAGE_KEY = 'announcement-devis-v2-dismissed'
 
 type Props = {
   href: string
@@ -44,7 +44,6 @@ export default function AnnouncementBar({ href, badge, message, cta }: Props) {
       <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center justify-between gap-3">
         <Link
           href={href}
-          onClick={dismiss}
           className="flex items-center gap-2 group min-w-0"
         >
           <Sparkles className="w-4 h-4 shrink-0 animate-pulse" />
