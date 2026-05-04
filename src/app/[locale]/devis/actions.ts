@@ -9,11 +9,14 @@ import { sendEmail, ADMIN_EMAIL } from '@/lib/email/client'
 import { NewCommissionRequest } from '@/lib/email/templates/NewCommissionRequest'
 import {
   FORMATS,
+  FRAME_TYPES,
   SUPPLEMENT_IDS,
   PORTRAIT_COUNT_MIN,
   PORTRAIT_COUNT_MAX,
   estimatePrice,
+  type FrameType,
 } from '@/lib/atelier-config'
+import { loadPricing } from '@/lib/commission-pricing'
 
 export type CommissionState =
   | { status: 'idle' }
@@ -33,7 +36,7 @@ const ALLOWED_TYPES = new Set([
 ])
 const TECHNIQUES = new Set(['crayon_nb', 'aquarelle_couleur', 'acrylique_toile'])
 const SUPPORTS = new Set(['papier_aquarelle', 'toile_lin'])
-const FRAMINGS = new Set(['oui', 'non'])
+const FRAME_TYPE_SET = new Set<string>(FRAME_TYPES as readonly string[])
 const FORMAT_PRESET_IDS = new Set<string>(FORMATS.map((f) => f.id))
 const SUPPLEMENT_SET = new Set<string>(SUPPLEMENT_IDS as readonly string[])
 
@@ -85,7 +88,7 @@ export async function submitCommission(
   // In discuss-mode skippen we de structured validatie — JP behandelt manueel.
   let technique: string
   let support: string | null
-  let framing: 'oui' | 'non' | null
+  let frameType: FrameType | null
   let widthCm: number | null = null
   let heightCm: number | null = null
   let formatChoice: string
@@ -95,14 +98,14 @@ export async function submitCommission(
   if (discussOnly) {
     technique = 'autre'
     support = null
-    framing = null
+    frameType = null
     formatChoice = 'custom'
     portraitCount = 1
     supplements = []
   } else {
     const techniqueRaw = String(formData.get('technique') ?? '').trim()
     const supportRaw = String(formData.get('support') ?? '').trim()
-    const framingRaw = String(formData.get('framing') ?? '').trim()
+    const frameTypeRaw = String(formData.get('frame_type') ?? '').trim()
     formatChoice = String(formData.get('format_choice') ?? '').trim()
     const widthRaw = String(formData.get('width_cm') ?? '').trim()
     const heightRaw = String(formData.get('height_cm') ?? '').trim()
@@ -110,10 +113,10 @@ export async function submitCommission(
 
     if (!TECHNIQUES.has(techniqueRaw)) return { status: 'error', message: t.errors.required }
     if (!SUPPORTS.has(supportRaw)) return { status: 'error', message: t.errors.required }
-    if (!FRAMINGS.has(framingRaw)) return { status: 'error', message: t.errors.required }
+    if (!FRAME_TYPE_SET.has(frameTypeRaw)) return { status: 'error', message: t.errors.required }
     technique = techniqueRaw
     support = supportRaw
-    framing = framingRaw as 'oui' | 'non'
+    frameType = frameTypeRaw as FrameType
 
     // Format: ofwel preset (gebruik vaste afmetingen) ofwel custom (use input)
     if (FORMAT_PRESET_IDS.has(formatChoice)) {
@@ -170,7 +173,7 @@ export async function submitCommission(
       support,
       width_cm: widthCm,
       height_cm: heightCm,
-      framing,
+      frame_type: frameType,
       portrait_count: portraitCount,
       supplements,
       message,
@@ -218,15 +221,16 @@ export async function submitCommission(
   }
 
   // Schat de prijs voor in de mail naar JP (null voor discuss-mode of custom format)
+  const pricing = await loadPricing()
   const priceEstimate =
-    discussOnly || framing == null
+    discussOnly || frameType == null
       ? null
       : estimatePrice({
           formatId: formatChoice,
-          technique,
+          frameType,
           portraitCount,
           supplements,
-          framing,
+          pricing,
         })
 
   // Notify JP
@@ -235,8 +239,8 @@ export async function submitCommission(
     const supportLabel = support
       ? ((t.supportOptions as Record<string, string>)[support] || support)
       : null
-    const framingLabel = framing
-      ? ((t.framingOptions as Record<string, string>)[framing] || framing)
+    const frameTypeLabel = frameType
+      ? ((t.frameTypeOptions as Record<string, string>)[frameType] || frameType)
       : null
     const supplementLabels = supplements.map(
       (s) => (t.supplementOptions as Record<string, string>)[s] || s
@@ -260,8 +264,8 @@ export async function submitCommission(
         supportLabel,
         width: widthCm,
         height: heightCm,
-        framing,
-        framingLabel,
+        frameType,
+        frameTypeLabel,
         portraitCount,
         supplements: supplementLabels,
         priceEstimate,
@@ -276,9 +280,9 @@ export async function submitCommission(
       `Email: ${email}`,
       phone ? `${isFR ? 'Téléphone' : 'Telefoon'}: ${phone}` : '',
       `${isFR ? 'Technique' : 'Techniek'}: ${techniqueLabel}`,
-      `${isFR ? 'Support' : 'Drager'}: ${supportLabel}`,
+      supportLabel ? `${isFR ? 'Support' : 'Drager'}: ${supportLabel}` : '',
       widthCm && heightCm ? `${isFR ? 'Format' : 'Formaat'}: ${widthCm} × ${heightCm} cm` : '',
-      `${isFR ? 'Encadrement' : 'Inkadering'}: ${framingLabel}`,
+      frameTypeLabel ? `${isFR ? 'Encadrement' : 'Inkadering'}: ${frameTypeLabel}` : '',
       `${isFR ? 'Portraits' : 'Portretten'}: ${portraitCount}`,
       supplementLabels.length > 0
         ? `${isFR ? 'Suppléments' : 'Supplementen'}: ${supplementLabels.join(', ')}`

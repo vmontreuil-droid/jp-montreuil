@@ -4,7 +4,10 @@ import { Brush, Check } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { pageMetadata } from '@/lib/og'
+import { loadPricing } from '@/lib/commission-pricing'
 import CommissionForm from './CommissionForm'
+
+export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -29,6 +32,7 @@ export default async function DevisPage({ params }: Props) {
   if (!isLocale(locale)) notFound()
   const t = getDictionary(locale as Locale)
   const tt = t.devis
+  const pricing = await loadPricing()
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -58,7 +62,7 @@ export default async function DevisPage({ params }: Props) {
       </div>
 
       <div>
-        <CommissionForm locale={locale as Locale} t={t} />
+        <CommissionForm locale={locale as Locale} t={t} pricing={pricing} />
       </div>
     </div>
   )

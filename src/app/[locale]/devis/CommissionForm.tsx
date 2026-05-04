@@ -7,11 +7,15 @@ import type { Locale } from '@/i18n/config'
 import type { Dictionary } from '@/i18n/dictionaries'
 import {
   FORMATS,
+  FRAME_TYPES,
   SUPPLEMENT_IDS,
   PORTRAIT_COUNT_MIN,
   PORTRAIT_COUNT_MAX,
-  estimatePrice,
+  priceBreakdown,
   type SupplementId,
+  type FrameType,
+  type Pricing,
+  type PriceLineItem,
 } from '@/lib/atelier-config'
 import { submitCommission, type CommissionState } from './actions'
 
@@ -21,7 +25,6 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif'
 const TECHNIQUES = ['crayon_nb', 'aquarelle_couleur', 'acrylique_toile'] as const
 const SUPPORTS = ['papier_aquarelle', 'toile_lin'] as const
-const FRAMINGS = ['oui', 'non'] as const
 type FormatChoice = (typeof FORMATS)[number]['id'] | 'custom'
 
 function formatBytes(b: number): string {
@@ -53,9 +56,10 @@ function SubmitButton({ label, sendingLabel }: { label: string; sendingLabel: st
 type Props = {
   locale: Locale
   t: Dictionary
+  pricing: Pricing
 }
 
-export default function CommissionForm({ locale, t }: Props) {
+export default function CommissionForm({ locale, t, pricing }: Props) {
   const tt = t.devis
   const [state, action] = useActionState(submitCommission, initial)
   const [files, setFiles] = useState<File[]>([])
@@ -63,7 +67,7 @@ export default function CommissionForm({ locale, t }: Props) {
   const [localError, setLocalError] = useState<string | null>(null)
   const [selectedTechnique, setSelectedTechnique] = useState<typeof TECHNIQUES[number]>('aquarelle_couleur')
   const [selectedSupport, setSelectedSupport] = useState<typeof SUPPORTS[number]>('papier_aquarelle')
-  const [selectedFraming, setSelectedFraming] = useState<typeof FRAMINGS[number]>('non')
+  const [selectedFrame, setSelectedFrame] = useState<FrameType>('aucun')
   const [selectedFormat, setSelectedFormat] = useState<FormatChoice>('40x60')
   const [customWidth, setCustomWidth] = useState('')
   const [customHeight, setCustomHeight] = useState('')
@@ -86,13 +90,44 @@ export default function CommissionForm({ locale, t }: Props) {
   const effectiveHeight =
     selectedFormat === 'custom' ? customHeight : formatPreset ? String(formatPreset.height) : ''
 
-  const estimatedPrice = estimatePrice({
+  const breakdown = priceBreakdown({
     formatId: selectedFormat,
-    technique: selectedTechnique,
+    frameType: selectedFrame,
     portraitCount,
     supplements: Array.from(selectedSupplements),
-    framing: selectedFraming,
+    pricing,
   })
+  const estimatedPrice = breakdown.total
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(locale === 'fr' ? 'fr-BE' : 'nl-BE', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+    }).format(amount)
+
+  const lineLabel = (line: PriceLineItem): string => {
+    if (line.key.startsWith('format:')) {
+      const id = line.key.split(':')[1]
+      if (id === 'custom') return tt.formatOptions.custom
+      return tt.formatOptions[id as keyof typeof tt.formatOptions] || id
+    }
+    if (line.key.startsWith('frame:')) {
+      const id = line.key.split(':')[1]
+      return tt.frameTypeOptions[id as keyof typeof tt.frameTypeOptions] || id
+    }
+    if (line.key === 'extra_portraits') {
+      const n = line.qty ?? 0
+      return locale === 'fr'
+        ? `${n} portrait${n > 1 ? 's' : ''} supplémentaire${n > 1 ? 's' : ''}`
+        : `${n} extra portret${n > 1 ? 'ten' : ''}`
+    }
+    if (line.key.startsWith('supplement:')) {
+      const id = line.key.split(':')[1]
+      return tt.supplementOptions[id as keyof typeof tt.supplementOptions] || id
+    }
+    return line.key
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const hiddenInputRef = useRef<HTMLInputElement>(null)
@@ -404,18 +439,18 @@ export default function CommissionForm({ locale, t }: Props) {
         <p className="mt-2 text-xs text-(--color-stone)">{tt.supplementsHint}</p>
       </div>
 
-      {/* Framing */}
+      {/* Frame type */}
       <div>
         <label className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
-          {tt.framingLabel}
+          {tt.frameTypeLabel}
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {FRAMINGS.map((f) => {
-            const active = selectedFraming === f
+        <div className="space-y-2">
+          {FRAME_TYPES.map((f) => {
+            const active = selectedFrame === f
             return (
               <label
                 key={f}
-                className={`cursor-pointer text-center px-3 py-3 text-sm border transition-colors ${
+                className={`flex items-center gap-3 cursor-pointer px-4 py-3 border transition-colors ${
                   active
                     ? 'border-(--color-bronze) bg-(--color-bronze)/10 text-(--color-ink)'
                     : 'border-(--color-frame) bg-(--color-paper) text-(--color-charcoal) hover:border-(--color-stone)'
@@ -423,13 +458,13 @@ export default function CommissionForm({ locale, t }: Props) {
               >
                 <input
                   type="radio"
-                  name="framing"
+                  name="frame_type"
                   value={f}
                   checked={active}
-                  onChange={() => setSelectedFraming(f)}
-                  className="sr-only"
+                  onChange={() => setSelectedFrame(f)}
+                  className="w-4 h-4 accent-(--color-bronze)"
                 />
-                {tt.framingOptions[f]}
+                <span className="text-sm">{tt.frameTypeOptions[f]}</span>
               </label>
             )
           })}
@@ -479,21 +514,35 @@ export default function CommissionForm({ locale, t }: Props) {
         </div>
       </div>
 
-      {/* Prix indicatif (live) */}
+      {/* Prix indicatif (live) — détail par ligne */}
       <div className="bg-(--color-bronze)/10 border border-(--color-bronze)/40 px-5 py-4">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-3">
           {tt.estimateLabel}
         </p>
-        <p className="text-2xl font-[family-name:var(--font-display)] text-(--color-ink)">
-          {estimatedPrice == null
-            ? tt.estimateCustom
-            : new Intl.NumberFormat(locale === 'fr' ? 'fr-BE' : 'nl-BE', {
-                style: 'currency',
-                currency: 'EUR',
-                maximumFractionDigits: 0,
-              }).format(estimatedPrice)}
-        </p>
-        <p className="mt-1.5 text-xs text-(--color-stone) leading-relaxed">{tt.estimateHint}</p>
+        <ul className="space-y-1.5 mb-3 text-sm">
+          {breakdown.lines.map((line) => (
+            <li
+              key={line.key}
+              className="flex items-baseline justify-between gap-3 border-b border-(--color-bronze)/20 pb-1.5 last:border-b-0 last:pb-0"
+            >
+              <span className="text-(--color-charcoal)">{lineLabel(line)}</span>
+              <span className="text-(--color-ink) tabular-nums whitespace-nowrap">
+                {line.onRequest
+                  ? tt.estimateCustom
+                  : formatCurrency(line.amount)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="flex items-baseline justify-between gap-3 pt-2 border-t-2 border-(--color-bronze)/40">
+          <span className="text-sm uppercase tracking-[0.15em] text-(--color-stone)">
+            {tt.estimateTotal}
+          </span>
+          <span className="text-2xl font-[family-name:var(--font-display)] text-(--color-ink)">
+            {estimatedPrice == null ? tt.estimateCustom : formatCurrency(estimatedPrice)}
+          </span>
+        </div>
+        <p className="mt-3 text-xs text-(--color-stone) leading-relaxed">{tt.estimateHint}</p>
       </div>
         </>
       )}

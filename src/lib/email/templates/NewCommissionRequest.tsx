@@ -16,8 +16,8 @@ type Props = {
   supportLabel: string | null
   width: number | null
   height: number | null
-  framing: string | null
-  framingLabel: string | null
+  frameType: string | null
+  frameTypeLabel: string | null
   portraitCount: number
   supplements: string[]
   priceEstimate: number | null
@@ -113,10 +113,10 @@ export function NewCommissionRequest(p: Props) {
         <Text style={labelStyle}>{isFR ? 'Format' : 'Formaat'}</Text>
         <Text style={valueStyle}>{sizeStr}</Text>
 
-        {p.framingLabel && (
+        {p.frameTypeLabel && (
           <>
             <Text style={labelStyle}>{isFR ? 'Encadrement' : 'Inkadering'}</Text>
-            <Text style={valueStyle}>{p.framingLabel}</Text>
+            <Text style={valueStyle}>{p.frameTypeLabel}</Text>
           </>
         )}
 

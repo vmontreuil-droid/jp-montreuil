@@ -16,8 +16,60 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { ATELIER, formatEur } from '@/lib/atelier-config'
+import {
+  ATELIER,
+  formatEur,
+  priceBreakdown,
+  FORMATS,
+  type FrameType,
+  type PriceLineItem,
+} from '@/lib/atelier-config'
+import { loadPricing } from '@/lib/commission-pricing'
 import { localePath } from '@/lib/links'
+
+const SUPPLEMENT_LABEL_FR: Record<string, string> = {
+  background: 'Arrière-plan travaillé',
+  complex_decor: 'Décor complexe',
+  high_detail: 'Niveau de détail élevé',
+  hyperrealism: 'Hyper-réalisme',
+  rush: 'Délai express',
+}
+
+const FORMAT_LABEL_FR: Record<string, string> = {
+  '40x60': '40 × 60 cm',
+  '57x77': '57 × 77 cm',
+  '60x90': '60 × 90 cm',
+  '130x160': '130 × 160 cm',
+  custom: 'Format sur mesure',
+}
+
+function detectFormatId(width: number | null, height: number | null): string {
+  if (!width || !height) return 'custom'
+  for (const f of FORMATS) {
+    if (f.width === width && f.height === height) return f.id
+  }
+  return 'custom'
+}
+
+function formatLineLabel(line: PriceLineItem): string {
+  if (line.key.startsWith('format:')) {
+    const id = line.key.split(':')[1]
+    return FORMAT_LABEL_FR[id] || id
+  }
+  if (line.key.startsWith('frame:')) {
+    const id = line.key.split(':')[1]
+    return FRAME_TYPE_LABEL_FR[id] || id
+  }
+  if (line.key === 'extra_portraits') {
+    const n = line.qty ?? 0
+    return `${n} portrait${n > 1 ? 's' : ''} supplémentaire${n > 1 ? 's' : ''}`
+  }
+  if (line.key.startsWith('supplement:')) {
+    const id = line.key.split(':')[1]
+    return SUPPLEMENT_LABEL_FR[id] || id
+  }
+  return line.key
+}
 import {
   markRead,
   updateCommissionStatus,
@@ -78,6 +130,14 @@ const FRAMING_LABEL_FR: Record<string, string> = {
   peu_importe: 'Peu importe',
 }
 
+const FRAME_TYPE_LABEL_FR: Record<string, string> = {
+  aucun: 'Sans cadre',
+  simple: 'Cadre simple',
+  standard: 'Cadre standard',
+  travaille: 'Cadre travaillé',
+  sur_mesure: 'Cadre sur mesure',
+}
+
 type Props = {
   params: Promise<{ id: string }>
 }
@@ -103,6 +163,7 @@ type CommissionRow = {
   width_cm: number | null
   height_cm: number | null
   framing: string | null
+  frame_type: string | null
   budget_indication: string | null
   portrait_count: number | null
   supplements: string[] | null
@@ -177,6 +238,17 @@ export default async function CommissionDetailPage({ params }: Props) {
   const submittedAt = formatDateTime(req.created_at)
   const isDevisSent = !!req.devis_sent_at
   const isSigned = !!req.signed_at
+
+  // Live prijsschatting met huidige tarieven
+  const pricing = await loadPricing()
+  const formatId = detectFormatId(req.width_cm, req.height_cm)
+  const breakdown = priceBreakdown({
+    formatId,
+    frameType: (req.frame_type as FrameType | null) ?? 'aucun',
+    portraitCount: req.portrait_count ?? 1,
+    supplements: req.supplements ?? [],
+    pricing,
+  })
 
   const devisLines = (req.devis_lines ?? []) as DevisLine[]
   const signUrl = req.signature_token
@@ -268,13 +340,15 @@ export default async function CommissionDetailPage({ params }: Props) {
                   </dd>
                 </div>
               )}
-              {req.framing && (
+              {(req.frame_type || req.framing) && (
                 <div>
                   <dt className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5">
                     Encadrement
                   </dt>
                   <dd className="text-(--color-ink)">
-                    {FRAMING_LABEL_FR[req.framing] ?? req.framing}
+                    {req.frame_type
+                      ? FRAME_TYPE_LABEL_FR[req.frame_type] ?? req.frame_type
+                      : FRAMING_LABEL_FR[req.framing!] ?? req.framing}
                   </dd>
                 </div>
               )}
@@ -293,12 +367,15 @@ export default async function CommissionDetailPage({ params }: Props) {
                   </dt>
                   <dd className="text-(--color-ink)">
                     {req.supplements
-                      .map((s) =>
-                        ({
-                          background: 'Arrière-plan travaillé',
-                          high_detail: 'Niveau de détail élevé',
-                          rush: 'Délai express',
-                        }[s] ?? s)
+                      .map(
+                        (s) =>
+                          ({
+                            background: 'Arrière-plan travaillé',
+                            complex_decor: 'Décor complexe',
+                            high_detail: 'Niveau de détail élevé',
+                            hyperrealism: 'Hyper-réalisme',
+                            rush: 'Délai express',
+                          }[s] ?? s)
                       )
                       .join(' · ')}
                   </dd>
@@ -314,6 +391,48 @@ export default async function CommissionDetailPage({ params }: Props) {
               </p>
             </div>
           </section>
+
+          {/* Prix indicatif */}
+          {breakdown.lines.length > 0 && (
+            <section className="border border-(--color-bronze)/40 bg-(--color-bronze)/5 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
+                  Prix indicatif (tarifs actuels)
+                </h2>
+                <Link
+                  href="/admin/commissions/pricing"
+                  className="text-[10px] uppercase tracking-[0.15em] text-(--color-bronze) hover:text-(--color-bronze-dark)"
+                >
+                  Modifier les tarifs →
+                </Link>
+              </div>
+              <ul className="space-y-1.5 text-sm">
+                {breakdown.lines.map((line) => (
+                  <li
+                    key={line.key}
+                    className="flex items-baseline justify-between gap-3 border-b border-(--color-bronze)/15 pb-1.5"
+                  >
+                    <span className="text-(--color-charcoal)">{formatLineLabel(line)}</span>
+                    <span className="text-(--color-ink) tabular-nums whitespace-nowrap">
+                      {line.onRequest ? 'Sur devis' : formatEur(line.amount)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex items-baseline justify-between gap-3 pt-3 mt-2 border-t-2 border-(--color-bronze)/40">
+                <span className="text-sm uppercase tracking-[0.15em] text-(--color-stone)">
+                  Total
+                </span>
+                <span className="text-2xl font-[family-name:var(--font-display)] text-(--color-ink)">
+                  {breakdown.total == null ? 'Sur devis' : formatEur(breakdown.total)}
+                </span>
+              </div>
+              <p className="mt-3 text-xs text-(--color-stone)">
+                Calcul d’après les tarifs actuels et les choix du client.
+                Le prix final reste celui que vous indiquez dans le devis.
+              </p>
+            </section>
+          )}
 
           {/* References */}
           {signed.length > 0 && (

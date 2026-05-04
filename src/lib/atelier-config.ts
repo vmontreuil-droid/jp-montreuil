@@ -1,9 +1,7 @@
 /**
  * Statische bedrijfsgegevens van Atelier Montreuil.
- * Gebruikt voor de devis (IBAN, mededeling) en mailtjes.
- *
- * Wijzig hier wanneer JP een ander rekeningnummer gebruikt of de
- * standaard acompte-percentage aanpast — geen extra DB-tabel nodig.
+ * IBAN, adres, supplementen-IDs zijn hier hardcoded; tarieven worden
+ * geladen uit de DB-tabel `commission_pricing` (zie src/lib/commission-pricing.ts).
  */
 export const ATELIER = {
   name: 'Atelier Montreuil',
@@ -27,7 +25,7 @@ export function formatEur(amount: number): string {
   }).format(amount)
 }
 
-/** Bouw een korte mededeling voor een overschrijving. Max 12 tekens vrij + `+++` */
+/** Bouw een mededeling voor een overschrijving. */
 export function buildPaymentReference(devisNumber: string): string {
   return `Devis ${devisNumber}`
 }
@@ -46,12 +44,19 @@ export const FORMATS = [
 ] as const
 
 export type FormatId = (typeof FORMATS)[number]['id'] | 'custom'
-export const FORMAT_IDS: readonly FormatId[] = [...FORMATS.map((f) => f.id), 'custom']
 
-/** Supplementen die de klant kan aanvinken — labels in i18n.devis.supplementOptions
- * Aantal portretten staat apart als numeriek veld (portrait_count).
- */
-export const SUPPLEMENT_IDS = ['background', 'high_detail', 'rush'] as const
+/** Frame keuzes — labels in i18n.devis.frameTypeOptions */
+export const FRAME_TYPES = ['aucun', 'simple', 'standard', 'travaille', 'sur_mesure'] as const
+export type FrameType = (typeof FRAME_TYPES)[number]
+
+/** Supplementen die de klant kan aanvinken — labels in i18n.devis.supplementOptions */
+export const SUPPLEMENT_IDS = [
+  'background',
+  'complex_decor',
+  'high_detail',
+  'hyperrealism',
+  'rush',
+] as const
 
 export type SupplementId = (typeof SUPPLEMENT_IDS)[number]
 
@@ -60,71 +65,125 @@ export const PORTRAIT_COUNT_MIN = 1
 export const PORTRAIT_COUNT_MAX = 10
 
 /**
- * ╔═══════════════════════════════════════════════════════════════════╗
- * ║  RICHTPRIJZEN — pas deze aan naar JP's echte tarieven.            ║
- * ║  Wordt enkel gebruikt voor de live prijs-indicatie op /devis.     ║
- * ║  De échte prijs blijft staan in de devis-op-maat door JP.         ║
- * ╚═══════════════════════════════════════════════════════════════════╝
+ * Pricing-structuur (loaded uit DB tabel commission_pricing).
+ * Defaults staan ook hier zodat de fallback klopt als DB-fetch faalt.
  */
-export const PRICING = {
-  /** Basisprijs per formaat (in EUR), voor de instaptechniek */
-  formatBase: {
-    '40x60': 250,
-    '57x77': 400,
-    '60x90': 600,
-    '130x160': 1800,
-  } as Record<string, number>,
-  /** Vermenigvuldiger per techniek t.o.v. de basis */
-  techniqueMultiplier: {
-    crayon_nb: 1.0,
-    aquarelle_couleur: 1.3,
-    acrylique_toile: 1.5,
-  } as Record<string, number>,
-  /** Toeslag per extra portret, als % van (basis × techniek) */
-  extraPortraitPct: 30,
-  /** Toeslagen per supplement, als % van (basis × techniek) */
-  supplementPct: {
-    background: 25,
-    high_detail: 20,
-    rush: 30,
-  } as Record<string, number>,
-  /** Vaste meerprijs voor inkadering, per formaat */
-  framingPrice: {
-    '40x60': 80,
-    '57x77': 120,
-    '60x90': 150,
-    '130x160': 280,
-  } as Record<string, number>,
+export type Pricing = {
+  format: Record<(typeof FORMATS)[number]['id'], number>
+  frame: Record<Exclude<FrameType, 'aucun'>, number | null>
+  supplement: Record<SupplementId, number>
+  extraPortrait: number
+}
+
+export const DEFAULT_PRICING: Pricing = {
+  format: {
+    '40x60': 400,
+    '57x77': 650,
+    '60x90': 850,
+    '130x160': 2200,
+  },
+  frame: {
+    simple: 80,
+    standard: 150,
+    travaille: 280,
+    sur_mesure: null, // "op aanvraag"
+  },
+  supplement: {
+    background: 120,
+    complex_decor: 200,
+    high_detail: 150,
+    hyperrealism: 250,
+    rush: 180,
+  },
+  extraPortrait: 200,
 } as const
 
-/** Live prijsschatting voor de /devis pagina. Geeft `null` voor 'custom' formaat. */
-export function estimatePrice(opts: {
+/** Een lijn in de prijsdetail-tabel. */
+export type PriceLineItem = {
+  /** Stabiele key: 'format:40x60' | 'frame:simple' | 'extra_portraits' | 'supplement:background' etc. */
+  key: string
+  /** Optioneel aantal (voor extra portretten) */
+  qty?: number
+  /** Bedrag in EUR (0 als sur-devis lijn) */
+  amount: number
+  /** True als deze lijn "sur devis" is (geen vaste prijs) */
+  onRequest?: boolean
+}
+
+export type PriceBreakdown = {
+  /** Total bedrag, of null als ergens een sur-devis-lijn voorkomt */
+  total: number | null
+  lines: PriceLineItem[]
+}
+
+/**
+ * Live prijsschatting met breakdown per lijn.
+ * Returned `total: null` zodra een lijn "sur devis" is (custom formaat of cadre sur mesure).
+ */
+export function priceBreakdown(opts: {
   formatId: string
-  technique: string
+  frameType: FrameType
   portraitCount: number
   supplements: readonly string[]
-  framing: 'oui' | 'non'
-}): number | null {
-  if (opts.formatId === 'custom') return null
-  const base = PRICING.formatBase[opts.formatId]
-  const multiplier = PRICING.techniqueMultiplier[opts.technique]
-  if (base == null || multiplier == null) return null
+  pricing: Pricing
+}): PriceBreakdown {
+  const { pricing } = opts
+  const lines: PriceLineItem[] = []
+  let onRequest = false
 
-  const baseTechnique = base * multiplier
-  let total = baseTechnique
+  // Format
+  if (opts.formatId === 'custom') {
+    onRequest = true
+    lines.push({ key: 'format:custom', amount: 0, onRequest: true })
+  } else {
+    const fp = pricing.format[opts.formatId as keyof Pricing['format']]
+    if (fp != null) lines.push({ key: `format:${opts.formatId}`, amount: fp })
+  }
 
-  const extraPortraits = Math.max(0, opts.portraitCount - 1)
-  total += baseTechnique * (PRICING.extraPortraitPct / 100) * extraPortraits
+  // Frame
+  if (opts.frameType !== 'aucun') {
+    const fk = opts.frameType as Exclude<FrameType, 'aucun'>
+    const fp = pricing.frame[fk]
+    if (fp == null) {
+      onRequest = true
+      lines.push({ key: `frame:${fk}`, amount: 0, onRequest: true })
+    } else if (fp > 0) {
+      lines.push({ key: `frame:${fk}`, amount: fp })
+    }
+  }
 
+  // Extra portraits
+  const extra = Math.max(0, opts.portraitCount - 1)
+  if (extra > 0) {
+    lines.push({
+      key: 'extra_portraits',
+      qty: extra,
+      amount: pricing.extraPortrait * extra,
+    })
+  }
+
+  // Supplements
   for (const sid of opts.supplements) {
-    const pct = PRICING.supplementPct[sid]
-    if (pct) total += baseTechnique * (pct / 100)
+    const price = pricing.supplement[sid as SupplementId]
+    if (price != null && price > 0) {
+      lines.push({ key: `supplement:${sid}`, amount: price })
+    }
   }
 
-  if (opts.framing === 'oui') {
-    const fp = PRICING.framingPrice[opts.formatId]
-    if (fp) total += fp
-  }
+  const total = onRequest
+    ? null
+    : Math.round(lines.reduce((sum, l) => sum + l.amount, 0))
 
-  return Math.round(total)
+  return { total, lines }
+}
+
+/** Backwards-compatible helper: geeft enkel het totaal terug. */
+export function estimatePrice(opts: {
+  formatId: string
+  frameType: FrameType
+  portraitCount: number
+  supplements: readonly string[]
+  pricing: Pricing
+}): number | null {
+  return priceBreakdown(opts).total
 }

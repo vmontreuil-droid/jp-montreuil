@@ -150,8 +150,10 @@ const dict: Dictionary = {
     supplementsLabel: 'Gewenste supplementen',
     supplementsHint: 'Vink aan wat van toepassing is — deze worden verwerkt in de offerte.',
     supplementOptions: {
-      background: 'Bewerkte achtergrond / decor',
+      background: 'Bewerkte achtergrond (landschap, interieur…)',
+      complex_decor: 'Complex decor',
       high_detail: 'Hoog detailniveau',
+      hyperrealism: 'Hyper-realisme',
       rush: 'Spoedlevering',
     },
 
@@ -160,6 +162,14 @@ const dict: Dictionary = {
       oui: 'Ja, ik wens een inkadering',
       non: 'Nee, zonder inkadering',
     },
+    frameTypeLabel: 'Inkadering',
+    frameTypeOptions: {
+      aucun: 'Zonder kader',
+      simple: 'Eenvoudige kader (natuurlijk hout)',
+      standard: 'Standaard kader (geschilderd / gekleurd)',
+      travaille: 'Bewerkte kader (lijstwerk, vergulding…)',
+      sur_mesure: 'Kader op maat (op aanvraag)',
+    },
 
     nameLabel: 'Volledige naam',
     namePlaceholder: 'Jan Jansen',
@@ -167,9 +177,10 @@ const dict: Dictionary = {
     emailPlaceholder: 'jan@voorbeeld.be',
     phoneLabel: 'Telefoonnummer',
     phonePlaceholder: '+32 470 12 34 56',
-    estimateLabel: 'Indicatieve prijs',
+    estimateLabel: 'Indicatieve prijs — detail',
+    estimateTotal: 'Totaal',
     estimateHint: 'Schatting op basis van uw keuzes. De definitieve prijs staat in de offerte op maat die Jean-Pierre u stuurt.',
-    estimateCustom: 'Op aanvraag (formaat op maat)',
+    estimateCustom: 'Op aanvraag',
 
     messageLabel: 'Beschrijf uw project',
     messagePlaceholder: 'Onderwerp, sfeer, gelegenheid, kleurenpalet, randvoorwaarden …',

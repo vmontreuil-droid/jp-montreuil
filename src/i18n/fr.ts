@@ -148,8 +148,10 @@ const dict = {
     supplementsLabel: 'Suppléments souhaités',
     supplementsHint: 'Cochez les options qui s’appliquent — elles seront prises en compte dans le devis.',
     supplementOptions: {
-      background: 'Arrière-plan travaillé / décor',
+      background: 'Arrière-plan travaillé (paysage, intérieur…)',
+      complex_decor: 'Décor complexe',
       high_detail: 'Niveau de détail élevé',
+      hyperrealism: 'Hyper-réalisme',
       rush: 'Délai express',
     },
 
@@ -158,6 +160,14 @@ const dict = {
       oui: 'Oui, je souhaite un encadrement',
       non: 'Non, sans encadrement',
     },
+    frameTypeLabel: 'Encadrement',
+    frameTypeOptions: {
+      aucun: 'Sans cadre',
+      simple: 'Cadre simple (bois naturel)',
+      standard: 'Cadre standard (peint / coloré)',
+      travaille: 'Cadre travaillé (moulures, dorures…)',
+      sur_mesure: 'Cadre sur mesure (sur devis)',
+    },
 
     nameLabel: 'Nom complet',
     namePlaceholder: 'Jean Dupont',
@@ -165,9 +175,10 @@ const dict = {
     emailPlaceholder: 'jean@exemple.be',
     phoneLabel: 'Numéro de téléphone',
     phonePlaceholder: '+32 470 12 34 56',
-    estimateLabel: 'Prix indicatif',
+    estimateLabel: 'Prix indicatif — détail',
+    estimateTotal: 'Total',
     estimateHint: 'Estimation calculée d’après vos choix. Le prix final figure dans le devis sur mesure que Jean-Pierre vous enverra.',
-    estimateCustom: 'Sur devis (format personnalisé)',
+    estimateCustom: 'Sur devis',
 
     messageLabel: 'Décrivez votre projet',
     messagePlaceholder: 'Sujet, ambiance, occasion, palette de couleurs, contraintes …',
