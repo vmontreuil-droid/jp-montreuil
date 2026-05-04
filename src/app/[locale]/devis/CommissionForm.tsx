@@ -493,9 +493,9 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="min-w-0">
-          <label htmlFor="email" className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-end">
+        <div className="min-w-0 flex flex-col">
+          <label htmlFor="email" className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2 min-h-[3rem] leading-tight">
             {tt.emailLabel} <span className="text-(--color-bronze)">*</span>
           </label>
           <input
@@ -507,8 +507,8 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
             className="w-full min-w-0 px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
           />
         </div>
-        <div className="min-w-0">
-          <label htmlFor="phone" className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
+        <div className="min-w-0 flex flex-col">
+          <label htmlFor="phone" className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2 min-h-[3rem] leading-tight">
             {tt.phoneLabel} <span className="text-(--color-bronze)">*</span>
           </label>
           <input

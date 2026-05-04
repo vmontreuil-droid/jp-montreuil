@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { UserCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './SignOutButton'
 import Header from '@/components/site/Header'
@@ -27,9 +29,13 @@ export default async function PortailLayout({
       {user && (
         <div className="border-b border-(--color-frame) bg-(--color-paper)/60">
           <div className="max-w-5xl mx-auto px-6 py-2 flex items-center justify-end gap-3 text-xs">
-            <span className="text-(--color-stone) truncate max-w-[240px]">
-              {user.email}
-            </span>
+            <Link
+              href="/portail/compte"
+              className="inline-flex items-center gap-1.5 text-(--color-stone) hover:text-(--color-ink) transition-colors"
+            >
+              <UserCircle className="w-3.5 h-3.5" />
+              <span className="truncate max-w-[200px]">{user.email}</span>
+            </Link>
             <SignOutButton label={t.portail.signOut} />
           </div>
         </div>

@@ -133,9 +133,10 @@ export default async function PortailDashboardPage() {
                   ? `Demande du ${new Date(c.created_at).toLocaleDateString(dateLocale, { dateStyle: 'long' })}`
                   : `Aanvraag van ${new Date(c.created_at).toLocaleDateString(dateLocale, { dateStyle: 'long' })}`)
               const statusLabel = statusLabels[c.status] || c.status
-              const linkHref = c.signature_token
-                ? localePath(locale, `/devis-signature/${c.signature_token}`)
-                : null
+              // Voor klanten met een account → ga naar de detail-pagina in
+              // het portaal. Voor anonymous of net aangemaakte commissies
+              // zonder devis → fallback naar de signature-pagina via token.
+              const linkHref = `/portail/devis/${c.id}`
               const ctaLabel = c.signed_at ? t.commissions.viewStatus : t.commissions.viewDevis
               const StatusIcon = c.signed_at ? CheckCircle2 : Clock
 
