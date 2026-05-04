@@ -9,6 +9,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail } from '@/lib/email/client'
 import { DevisToClient } from '@/lib/email/templates/DevisToClient'
 import { StatusUpdate } from '@/lib/email/templates/StatusUpdate'
+import { PortalWelcome } from '@/lib/email/templates/PortalWelcome'
+import { PUBLIC_BASE_URL } from '@/lib/public-url'
 import {
   ATELIER,
   buildPaymentReference,
@@ -197,6 +199,63 @@ export async function composeDevis(
   if (updErr) {
     console.error('composeDevis update failed', updErr)
     return { status: 'error', message: 'Échec de l’enregistrement.' }
+  }
+
+  // Maak Supabase auth-account aan voor de klant (idempotent —
+  // negeer de fout als de gebruiker al bestaat) en stuur een welkomstmail
+  // met set-password link. Zo kan de klant straks inloggen op /portail.
+  try {
+    const tempPassword = randomUUID()
+    const { error: createErr } = await admin.auth.admin.createUser({
+      email: existing.email.toLowerCase(),
+      password: tempPassword,
+      email_confirm: true,
+    })
+    const wasNewUser = !createErr
+    // 422 = User already registered → geen probleem, gewoon recovery sturen
+    if (createErr && createErr.status !== 422) {
+      console.warn('composeDevis: createUser non-fatal error', createErr.message)
+    }
+
+    const origin = PUBLIC_BASE_URL.replace(/\/$/, '')
+    const next = '/portail/reset-password'
+    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`
+    const { data: linkData } = await admin.auth.admin.generateLink({
+      type: 'recovery',
+      email: existing.email.toLowerCase(),
+      options: { redirectTo },
+    })
+
+    const setupPasswordUrl = linkData?.properties?.hashed_token
+      ? `${origin}/auth/confirm?token_hash=${encodeURIComponent(
+          linkData.properties.hashed_token
+        )}&type=recovery&next=${encodeURIComponent(next)}`
+      : `${origin}/portail/login`
+
+    const isFR = existing.locale === 'fr'
+    if (wasNewUser) {
+      const welcomeHtml = await render(
+        PortalWelcome({
+          recipientName: existing.name,
+          setupPasswordUrl,
+          portalUrl: `${origin}/portail/login`,
+          locale: existing.locale,
+        })
+      )
+      await sendEmail({
+        to: existing.email,
+        subject: isFR
+          ? 'Activez votre espace client — Atelier Montreuil'
+          : 'Activeer uw klantenportaal — Atelier Montreuil',
+        html: welcomeHtml,
+        text: isFR
+          ? `${existing.name}, votre espace client est prêt. Définissez votre mot de passe : ${setupPasswordUrl}`
+          : `${existing.name}, uw klantenportaal is klaar. Stel uw wachtwoord in: ${setupPasswordUrl}`,
+        replyTo: ATELIER.email,
+      })
+    }
+  } catch (err) {
+    console.error('composeDevis: portal account setup failed (non-fatal)', err)
   }
 
   // Mail naar klant

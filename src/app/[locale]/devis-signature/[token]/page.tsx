@@ -4,6 +4,7 @@ import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ATELIER, formatEur } from '@/lib/atelier-config'
+import { generateEpcQrDataUrl } from '@/lib/epc-qr'
 import SignClient from './SignClient'
 
 type Props = {
@@ -288,7 +289,7 @@ export default async function DevisSignaturePage({ params }: Props) {
 
       {/* Sign / Payment block */}
       {isSigned ? (
-        <PaymentBlock
+        <PaymentBlockServer
           locale={locale}
           tt={tt}
           acompteEur={acompteEur}
@@ -313,7 +314,7 @@ export default async function DevisSignaturePage({ params }: Props) {
   )
 }
 
-function PaymentBlock({
+async function PaymentBlockServer({
   locale,
   tt,
   acompteEur,
@@ -324,6 +325,18 @@ function PaymentBlock({
   acompteEur: number
   reference: string
 }) {
+  let qrDataUrl: string | null = null
+  try {
+    qrDataUrl = await generateEpcQrDataUrl({
+      beneficiaryName: ATELIER.ibanHolder,
+      iban: ATELIER.iban,
+      amountEur: acompteEur,
+      communication: reference,
+    })
+  } catch (err) {
+    console.error('[devis-signature] EPC QR generation failed', err)
+  }
+
   return (
     <section className="bg-(--color-paper) border border-(--color-bronze)/40 p-6 md:p-8">
       <h2 className="text-xl text-(--color-ink) mb-2 font-[family-name:var(--font-display)]">
@@ -331,35 +344,54 @@ function PaymentBlock({
       </h2>
       <p className="text-sm text-(--color-charcoal) mb-5 leading-relaxed">{tt.paymentInstructions}</p>
 
-      <dl className="space-y-3 text-sm">
-        <div>
-          <dt className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-0.5">
-            {tt.paymentBeneficiary}
-          </dt>
-          <dd className="text-(--color-ink)">{ATELIER.ibanHolder}</dd>
-        </div>
-        <div>
-          <dt className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-0.5">
-            {tt.paymentIban}
-          </dt>
-          <dd className="text-(--color-ink) font-mono">{ATELIER.iban}</dd>
-        </div>
-        <div>
-          <dt className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-0.5">
-            {tt.paymentAmount}
-          </dt>
-          <dd className="text-(--color-bronze) font-semibold">{formatEur(acompteEur)}</dd>
-        </div>
-        <div>
-          <dt className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-0.5">
-            {tt.paymentReference}
-          </dt>
-          <dd className="text-(--color-ink) font-mono bg-(--color-canvas) border border-(--color-frame) px-3 py-2 inline-block">
-            {reference}
-          </dd>
-        </div>
-      </dl>
-      <p className="mt-3 text-xs text-(--color-stone)">{tt.paymentRefHint}</p>
+      <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
+        <dl className="space-y-3 text-sm">
+          <div>
+            <dt className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-0.5">
+              {tt.paymentBeneficiary}
+            </dt>
+            <dd className="text-(--color-ink)">{ATELIER.ibanHolder}</dd>
+          </div>
+          <div>
+            <dt className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-0.5">
+              {tt.paymentIban}
+            </dt>
+            <dd className="text-(--color-ink) font-mono">{ATELIER.iban}</dd>
+          </div>
+          <div>
+            <dt className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-0.5">
+              {tt.paymentAmount}
+            </dt>
+            <dd className="text-(--color-bronze) font-semibold">{formatEur(acompteEur)}</dd>
+          </div>
+          <div>
+            <dt className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-0.5">
+              {tt.paymentReference}
+            </dt>
+            <dd className="text-(--color-ink) font-mono bg-(--color-canvas) border border-(--color-frame) px-3 py-2 inline-block">
+              {reference}
+            </dd>
+          </div>
+        </dl>
+
+        {qrDataUrl && (
+          <div className="flex flex-col items-center bg-white border border-(--color-frame) p-3 max-w-[180px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={qrDataUrl}
+              alt="EPC QR — scannez avec votre app bancaire"
+              className="w-36 h-36"
+            />
+            <p className="mt-2 text-[10px] uppercase tracking-[0.15em] text-stone-700 text-center leading-tight">
+              {locale === 'fr'
+                ? 'Scanner avec votre app bancaire'
+                : 'Scan met uw bank-app'}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <p className="mt-4 text-xs text-(--color-stone)">{tt.paymentRefHint}</p>
     </section>
   )
 }
