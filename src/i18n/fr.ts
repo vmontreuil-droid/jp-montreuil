@@ -114,7 +114,7 @@ const dict = {
       'Techniques : crayon noir & blanc, aquarelle couleur, acrylique sur toile.',
       'Encadrement possible en option.',
       'Délai de réalisation : 5 à 20 jours ouvrables suivant la demande.',
-      'Chaque commande fait l’objet d’un devis sur mesure. Un acompte est demandé pour validation avant exécution.',
+      'Chaque commande fait l’objet d’un devis sur mesure. Un acompte de 50 % est demandé pour validation avant exécution.',
     ],
 
     discussModeLabel: 'Je préfère tout discuter directement avec Jean-Pierre',
