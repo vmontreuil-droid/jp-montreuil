@@ -583,9 +583,14 @@ export default async function CommissionDetailPage({ params }: Props) {
                 </div>
 
                 {req.devis_payment_reference && (
-                  <div className="text-xs text-(--color-stone) inline-flex items-center gap-1.5">
-                    <Copy className="w-3 h-3" />
-                    Communication : <span className="text-(--color-ink)">{req.devis_payment_reference}</span>
+                  <div className="bg-(--color-canvas) border border-(--color-frame) px-3 py-2 space-y-1">
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) inline-flex items-center gap-1.5">
+                      <Copy className="w-3 h-3" />
+                      Communication structurée
+                    </p>
+                    <p className="text-(--color-ink) font-mono text-sm select-all">
+                      {req.devis_payment_reference}
+                    </p>
                   </div>
                 )}
 
@@ -721,12 +726,35 @@ export default async function CommissionDetailPage({ params }: Props) {
           </section>
 
           {/* Atelier-info reminder */}
-          <section className="border border-(--color-frame) bg-(--color-canvas) p-5 text-xs space-y-1">
+          <section className="border border-(--color-frame) bg-(--color-canvas) p-5 text-xs space-y-2">
             <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1.5">
               Coordonnées de virement
             </p>
-            <p className="text-(--color-ink)">{ATELIER.ibanHolder}</p>
-            <p className="text-(--color-ink) font-mono">{ATELIER.iban}</p>
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5">
+                Bénéficiaire
+              </p>
+              <p className="text-(--color-ink)">{ATELIER.ibanHolder}</p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5">
+                IBAN
+              </p>
+              <p className="text-(--color-ink) font-mono select-all">{ATELIER.iban}</p>
+            </div>
+            {req.devis_payment_reference && (
+              <div>
+                <p className="text-[9px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5">
+                  Communication
+                </p>
+                <p className="text-(--color-ink) font-mono select-all break-all">
+                  {req.devis_payment_reference}
+                </p>
+                <p className="text-[10px] text-(--color-stone) mt-1">
+                  À attendre sur le virement du client.
+                </p>
+              </div>
+            )}
           </section>
 
           {/* Delete */}
