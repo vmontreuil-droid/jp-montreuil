@@ -25,7 +25,24 @@ export function formatEur(amount: number): string {
   }).format(amount)
 }
 
-/** Bouw een mededeling voor een overschrijving. */
+/** Bouw een gestructureerde Belgische mededeling (OGM, formaat
+ *  +++AAA/BBBB/CCCDD+++) op basis van jaar + volgnummer. Banken vullen
+ *  zo automatisch de mededeling in, geen tikfouten meer. */
+export function buildStructuredReference(year: number, sequence: number): string {
+  // 10-cijferig basisnummer dat niet met 0 begint :
+  //   "1" + laatste 2 cijfers van het jaar + 7-cijferig volgnummer
+  const yearTwoDigit = String(year % 100).padStart(2, '0')
+  const seq = String(sequence).padStart(7, '0')
+  const num = `1${yearTwoDigit}${seq}` // 10 cijfers, eerste is altijd 1
+
+  // Modulo 97 controle-cijfers (Belgisch OGM-standaard)
+  const remainder = BigInt(num) % 97n
+  const check = remainder === 0n ? '97' : String(remainder).padStart(2, '0')
+
+  return `+++${num.slice(0, 3)}/${num.slice(3, 7)}/${num.slice(7, 10)}${check}+++`
+}
+
+/** Backwards compat: vroeger gebruikten we 'Devis DV-2026-0001'. */
 export function buildPaymentReference(devisNumber: string): string {
   return `Devis ${devisNumber}`
 }

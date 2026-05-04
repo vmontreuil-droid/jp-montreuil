@@ -1,6 +1,10 @@
 import Link from 'next/link'
 import { Brush, ChevronRight, ImageIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+const STORAGE_BUCKET = 'commission-references'
+const SIGNED_URL_TTL = 60 * 60
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +51,7 @@ type CommissionRow = {
   status: StatusKey
   read_at: string | null
   created_at: string
-  commission_attachments: { id: string }[]
+  commission_attachments: { id: string; storage_path: string }[]
 }
 
 export default async function AdminCommissionsPage({ searchParams }: Props) {
@@ -56,7 +60,10 @@ export default async function AdminCommissionsPage({ searchParams }: Props) {
 
   let query = supabase
     .from('commission_requests')
-    .select('id, name, email, locale, technique, width_cm, height_cm, status, read_at, created_at, commission_attachments(id)')
+    .select(
+      'id, name, email, locale, technique, width_cm, height_cm, status, read_at, created_at,' +
+        ' commission_attachments(id, storage_path)'
+    )
     .is('archived_at', null)
     .order('created_at', { ascending: false })
 
@@ -76,6 +83,20 @@ export default async function AdminCommissionsPage({ searchParams }: Props) {
 
   const list = data ?? []
   const unread = list.filter((c) => !c.read_at).length
+
+  // Genereer thumbnail-URLs voor de eerste foto van elke aanvraag
+  const admin = createAdminClient()
+  const thumbnails = new Map<string, string>()
+  await Promise.all(
+    list.map(async (c) => {
+      const first = c.commission_attachments?.[0]
+      if (!first) return
+      const { data } = await admin.storage
+        .from(STORAGE_BUCKET)
+        .createSignedUrl(first.storage_path, SIGNED_URL_TTL)
+      if (data?.signedUrl) thumbnails.set(c.id, data.signedUrl)
+    })
+  )
 
   return (
     <div className="p-8 md:p-12 max-w-5xl">
@@ -134,19 +155,31 @@ export default async function AdminCommissionsPage({ searchParams }: Props) {
             const sizeStr =
               c.width_cm && c.height_cm ? `${c.width_cm} × ${c.height_cm} cm` : '—'
             const isUnread = !c.read_at
+            const thumbUrl = thumbnails.get(c.id)
             return (
               <li key={c.id}>
                 <Link
                   href={`/admin/commissions/${c.id}`}
                   className="group flex items-start gap-3 p-4 bg-(--color-paper) border border-(--color-frame) hover:border-(--color-bronze) transition-colors"
                 >
-                  <span
-                    className={`mt-0.5 flex w-9 h-9 shrink-0 items-center justify-center bg-(--color-bronze)/12 text-(--color-bronze) ${
-                      isUnread ? 'ring-2 ring-(--color-bronze)/40' : ''
-                    }`}
-                  >
-                    <Brush className="w-4 h-4" />
-                  </span>
+                  {thumbUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={thumbUrl}
+                      alt=""
+                      className={`mt-0.5 w-12 h-12 shrink-0 object-cover border ${
+                        isUnread ? 'border-(--color-bronze) ring-2 ring-(--color-bronze)/40' : 'border-(--color-frame)'
+                      }`}
+                    />
+                  ) : (
+                    <span
+                      className={`mt-0.5 flex w-12 h-12 shrink-0 items-center justify-center bg-(--color-bronze)/12 text-(--color-bronze) border ${
+                        isUnread ? 'border-(--color-bronze) ring-2 ring-(--color-bronze)/40' : 'border-(--color-frame)'
+                      }`}
+                    >
+                      <Brush className="w-4 h-4" />
+                    </span>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span

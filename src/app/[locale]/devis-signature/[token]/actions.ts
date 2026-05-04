@@ -5,7 +5,7 @@ import { render } from '@react-email/render'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail, ADMIN_EMAIL } from '@/lib/email/client'
 import { DevisSignedNotification } from '@/lib/email/templates/DevisSignedNotification'
-import { buildPaymentReference } from '@/lib/atelier-config'
+import { buildStructuredReference } from '@/lib/atelier-config'
 
 export type SignState =
   | { status: 'idle' }
@@ -65,9 +65,10 @@ export async function signDevis(
   }
 
   const signedAt = new Date()
+  // Fallback indien geen reference gezet (oude rijen) : bouw één obv jaar+seq
   const reference =
     req.devis_payment_reference ||
-    buildPaymentReference(`#${String(req.id).slice(0, 8)}`)
+    buildStructuredReference(new Date().getFullYear(), 1)
 
   const { error: updErr } = await admin
     .from('commission_requests')
