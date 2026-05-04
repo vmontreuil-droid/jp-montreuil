@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowLeft, Mail, User } from 'lucide-react'
+import { ArrowLeft, Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getDictionary } from '@/i18n/dictionaries'
 import { getPortailLocale } from '../locale'
 import AccountForm from './AccountForm'
+import MessageForm from './MessageForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +50,8 @@ export default async function PortailComptePage() {
           {t.account.emailLabel}: <span className="text-(--color-ink)">{user.email}</span>
         </div>
       </section>
+
+      <MessageForm locale={locale} labels={t.account.message} />
 
       <section>
         <h2 className="text-base text-(--color-ink) font-[family-name:var(--font-display)] mb-3">

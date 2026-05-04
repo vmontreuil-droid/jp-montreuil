@@ -132,6 +132,15 @@ const dict: Dictionary = {
         wrongCurrent: 'Huidig wachtwoord is onjuist.',
         server: 'Er is een fout opgetreden.',
       },
+      message: {
+        title: 'Een vraag voor Jean-Pierre?',
+        lead: 'Schrijf hem rechtstreeks vanuit uw portaal — hij antwoordt per e-mail.',
+        placeholder: 'Uw bericht…',
+        submit: 'Verstuur naar Jean-Pierre',
+        sending: 'Versturen…',
+        success: 'Bericht verstuurd.',
+        successHint: 'Jean-Pierre heeft uw bericht goed ontvangen en antwoordt per e-mail.',
+      },
     },
     dashboard: {
       eyebrow: 'Atelier Montreuil',

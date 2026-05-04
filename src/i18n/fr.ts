@@ -130,6 +130,15 @@ const dict = {
         wrongCurrent: 'Mot de passe actuel incorrect.',
         server: 'Une erreur est survenue.',
       },
+      message: {
+        title: 'Une question pour Jean-Pierre ?',
+        lead: 'Écrivez-lui directement depuis votre espace — il vous répondra par e-mail.',
+        placeholder: 'Votre message…',
+        submit: 'Envoyer à Jean-Pierre',
+        sending: 'Envoi…',
+        success: 'Message envoyé.',
+        successHint: 'Jean-Pierre a bien reçu votre message et vous répondra par e-mail.',
+      },
     },
     dashboard: {
       eyebrow: 'Atelier Montreuil',
