@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, Check, Brush } from 'lucide-react'
+import { ArrowLeft, Check, Brush, Star, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { workImageUrl } from '@/lib/links'
 import { toggleDevisExample } from './actions'
@@ -44,10 +44,10 @@ export default async function DevisExamplesAdminPage() {
       works: ((c.works ?? []) as WorkRow[]).sort((a, b) => a.sort_order - b.sort_order),
     }))
 
-  const totalSelected = categories.reduce(
-    (sum, c) => sum + c.works.filter((w) => w.is_devis_example).length,
-    0
-  )
+  const selectedWorks = categories
+    .flatMap((c) => c.works.filter((w) => w.is_devis_example))
+    .sort((a, b) => a.sort_order - b.sort_order)
+  const totalSelected = selectedWorks.length
 
   return (
     <div className="p-8 md:p-12 max-w-6xl">
@@ -80,6 +80,43 @@ export default async function DevisExamplesAdminPage() {
             : 'Aucune sélection — les 8 premières œuvres sont affichées par défaut.'}
         </p>
       </header>
+
+      {/* Huidige selectie bovenaan — overzicht in volgorde van weergave op /devis */}
+      {totalSelected > 0 && (
+        <section className="mb-10 border border-(--color-bronze)/40 bg-(--color-bronze)/5 p-6">
+          <h2 className="text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-4 inline-flex items-center gap-2">
+            <Star className="w-3.5 h-3.5 text-(--color-bronze)" />
+            Sélection actuelle ({totalSelected})
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+            {selectedWorks.map((w) => (
+              <form key={w.id} action={toggleDevisExample}>
+                <input type="hidden" name="id" value={w.id} />
+                <input type="hidden" name="value" value="false" />
+                <button
+                  type="submit"
+                  title="Cliquer pour retirer de la sélection"
+                  className="group relative block w-full aspect-square overflow-hidden border-2 border-(--color-bronze) shadow-md shadow-(--color-bronze)/20"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={workImageUrl(w.storage_path)}
+                    alt={w.title_fr || ''}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                  <span className="absolute inset-0 bg-(--color-ink)/0 group-hover:bg-(--color-ink)/60 transition-colors flex items-center justify-center">
+                    <X className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </span>
+                </button>
+              </form>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-(--color-stone) italic">
+            Cliquez sur une œuvre pour la retirer · ordre = ordre d’affichage sur /devis.
+          </p>
+        </section>
+      )}
 
       <div className="space-y-10">
         {categories.map((cat) => (
