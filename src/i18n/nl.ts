@@ -335,6 +335,8 @@ const dict: Dictionary = {
     signerNameLabel: 'Uw naam',
     signaturePadLabel: 'Plaats uw handtekening in het kader',
     clearSignature: 'Wissen',
+    acceptTerms: 'Ik aanvaard de offerte en de uitvoeringsvoorwaarden.',
+    acceptRequired: 'Aanvaard de offerte voor u tekent.',
     signBtn: 'Offerte ondertekenen',
     signing: 'Ondertekenen…',
     signedTitle: 'Bedankt voor uw vertrouwen',

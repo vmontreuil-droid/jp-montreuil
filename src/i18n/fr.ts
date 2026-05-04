@@ -333,6 +333,8 @@ const dict = {
     signerNameLabel: 'Votre nom',
     signaturePadLabel: 'Tracez votre signature dans le cadre',
     clearSignature: 'Effacer',
+    acceptTerms: 'J’accepte le devis et les conditions de réalisation.',
+    acceptRequired: 'Veuillez accepter le devis avant de signer.',
     signBtn: 'Signer le devis',
     signing: 'Signature en cours…',
     signedTitle: 'Merci pour votre confiance',
