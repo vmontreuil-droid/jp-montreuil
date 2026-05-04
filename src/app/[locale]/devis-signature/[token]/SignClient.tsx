@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { Eraser, PenLine, CheckCircle2, AlertCircle } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import type { Dictionary } from '@/i18n/dictionaries'
@@ -47,6 +48,7 @@ export default function SignClient({
   alreadySigned: initialAlreadySigned,
 }: Props) {
   const tt = t.devisSign
+  const router = useRouter()
   const [state, action] = useActionState(signDevis, initial)
   const [hasSigned, setHasSigned] = useState(initialAlreadySigned)
   const [accepted, setAccepted] = useState(false)
@@ -57,8 +59,13 @@ export default function SignClient({
   const [showAcceptError, setShowAcceptError] = useState(false)
 
   useEffect(() => {
-    if (state.status === 'success') setHasSigned(true)
-  }, [state.status])
+    if (state.status === 'success') {
+      setHasSigned(true)
+      // Server-component refresh zodat het betaalblok met IBAN + QR-code
+      // hieronder verschijnt zonder dat de klant manueel moet herladen.
+      router.refresh()
+    }
+  }, [state.status, router])
 
   // Robuuste canvas-init: sync intrinsic size met layout size, ook bij resize.
   useLayoutEffect(() => {
