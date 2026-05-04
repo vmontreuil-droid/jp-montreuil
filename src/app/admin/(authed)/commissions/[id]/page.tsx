@@ -13,6 +13,9 @@ import {
   Flag,
   Ban,
   Copy,
+  RefreshCw,
+  Send,
+  AlertTriangle,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -81,6 +84,9 @@ import {
   markDelivered,
   markComplete,
   markRefused,
+  resendDevisEmail,
+  sendAcompteReminder,
+  sendBalanceReminder,
 } from '../actions'
 import DevisComposeForm from './DevisComposeForm'
 import MessageWithTranslate from './MessageWithTranslate'
@@ -143,6 +149,7 @@ const FRAME_TYPE_LABEL_FR: Record<string, string> = {
 
 type Props = {
   params: Promise<{ id: string }>
+  searchParams?: Promise<{ notice?: string }>
 }
 
 type Attachment = {
@@ -210,8 +217,10 @@ function formatDateTime(value: string | null): string | null {
   })
 }
 
-export default async function CommissionDetailPage({ params }: Props) {
+export default async function CommissionDetailPage({ params, searchParams }: Props) {
   const { id } = await params
+  const sp = searchParams ? await searchParams : {}
+  const notice = sp.notice
   const supabase = await createClient()
 
   const { data: req, error } = await supabase
@@ -724,6 +733,63 @@ export default async function CommissionDetailPage({ params }: Props) {
               </button>
             </form>
           </section>
+
+          {/* Boutons de secours — herverstuur mails wanneer de flow hapert */}
+          {req.devis_sent_at && (
+            <section className="border border-(--color-frame) bg-(--color-paper) p-5 space-y-2">
+              <div className="flex items-start gap-2 mb-2">
+                <AlertTriangle className="w-3.5 h-3.5 text-(--color-bronze) mt-0.5 shrink-0" />
+                <div>
+                  <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
+                    Boutons de secours
+                  </h2>
+                  <p className="mt-1 text-[10px] text-(--color-stone) leading-relaxed">
+                    Au cas où le client n’aurait rien reçu ou aurait perdu les
+                    infos. N’écrase rien — envoie juste un nouveau mail.
+                  </p>
+                </div>
+              </div>
+
+              <form action={resendDevisEmail}>
+                <input type="hidden" name="id" value={req.id} />
+                <button
+                  type="submit"
+                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs uppercase tracking-[0.15em] bg-(--color-canvas) border border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-ink)"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Renvoyer le devis
+                </button>
+              </form>
+
+              {req.devis_acompte_eur != null && req.devis_acompte_eur > 0 && (
+                <form action={sendAcompteReminder}>
+                  <input type="hidden" name="id" value={req.id} />
+                  <button
+                    type="submit"
+                    className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs uppercase tracking-[0.15em] bg-(--color-canvas) border border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-ink)"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    Demander l'acompte
+                  </button>
+                </form>
+              )}
+
+              {req.devis_total_eur != null &&
+                req.devis_acompte_eur != null &&
+                req.devis_total_eur - req.devis_acompte_eur > 0 && (
+                  <form action={sendBalanceReminder}>
+                    <input type="hidden" name="id" value={req.id} />
+                    <button
+                      type="submit"
+                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs uppercase tracking-[0.15em] bg-(--color-canvas) border border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-ink)"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      Demander le solde
+                    </button>
+                  </form>
+                )}
+            </section>
+          )}
 
           {/* Atelier-info reminder */}
           <section className="border border-(--color-frame) bg-(--color-canvas) p-5 text-xs space-y-2">

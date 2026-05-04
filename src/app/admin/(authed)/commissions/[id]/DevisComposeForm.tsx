@@ -68,9 +68,13 @@ export default function DevisComposeForm({
   const [acomptePct, setAcomptePct] = useState(defaultAcomptePct)
   const [vatRate, setVatRate] = useState(defaultVatRate)
 
-  const subtotalHt = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0)
-  const vatAmount = Math.round(subtotalHt * (vatRate / 100) * 100) / 100
-  const totalTtc = Math.round((subtotalHt + vatAmount) * 100) / 100
+  // Lijnen worden TTC ingevoerd (BTW inbegrepen) — BTW wordt eruit gehaald.
+  const totalTtc = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0)
+  const subtotalHt =
+    vatRate > 0
+      ? Math.round((totalTtc / (1 + vatRate / 100)) * 100) / 100
+      : totalTtc
+  const vatAmount = Math.round((totalTtc - subtotalHt) * 100) / 100
   const acompteEur = Math.round(totalTtc * (acomptePct / 100) * 100) / 100
 
   const addLine = () => {

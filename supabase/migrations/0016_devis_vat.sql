@@ -10,4 +10,4 @@ alter table public.commission_requests
   add column if not exists devis_subtotal_eur numeric;
 
 alter table public.commission_pricing
-  add column if not exists default_vat_rate numeric not null default 0;
+  add column if not exists default_vat_rate numeric not null default 21;

@@ -537,28 +537,40 @@ function NextActionCard({
 
   // Stap 3 — wachtt op uitvoering / in cours
   if (isAcompteReceived && !isInProgress) {
+    const balanceNote =
+      balanceEur && balanceEur > 0
+        ? isFR
+          ? ` Solde à régler à la livraison : ${formatEur(balanceEur)}.`
+          : ` Saldo te betalen bij levering: ${formatEur(balanceEur)}.`
+        : ''
     return (
       <ActionShell
         icon={<Clock className="w-5 h-5" />}
         title={isFR ? 'Acompte bien reçu' : 'Voorschot ontvangen'}
         body={
           isFR
-            ? 'Merci ! Jean-Pierre va commencer votre œuvre dans les prochains jours. Vous recevrez une notification dès qu’elle sera en cours.'
-            : 'Bedankt! Jean-Pierre begint binnenkort aan uw werk. U krijgt een melding zodra het in uitvoering is.'
+            ? `Merci ! Jean-Pierre va commencer votre œuvre dans les prochains jours.${balanceNote} Vous recevrez une notification dès qu'elle sera en cours.`
+            : `Bedankt! Jean-Pierre begint binnenkort aan uw werk.${balanceNote} U krijgt een melding zodra het in uitvoering is.`
         }
       />
     )
   }
 
   if (isInProgress && !isDelivered) {
+    const balanceNote =
+      balanceEur && balanceEur > 0
+        ? isFR
+          ? ` Solde à régler à la livraison : ${formatEur(balanceEur)}.`
+          : ` Saldo te betalen bij levering: ${formatEur(balanceEur)}.`
+        : ''
     return (
       <ActionShell
         icon={<Hammer className="w-5 h-5" />}
         title={isFR ? 'Œuvre en cours' : 'Werk in uitvoering'}
         body={
           isFR
-            ? 'Jean-Pierre travaille actuellement à votre œuvre. Délai standard : 5 à 20 jours ouvrables.'
-            : 'Jean-Pierre werkt nu aan uw werk. Standaardtermijn: 5 tot 20 werkdagen.'
+            ? `Jean-Pierre travaille actuellement à votre œuvre. Délai standard : 5 à 20 jours ouvrables.${balanceNote}`
+            : `Jean-Pierre werkt nu aan uw werk. Standaardtermijn: 5 tot 20 werkdagen.${balanceNote}`
         }
       />
     )

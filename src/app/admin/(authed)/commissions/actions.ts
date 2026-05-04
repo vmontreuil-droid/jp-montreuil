@@ -10,10 +10,12 @@ import { sendEmail } from '@/lib/email/client'
 import { DevisToClient } from '@/lib/email/templates/DevisToClient'
 import { StatusUpdate } from '@/lib/email/templates/StatusUpdate'
 import { PortalWelcome } from '@/lib/email/templates/PortalWelcome'
+import { PaymentReminder } from '@/lib/email/templates/PaymentReminder'
+import { generateEpcQrDataUrl } from '@/lib/epc-qr'
 import { PUBLIC_BASE_URL } from '@/lib/public-url'
 import {
   ATELIER,
-  buildPaymentReference,
+  buildStructuredReference,
   generateDevisNumber,
 } from '@/lib/atelier-config'
 
@@ -148,9 +150,13 @@ export async function composeDevis(
     return { status: 'error', message: 'Ajoutez au moins une ligne avec un montant.' }
   }
 
-  const subtotalHt = lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0)
-  const vatAmount = Math.round(subtotalHt * (vatRate / 100) * 100) / 100
-  const total = Math.round((subtotalHt + vatAmount) * 100) / 100
+  // Lijnen worden TTC ingevoerd (BTW inbegrepen) — BTW wordt eruit gehaald
+  const total = lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0)
+  const subtotalHt =
+    vatRate > 0
+      ? Math.round((total / (1 + vatRate / 100)) * 100) / 100
+      : total
+  const vatAmount = Math.round((total - subtotalHt) * 100) / 100
   const acompteEur = Math.round(total * (acomptePct / 100) * 100) / 100
 
   const admin = createAdminClient()
@@ -180,8 +186,11 @@ export async function composeDevis(
     .select('id', { count: 'exact', head: true })
     .not('devis_sent_at', 'is', null)
     .gte('devis_sent_at', `${year}-01-01`)
-  const devisNumber = generateDevisNumber(year, (count ?? 0) + 1)
-  const reference = buildPaymentReference(devisNumber)
+  const sequenceNumber = (count ?? 0) + 1
+  const devisNumber = generateDevisNumber(year, sequenceNumber)
+  // Gestructureerde Belgische mededeling (OGM) — bankapps vullen 'm
+  // automatisch in via QR.
+  const reference = buildStructuredReference(year, sequenceNumber)
 
   const { error: updErr } = await admin
     .from('commission_requests')
@@ -352,7 +361,10 @@ async function transitionStatus(
           locale: req.locale,
           signToken: req.signature_token,
           paymentReference: req.devis_payment_reference,
-          paymentAmountEur: newStatus === 'livre' ? balance : null,
+          // Bij 'acompte_recu' tonen we het saldo dat nog te betalen valt
+          // bij levering. Bij 'livre' tonen we het te betalen saldo zelf.
+          paymentAmountEur:
+            newStatus === 'livre' || newStatus === 'acompte_recu' ? balance : null,
         })
       )
 
@@ -414,4 +426,185 @@ export async function markComplete(formData: FormData) {
 export async function markRefused(formData: FormData) {
   const id = String(formData.get('id') || '')
   await transitionStatus(id, 'refuse', 'refused_at')
+}
+
+// ─── Noodknoppen — herversturen mails ───────────────────────────────
+
+type DevisLineRecord = {
+  description: string
+  quantity: number
+  unit_price: number
+}
+
+type CommissionForResend = {
+  id: string
+  name: string
+  email: string
+  locale: 'fr' | 'nl'
+  signature_token: string | null
+  devis_subject: string | null
+  devis_intro: string | null
+  devis_lines: DevisLineRecord[] | null
+  devis_subtotal_eur: number | null
+  devis_vat_rate: number | null
+  devis_total_eur: number | null
+  devis_acompte_pct: number | null
+  devis_acompte_eur: number | null
+  devis_valid_until: string | null
+  devis_payment_reference: string | null
+}
+
+async function loadCommissionForResend(id: string) {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('commission_requests')
+    .select(
+      'id, name, email, locale, signature_token, devis_subject, devis_intro, devis_lines,' +
+        ' devis_subtotal_eur, devis_vat_rate, devis_total_eur, devis_acompte_pct,' +
+        ' devis_acompte_eur, devis_valid_until, devis_payment_reference'
+    )
+    .eq('id', id)
+    .single<CommissionForResend>()
+  return data
+}
+
+/** Herverstuur de oorspronkelijke devis-mail (met sign-link en alle details). */
+export async function resendDevisEmail(formData: FormData) {
+  await requireAdmin()
+  const id = String(formData.get('id') || '')
+  if (!id) return
+
+  const req = await loadCommissionForResend(id)
+  if (!req || !req.signature_token || !req.devis_subject) {
+    redirect(`/admin/commissions/${id}?notice=missing_devis`)
+  }
+
+  try {
+    const isFR = req.locale === 'fr'
+    const lines = (req.devis_lines ?? []) as DevisLineRecord[]
+    const subtotal =
+      req.devis_subtotal_eur ?? lines.reduce((s, l) => s + l.quantity * l.unit_price, 0)
+    const total = req.devis_total_eur ?? subtotal
+    const html = await render(
+      DevisToClient({
+        clientName: req.name,
+        devisNumber: req.devis_subject || `#${id.slice(0, 8)}`,
+        subject: req.devis_subject!,
+        intro: req.devis_intro,
+        lines,
+        subtotalHt: subtotal,
+        vatRate: Number(req.devis_vat_rate ?? 0),
+        vatAmount: Math.round((total - subtotal) * 100) / 100,
+        total,
+        acomptePct: req.devis_acompte_pct ?? 50,
+        acompteEur: req.devis_acompte_eur ?? 0,
+        validUntil: req.devis_valid_until,
+        signToken: req.signature_token!,
+        locale: req.locale,
+      })
+    )
+    await sendEmail({
+      to: req.email,
+      subject: isFR
+        ? 'Rappel : votre devis — Atelier Montreuil'
+        : 'Herinnering: uw offerte — Atelier Montreuil',
+      html,
+      text: isFR
+        ? `${req.name}, voici à nouveau votre devis. Total ${(total).toFixed(2)} €.`
+        : `${req.name}, hier nogmaals uw offerte. Totaal ${(total).toFixed(2)} €.`,
+      replyTo: ATELIER.email,
+    })
+  } catch (err) {
+    console.error('resendDevisEmail failed', err)
+  }
+  revalidatePath(`/admin/commissions/${id}`)
+  redirect(`/admin/commissions/${id}?notice=devis_resent`)
+}
+
+async function sendPaymentReminderInternal(
+  id: string,
+  type: 'acompte' | 'balance'
+) {
+  await requireAdmin()
+  if (!id) return
+
+  const req = await loadCommissionForResend(id)
+  if (!req || !req.devis_payment_reference) {
+    redirect(`/admin/commissions/${id}?notice=missing_devis`)
+  }
+
+  const total = req!.devis_total_eur ?? 0
+  const acompte = req!.devis_acompte_eur ?? 0
+  const amount =
+    type === 'acompte' ? acompte : Math.round((total - acompte) * 100) / 100
+  if (amount <= 0) {
+    redirect(`/admin/commissions/${id}?notice=missing_amount`)
+  }
+
+  const reference = req!.devis_payment_reference!
+
+  let qrDataUrl: string | null = null
+  try {
+    qrDataUrl = await generateEpcQrDataUrl({
+      beneficiaryName: ATELIER.ibanHolder,
+      iban: ATELIER.iban,
+      amountEur: amount,
+      communication: reference,
+    })
+  } catch (err) {
+    console.error('Payment reminder QR failed', err)
+  }
+
+  try {
+    const isFR = req!.locale === 'fr'
+    const portalUrl = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/portail/devis/${id}`
+    const html = await render(
+      PaymentReminder({
+        recipientName: req!.name,
+        paymentType: type,
+        amountEur: amount,
+        reference,
+        iban: ATELIER.iban,
+        ibanHolder: ATELIER.ibanHolder,
+        qrDataUrl,
+        portalUrl,
+        locale: req!.locale,
+      })
+    )
+    const subject =
+      type === 'acompte'
+        ? isFR
+          ? 'Coordonnées pour votre acompte — Atelier Montreuil'
+          : 'Gegevens voor uw voorschot — Atelier Montreuil'
+        : isFR
+          ? 'Coordonnées pour le solde — Atelier Montreuil'
+          : 'Gegevens voor het saldo — Atelier Montreuil'
+
+    await sendEmail({
+      to: req!.email,
+      subject,
+      html,
+      text: isFR
+        ? `Bonjour ${req!.name}, voici les coordonnées de paiement : IBAN ${ATELIER.iban}, montant ${amount.toFixed(2)} €, communication structurée ${reference}.`
+        : `Beste ${req!.name}, hier de betalingsgegevens: IBAN ${ATELIER.iban}, bedrag ${amount.toFixed(2)} €, gestructureerde mededeling ${reference}.`,
+      replyTo: ATELIER.email,
+    })
+  } catch (err) {
+    console.error(`sendPaymentReminder ${type} failed`, err)
+  }
+
+  revalidatePath(`/admin/commissions/${id}`)
+  redirect(`/admin/commissions/${id}?notice=reminder_sent_${type}`)
+}
+
+/** Stuur een vriendelijke betaalherinnering voor het voorschot. */
+export async function sendAcompteReminder(formData: FormData) {
+  const id = String(formData.get('id') || '')
+  await sendPaymentReminderInternal(id, 'acompte')
+}
+
+/** Stuur een vriendelijke betaalherinnering voor het saldo. */
+export async function sendBalanceReminder(formData: FormData) {
+  const id = String(formData.get('id') || '')
+  await sendPaymentReminderInternal(id, 'balance')
 }

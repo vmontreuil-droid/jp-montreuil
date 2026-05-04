@@ -543,30 +543,33 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
           ))}
         </ul>
 
-        {estimatedPrice != null && (
-          <div className="space-y-1 text-sm pt-2 border-t border-(--color-bronze)/30">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-(--color-charcoal) text-xs">
-                {locale === 'fr' ? 'Sous-total HT' : 'Subtotaal excl. BTW'}
-              </span>
-              <span className="text-(--color-ink) tabular-nums">
-                {formatCurrency(estimatedPrice)}
-              </span>
+        {estimatedPrice != null && (() => {
+          // Lijnen op /devis zijn TTC (BTW inbegrepen) — extraheer BTW.
+          const ttc = estimatedPrice
+          const ht =
+            pricing.defaultVatRate > 0
+              ? Math.round((ttc / (1 + pricing.defaultVatRate / 100)) * 100) / 100
+              : ttc
+          const vat = Math.round((ttc - ht) * 100) / 100
+          return (
+            <div className="space-y-1 text-sm pt-2 border-t border-(--color-bronze)/30">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-(--color-charcoal) text-xs">
+                  {locale === 'fr' ? 'Sous-total HT' : 'Subtotaal excl. BTW'}
+                </span>
+                <span className="text-(--color-ink) tabular-nums">{formatCurrency(ht)}</span>
+              </div>
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-(--color-charcoal) text-xs">
+                  {locale === 'fr'
+                    ? `TVA (${pricing.defaultVatRate}%)`
+                    : `BTW (${pricing.defaultVatRate}%)`}
+                </span>
+                <span className="text-(--color-ink) tabular-nums">{formatCurrency(vat)}</span>
+              </div>
             </div>
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-(--color-charcoal) text-xs">
-                {locale === 'fr'
-                  ? `TVA (${pricing.defaultVatRate}%)`
-                  : `BTW (${pricing.defaultVatRate}%)`}
-              </span>
-              <span className="text-(--color-ink) tabular-nums">
-                {formatCurrency(
-                  Math.round(estimatedPrice * (pricing.defaultVatRate / 100) * 100) / 100,
-                )}
-              </span>
-            </div>
-          </div>
-        )}
+          )
+        })()}
 
         <div className="flex items-baseline justify-between gap-3 pt-2 mt-2 border-t-2 border-(--color-bronze)/40">
           <span className="text-sm uppercase tracking-[0.15em] text-(--color-stone)">
@@ -577,11 +580,7 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
               : tt.estimateTotal}
           </span>
           <span className="text-2xl font-[family-name:var(--font-display)] text-(--color-ink)">
-            {estimatedPrice == null
-              ? tt.estimateCustom
-              : formatCurrency(
-                  Math.round(estimatedPrice * (1 + pricing.defaultVatRate / 100) * 100) / 100,
-                )}
+            {estimatedPrice == null ? tt.estimateCustom : formatCurrency(estimatedPrice)}
           </span>
         </div>
         <p className="mt-3 text-xs text-(--color-stone) leading-relaxed">{tt.estimateHint}</p>

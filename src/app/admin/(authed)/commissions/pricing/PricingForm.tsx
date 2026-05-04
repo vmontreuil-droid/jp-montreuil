@@ -83,11 +83,18 @@ export default function PricingForm({ defaults }: Props) {
 
   return (
     <form action={action} className="space-y-8">
+      <div className="bg-(--color-bronze)/10 border border-(--color-bronze)/40 px-4 py-3 text-xs text-(--color-charcoal) leading-relaxed">
+        <strong className="text-(--color-bronze)">Tous les prix sont TTC</strong> (TVA
+        comprise au taux par défaut indiqué dans la section 5). Le devis montre
+        ensuite la ventilation HT / TVA / Total TTC, mais ces montants ici sont
+        les prix tout compris que paie le client.
+      </div>
+
       {/* Section 1: Prix de base par format */}
       <section className="border border-(--color-frame) bg-(--color-paper) p-6 space-y-3">
         <header className="mb-3">
           <h2 className="text-base text-(--color-ink) font-[family-name:var(--font-display)]">
-            1. Prix de base par format
+            1. Prix de base par format <span className="text-xs text-(--color-stone)">(TTC)</span>
           </h2>
           <p className="text-xs text-(--color-stone) mt-1">
             Œuvre sans cadre, 1 portrait, fond simple. Identique pour les 3 techniques.

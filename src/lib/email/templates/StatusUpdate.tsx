@@ -76,6 +76,31 @@ export function StatusUpdate(p: Props) {
 
       <Text style={{ ...text.body, marginBottom: 18 }}>{copy.body}</Text>
 
+      {p.status === 'acompte_recu' && p.paymentAmountEur != null && p.paymentAmountEur > 0 && (
+        <Section
+          style={{
+            backgroundColor: colors.canvas,
+            border: `1px solid ${colors.border}`,
+            padding: '14px 18px',
+            marginBottom: 22,
+          }}
+        >
+          <Text style={{ ...text.small, margin: '0 0 6px' }}>
+            {isFR ? 'À régler à la livraison (solde)' : 'Nog te betalen bij levering (saldo)'}
+          </Text>
+          <Text
+            style={{
+              ...text.body,
+              fontWeight: 600,
+              margin: 0,
+              color: colors.bronze,
+            }}
+          >
+            {p.paymentAmountEur.toFixed(2)} €
+          </Text>
+        </Section>
+      )}
+
       {p.status === 'livre' && p.paymentReference && p.paymentAmountEur != null && (
         <Section
           style={{

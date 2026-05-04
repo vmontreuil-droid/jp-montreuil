@@ -119,7 +119,7 @@ export const DEFAULT_PRICING: Pricing = {
     hyperrealism: 250,
   },
   extraPortrait: 200,
-  defaultVatRate: 0,
+  defaultVatRate: 21,
 } as const
 
 /** Een lijn in de prijsdetail-tabel. */
