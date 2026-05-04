@@ -82,6 +82,7 @@ import {
   markRefused,
 } from '../actions'
 import DevisComposeForm from './DevisComposeForm'
+import MessageWithTranslate from './MessageWithTranslate'
 
 export const dynamic = 'force-dynamic'
 
@@ -383,12 +384,7 @@ export default async function CommissionDetailPage({ params }: Props) {
               )}
             </dl>
             <div className="mt-5">
-              <h3 className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-2">
-                Message du client
-              </h3>
-              <p className="whitespace-pre-wrap text-sm text-(--color-charcoal) leading-relaxed bg-(--color-canvas) border border-(--color-frame) p-4">
-                {req.message}
-              </p>
+              <MessageWithTranslate text={req.message} />
             </div>
           </section>
 
