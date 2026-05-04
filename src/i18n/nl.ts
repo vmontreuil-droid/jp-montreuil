@@ -115,6 +115,7 @@ const dict: Dictionary = {
       'Formaten volledig op maat.',
       'Technieken: zwart-wit potlood, kleur aquarel, acryl op linnen.',
       'Inkadering mogelijk als optie.',
+      'Uitvoeringstermijn: 5 tot 20 werkdagen na de aanvraag.',
       'Elke opdracht krijgt een offerte op maat. Een voorschot wordt gevraagd ter validatie vóór de uitvoering.',
     ],
 
