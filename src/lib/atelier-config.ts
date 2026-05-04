@@ -77,10 +77,10 @@ export type Pricing = {
 
 export const DEFAULT_PRICING: Pricing = {
   format: {
-    '40x60': 400,
-    '57x77': 650,
-    '60x90': 850,
-    '130x160': 2200,
+    '40x60': 390,
+    '57x77': 495,
+    '60x90': 720,
+    '130x160': 2250,
   },
   frame: {
     simple: 80,

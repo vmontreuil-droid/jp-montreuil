@@ -15,10 +15,10 @@ create table if not exists public.commission_pricing (
   id int primary key default 1 check (id = 1),
 
   -- Basis per formaat (gelijke prijs voor alle 3 technieken)
-  format_40x60 numeric not null default 400,
-  format_57x77 numeric not null default 650,
-  format_60x90 numeric not null default 850,
-  format_130x160 numeric not null default 2200,
+  format_40x60 numeric not null default 390,
+  format_57x77 numeric not null default 495,
+  format_60x90 numeric not null default 720,
+  format_130x160 numeric not null default 2250,
 
   -- Kaders (vast bedrag, ongeacht formaat). NULL = "sur devis".
   frame_simple numeric not null default 80,
