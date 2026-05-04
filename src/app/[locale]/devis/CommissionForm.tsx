@@ -522,7 +522,7 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
         </div>
       </div>
 
-      {/* Prix indicatif (live) — détail par ligne */}
+      {/* Prix indicatif (live) — détail par ligne + BTW */}
       <div className="bg-(--color-bronze)/10 border border-(--color-bronze)/40 px-5 py-4">
         <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-3">
           {tt.estimateLabel}
@@ -542,12 +542,46 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
             </li>
           ))}
         </ul>
-        <div className="flex items-baseline justify-between gap-3 pt-2 border-t-2 border-(--color-bronze)/40">
+
+        {estimatedPrice != null && (
+          <div className="space-y-1 text-sm pt-2 border-t border-(--color-bronze)/30">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-(--color-charcoal) text-xs">
+                {locale === 'fr' ? 'Sous-total HT' : 'Subtotaal excl. BTW'}
+              </span>
+              <span className="text-(--color-ink) tabular-nums">
+                {formatCurrency(estimatedPrice)}
+              </span>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-(--color-charcoal) text-xs">
+                {locale === 'fr'
+                  ? `TVA (${pricing.defaultVatRate}%)`
+                  : `BTW (${pricing.defaultVatRate}%)`}
+              </span>
+              <span className="text-(--color-ink) tabular-nums">
+                {formatCurrency(
+                  Math.round(estimatedPrice * (pricing.defaultVatRate / 100) * 100) / 100,
+                )}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-baseline justify-between gap-3 pt-2 mt-2 border-t-2 border-(--color-bronze)/40">
           <span className="text-sm uppercase tracking-[0.15em] text-(--color-stone)">
-            {tt.estimateTotal}
+            {estimatedPrice != null && pricing.defaultVatRate > 0
+              ? locale === 'fr'
+                ? 'Total TTC'
+                : 'Totaal incl. BTW'
+              : tt.estimateTotal}
           </span>
           <span className="text-2xl font-[family-name:var(--font-display)] text-(--color-ink)">
-            {estimatedPrice == null ? tt.estimateCustom : formatCurrency(estimatedPrice)}
+            {estimatedPrice == null
+              ? tt.estimateCustom
+              : formatCurrency(
+                  Math.round(estimatedPrice * (1 + pricing.defaultVatRate / 100) * 100) / 100,
+                )}
           </span>
         </div>
         <p className="mt-3 text-xs text-(--color-stone) leading-relaxed">{tt.estimateHint}</p>

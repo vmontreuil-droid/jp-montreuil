@@ -389,7 +389,7 @@ export default async function PortailDevisDetailPage({ params }: Props) {
           </ul>
 
           <div className="bg-(--color-canvas) border border-(--color-frame) px-4 py-3 space-y-1 text-sm">
-            {vatRate > 0 && devisSubtotal != null && vatAmount != null && (
+            {devisSubtotal != null && (
               <>
                 <div className="flex items-center justify-between">
                   <span className="text-(--color-stone) text-xs">
@@ -404,18 +404,18 @@ export default async function PortailDevisDetailPage({ params }: Props) {
                     {isFR ? `TVA (${vatRate}%)` : `BTW (${vatRate}%)`}
                   </span>
                   <span className="text-(--color-charcoal) tabular-nums">
-                    {formatEur(vatAmount)}
+                    {formatEur(vatAmount ?? 0)}
                   </span>
                 </div>
               </>
             )}
             <div
               className={`flex items-center justify-between ${
-                vatRate > 0 ? 'pt-1.5 border-t border-(--color-frame)/50' : ''
+                devisSubtotal != null ? 'pt-1.5 border-t border-(--color-frame)/50' : ''
               }`}
             >
               <span className="text-(--color-charcoal)">
-                {vatRate > 0
+                {devisSubtotal != null
                   ? isFR
                     ? 'Total TTC'
                     : 'Totaal incl. BTW'

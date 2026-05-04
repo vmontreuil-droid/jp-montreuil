@@ -278,37 +278,25 @@ export default async function DevisSignaturePage({ params }: Props) {
 
         {/* Totals */}
         <div className="bg-(--color-canvas) border border-(--color-frame) px-4 py-3 space-y-1.5 text-sm">
-          {vatRate > 0 && (
-            <>
-              <div className="flex items-center justify-between">
-                <span className="text-(--color-stone) text-xs">
-                  {locale === 'fr' ? 'Sous-total HT' : 'Subtotaal excl. BTW'}
-                </span>
-                <span className="text-(--color-charcoal) tabular-nums">
-                  {formatEur(subtotalHt)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-(--color-stone) text-xs">
-                  {locale === 'fr' ? `TVA (${vatRate}%)` : `BTW (${vatRate}%)`}
-                </span>
-                <span className="text-(--color-charcoal) tabular-nums">
-                  {formatEur(vatAmount)}
-                </span>
-              </div>
-            </>
-          )}
-          <div
-            className={`flex items-center justify-between ${
-              vatRate > 0 ? 'pt-1.5 border-t border-(--color-frame)/50' : ''
-            }`}
-          >
+          <div className="flex items-center justify-between">
+            <span className="text-(--color-stone) text-xs">
+              {locale === 'fr' ? 'Sous-total HT' : 'Subtotaal excl. BTW'}
+            </span>
+            <span className="text-(--color-charcoal) tabular-nums">
+              {formatEur(subtotalHt)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-(--color-stone) text-xs">
+              {locale === 'fr' ? `TVA (${vatRate}%)` : `BTW (${vatRate}%)`}
+            </span>
+            <span className="text-(--color-charcoal) tabular-nums">
+              {formatEur(vatAmount)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between pt-1.5 border-t border-(--color-frame)/50">
             <span className="text-(--color-charcoal)">
-              {vatRate > 0
-                ? locale === 'fr'
-                  ? 'Total TTC'
-                  : 'Totaal incl. BTW'
-                : tt.total}
+              {locale === 'fr' ? 'Total TTC' : 'Totaal incl. BTW'}
             </span>
             <span className="text-(--color-ink) font-semibold text-base">
               {formatEur(total)}
