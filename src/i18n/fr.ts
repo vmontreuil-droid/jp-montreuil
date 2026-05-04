@@ -92,6 +92,15 @@ const dict = {
       forbiddenBody: "Cet album n'est pas associé à votre adresse e-mail. Si vous pensez qu'il s'agit d'une erreur, contactez Jean-Pierre.",
       backFull: 'Retour à mes albums',
     },
+    commissions: {
+      sectionTitle: 'Mes commandes',
+      sectionLead: 'Suivi de vos devis et commandes en cours.',
+      empty: 'Aucune commande en cours.',
+      statusLabel: 'Statut',
+      viewDevis: 'Voir & signer le devis',
+      viewStatus: 'Voir le suivi',
+      askedFor: 'Demande envoyée le',
+    },
   },
 
   devis: {
@@ -167,6 +176,70 @@ const dict = {
     },
 
     askedFields: 'Champs requis *',
+
+    statusLabels: {
+      nieuw: 'Reçue',
+      in_behandeling: 'En traitement',
+      devis_envoye: 'Devis envoyé',
+      signe: 'Devis signé',
+      refuse: 'Refusé',
+      acompte_recu: 'Acompte reçu',
+      en_cours: 'En cours de réalisation',
+      livre: 'Livrée',
+      complete: 'Terminée',
+    },
+  },
+
+  devisSign: {
+    eyebrow: 'Atelier Montreuil',
+    portalTitle: 'Votre devis',
+    introTitle: 'Détail du devis',
+    devisNumber: 'Numéro',
+    issuedFor: 'Établi pour',
+    validUntil: "Valable jusqu'au",
+    technique: 'Technique',
+    format: 'Format',
+    support: 'Support',
+    framing: 'Encadrement',
+    description: 'Description',
+    qty: 'Qté',
+    unitPrice: 'P.U.',
+    lineTotal: 'Total',
+    subTotal: 'Sous-total',
+    total: 'Total à régler',
+    acompteLabel: 'Acompte demandé',
+    acompteHint: "L'acompte de validation se règle par virement après la signature.",
+
+    signTitle: 'Signature pour accord',
+    signLead: 'En signant ci-dessous, vous validez le devis et donnez le feu vert pour la réalisation.',
+    signerNameLabel: 'Votre nom',
+    signaturePadLabel: 'Tracez votre signature dans le cadre',
+    clearSignature: 'Effacer',
+    signBtn: 'Signer le devis',
+    signing: 'Signature en cours…',
+    signedTitle: 'Merci pour votre confiance',
+    signedBody: 'Votre devis est validé. Vous pouvez régler l’acompte par virement avec les coordonnées ci-dessous.',
+
+    paymentTitle: 'Paiement de l’acompte',
+    paymentInstructions:
+      'Effectuez un virement avec la mention exacte ci-dessous. Dès réception, Jean-Pierre commence votre œuvre.',
+    paymentBeneficiary: 'Bénéficiaire',
+    paymentIban: 'IBAN',
+    paymentAmount: 'Montant',
+    paymentReference: 'Communication',
+    paymentRefHint: 'Indiquez exactement cette communication pour que le paiement soit reconnu.',
+
+    statusTitle: 'Suivi de votre commande',
+    statusHint: 'Vous pouvez retrouver ce devis à tout moment via le lien dans votre e-mail, ou en vous connectant à votre espace client.',
+
+    notFoundTitle: 'Devis introuvable',
+    notFoundBody: 'Ce lien n’est pas valide ou a expiré. Contactez Jean-Pierre si vous pensez qu’il s’agit d’une erreur.',
+
+    errors: {
+      signerName: 'Indiquez votre nom complet.',
+      signature: 'Veuillez tracer votre signature.',
+      server: 'Une erreur est survenue. Veuillez réessayer.',
+    },
   },
 }
 

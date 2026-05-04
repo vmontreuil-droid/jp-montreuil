@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Camera, ArrowRight, Calendar, ImageIcon } from 'lucide-react'
+import { Camera, ArrowRight, Calendar, ImageIcon, Brush, CheckCircle2, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getDictionary } from '@/i18n/dictionaries'
 import { getPortailLocale } from './locale'
+import { localePath } from '@/lib/links'
 
 export const dynamic = 'force-dynamic'
 
@@ -75,6 +76,32 @@ export default async function PortailDashboardPage() {
     if (signed?.signedUrl) coverUrls.set(a.id, signed.signedUrl)
   }
 
+  // Commissions matched op email
+  const { data: commissionsRaw } = await admin
+    .from('commission_requests')
+    .select(
+      'id, devis_subject, technique, width_cm, height_cm, status, signature_token, signed_at, devis_total_eur, devis_acompte_eur, created_at'
+    )
+    .ilike('email', user.email)
+    .order('created_at', { ascending: false })
+
+  type CommissionEntry = {
+    id: string
+    devis_subject: string | null
+    technique: string
+    width_cm: number | null
+    height_cm: number | null
+    status: keyof typeof getDictionary extends never ? string : string
+    signature_token: string | null
+    signed_at: string | null
+    devis_total_eur: number | null
+    devis_acompte_eur: number | null
+    created_at: string
+  }
+  const commissions = (commissionsRaw ?? []) as CommissionEntry[]
+  const tDevis = getDictionary(locale).devis
+  const statusLabels = tDevis.statusLabels as Record<string, string>
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
       <header className="mb-10">
@@ -87,13 +114,79 @@ export default async function PortailDashboardPage() {
         <p className="mt-2 text-sm text-(--color-charcoal)">{t.dashboard.lead}</p>
       </header>
 
-      {albums.length === 0 ? (
+      {/* Commissions section */}
+      {commissions.length > 0 && (
+        <section className="mb-12">
+          <div className="mb-4">
+            <h2 className="text-2xl text-(--color-ink) font-[family-name:var(--font-display)] inline-flex items-center gap-2">
+              <Brush className="w-5 h-5 text-(--color-bronze)" />
+              {t.commissions.sectionTitle}
+            </h2>
+            <p className="mt-1 text-sm text-(--color-charcoal)">{t.commissions.sectionLead}</p>
+          </div>
+
+          <ul className="space-y-3">
+            {commissions.map((c) => {
+              const title =
+                c.devis_subject ||
+                (locale === 'fr'
+                  ? `Demande du ${new Date(c.created_at).toLocaleDateString(dateLocale, { dateStyle: 'long' })}`
+                  : `Aanvraag van ${new Date(c.created_at).toLocaleDateString(dateLocale, { dateStyle: 'long' })}`)
+              const statusLabel = statusLabels[c.status] || c.status
+              const linkHref = c.signature_token
+                ? localePath(locale, `/devis-signature/${c.signature_token}`)
+                : null
+              const ctaLabel = c.signed_at ? t.commissions.viewStatus : t.commissions.viewDevis
+              const StatusIcon = c.signed_at ? CheckCircle2 : Clock
+
+              const card = (
+                <div className="block bg-(--color-paper) border border-(--color-frame) hover:border-(--color-bronze) p-5 transition-colors">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg text-(--color-ink) font-[family-name:var(--font-display)] mb-1">
+                        {title}
+                      </h3>
+                      <p className="text-xs text-(--color-stone)">
+                        {t.commissions.askedFor}{' '}
+                        {new Date(c.created_at).toLocaleDateString(dateLocale, { dateStyle: 'long' })}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] uppercase tracking-[0.15em] border border-(--color-bronze)/40 bg-(--color-bronze)/10 text-(--color-ink) whitespace-nowrap shrink-0">
+                      <StatusIcon className="w-3 h-3 text-(--color-bronze)" />
+                      {statusLabel}
+                    </span>
+                  </div>
+                  {linkHref && (
+                    <div className="mt-3 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] text-(--color-bronze) group-hover:gap-2 transition-all">
+                      {ctaLabel}
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                </div>
+              )
+              return (
+                <li key={c.id}>
+                  {linkHref ? (
+                    <Link href={linkHref} className="block group">
+                      {card}
+                    </Link>
+                  ) : (
+                    card
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      )}
+
+      {albums.length === 0 && commissions.length === 0 ? (
         <div className="bg-(--color-paper) border border-(--color-frame) p-10 text-center">
           <Camera className="w-10 h-10 mx-auto mb-4 text-(--color-stone) opacity-50" />
           <p className="text-sm text-(--color-charcoal)">{t.dashboard.empty}</p>
           <p className="mt-2 text-xs text-(--color-stone)">{t.dashboard.emptyHint}</p>
         </div>
-      ) : (
+      ) : albums.length === 0 ? null : (
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {albums.map((a) => (
             <li key={a.id}>

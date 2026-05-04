@@ -94,6 +94,15 @@ const dict: Dictionary = {
       forbiddenBody: 'Dit album is niet gekoppeld aan uw e-mailadres. Denkt u dat dit een fout is, neem dan contact op met Jean-Pierre.',
       backFull: 'Terug naar mijn albums',
     },
+    commissions: {
+      sectionTitle: 'Mijn bestellingen',
+      sectionLead: 'Opvolging van uw offertes en lopende bestellingen.',
+      empty: 'Nog geen lopende bestellingen.',
+      statusLabel: 'Status',
+      viewDevis: 'Bekijk & onderteken offerte',
+      viewStatus: 'Bekijk opvolging',
+      askedFor: 'Aanvraag verzonden op',
+    },
   },
 
   devis: {
@@ -169,6 +178,70 @@ const dict: Dictionary = {
     },
 
     askedFields: 'Verplichte velden *',
+
+    statusLabels: {
+      nieuw: 'Ontvangen',
+      in_behandeling: 'In behandeling',
+      devis_envoye: 'Offerte verzonden',
+      signe: 'Offerte ondertekend',
+      refuse: 'Geweigerd',
+      acompte_recu: 'Voorschot ontvangen',
+      en_cours: 'In uitvoering',
+      livre: 'Afgeleverd',
+      complete: 'Afgerond',
+    },
+  },
+
+  devisSign: {
+    eyebrow: 'Atelier Montreuil',
+    portalTitle: 'Uw offerte',
+    introTitle: 'Detail van de offerte',
+    devisNumber: 'Nummer',
+    issuedFor: 'Opgesteld voor',
+    validUntil: 'Geldig tot',
+    technique: 'Techniek',
+    format: 'Formaat',
+    support: 'Drager',
+    framing: 'Inkadering',
+    description: 'Beschrijving',
+    qty: 'Aant.',
+    unitPrice: 'Prijs',
+    lineTotal: 'Totaal',
+    subTotal: 'Subtotaal',
+    total: 'Te betalen',
+    acompteLabel: 'Gevraagd voorschot',
+    acompteHint: 'Het voorschot wordt na ondertekening per overschrijving betaald.',
+
+    signTitle: 'Handtekening voor akkoord',
+    signLead: 'Door te ondertekenen valideert u de offerte en geeft u groen licht voor de uitvoering.',
+    signerNameLabel: 'Uw naam',
+    signaturePadLabel: 'Plaats uw handtekening in het kader',
+    clearSignature: 'Wissen',
+    signBtn: 'Offerte ondertekenen',
+    signing: 'Ondertekenen…',
+    signedTitle: 'Bedankt voor uw vertrouwen',
+    signedBody: 'Uw offerte is gevalideerd. U kunt het voorschot per overschrijving betalen met onderstaande gegevens.',
+
+    paymentTitle: 'Betaling van het voorschot',
+    paymentInstructions:
+      'Maak een overschrijving met onderstaande mededeling. Zodra Jean-Pierre het ontvangt, start hij uw werk.',
+    paymentBeneficiary: 'Begunstigde',
+    paymentIban: 'IBAN',
+    paymentAmount: 'Bedrag',
+    paymentReference: 'Mededeling',
+    paymentRefHint: 'Vermeld exact deze mededeling, zo wordt de betaling herkend.',
+
+    statusTitle: 'Status van uw bestelling',
+    statusHint: 'U kunt deze offerte altijd terugvinden via de link in uw e-mail, of door in te loggen op uw klantenportaal.',
+
+    notFoundTitle: 'Offerte niet gevonden',
+    notFoundBody: 'Deze link is ongeldig of verlopen. Neem contact op met Jean-Pierre als u denkt dat dit een fout is.',
+
+    errors: {
+      signerName: 'Geef uw volledige naam op.',
+      signature: 'Plaats uw handtekening.',
+      server: 'Er is een fout opgetreden. Probeer opnieuw.',
+    },
   },
 }
 
