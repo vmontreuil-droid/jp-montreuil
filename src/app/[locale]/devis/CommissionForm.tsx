@@ -487,7 +487,7 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div>
+        <div className="min-w-0">
           <label htmlFor="email" className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
             {tt.emailLabel} <span className="text-(--color-bronze)">*</span>
           </label>
@@ -497,10 +497,10 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
             type="email"
             required
             placeholder={tt.emailPlaceholder}
-            className="w-full px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
+            className="w-full min-w-0 px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
           />
         </div>
-        <div>
+        <div className="min-w-0">
           <label htmlFor="phone" className="block text-sm uppercase tracking-[0.2em] text-(--color-stone) mb-2">
             {tt.phoneLabel}
           </label>
@@ -509,7 +509,7 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
             name="phone"
             type="tel"
             placeholder={tt.phonePlaceholder}
-            className="w-full px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
+            className="w-full min-w-0 px-4 py-3 input-elev bg-(--color-paper) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink)"
           />
         </div>
       </div>
