@@ -128,7 +128,10 @@ export default async function PortailDevisDetailPage({ params }: Props) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user || !user.email) redirect('/portail/login')
+  const next = encodeURIComponent(`/portail/devis/${id}`)
+  if (!user || !user.email) {
+    redirect(`/portail/login?next=${next}`)
+  }
 
   const locale = await getPortailLocale()
   const t = getDictionary(locale)
@@ -144,9 +147,10 @@ export default async function PortailDevisDetailPage({ params }: Props) {
 
   if (!req) notFound()
 
-  // Veiligheid: enkel de eigenaar mag z'n eigen devis bekijken
+  // Eigenaar-check: ander account ingelogd → terug naar login (niet 404),
+  // zodat klant duidelijk ziet dat hij met het verkeerde account inlogde.
   if (req.email.toLowerCase() !== user.email.toLowerCase()) {
-    notFound()
+    redirect(`/portail/login?err=wrong_account&next=${next}`)
   }
 
   // Photos

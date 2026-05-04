@@ -86,6 +86,7 @@ const dict = {
       unknownEmail: "Aucun compte n'est associé à cette adresse. Vérifiez l'orthographe ou contactez Jean-Pierre.",
       sendFailed: "Impossible d'envoyer le lien pour le moment. Réessayez dans quelques instants.",
       expired: 'Le lien a expiré. Demandez-en un nouveau ci-dessous.',
+      wrongAccount: 'Ce dossier appartient à une autre adresse e-mail. Connectez-vous avec celle utilisée lors de votre demande.',
       sentTitle: 'Vérifiez votre e-mail',
       sentBody: 'Un lien de connexion a été envoyé à',
       sentExpiry: "Cliquez sur le lien dans l'e-mail pour accéder à votre espace. Le lien expire après 1 heure.",

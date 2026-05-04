@@ -88,6 +88,7 @@ const dict: Dictionary = {
       unknownEmail: 'Er bestaat geen account met dit e-mailadres. Controleer de spelling of neem contact op met Jean-Pierre.',
       sendFailed: 'De link kan momenteel niet verstuurd worden. Probeer het over enkele ogenblikken opnieuw.',
       expired: 'De link is verlopen. Vraag hieronder een nieuwe aan.',
+      wrongAccount: 'Dit dossier hoort bij een ander e-mailadres. Log in met het adres dat u bij uw aanvraag gebruikte.',
       sentTitle: 'Controleer uw e-mail',
       sentBody: 'Een login-link is verstuurd naar',
       sentExpiry: 'Klik op de link in de e-mail om uw portaal te openen. De link vervalt na 1 uur.',

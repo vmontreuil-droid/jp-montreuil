@@ -28,6 +28,9 @@ type Props = {
 function FormInner({ t }: Props) {
   const params = useSearchParams()
   const errorParam = params.get('error') ?? params.get('err')
+  const nextRaw = params.get('next')
+  const nextPath =
+    nextRaw && nextRaw.startsWith('/') && !nextRaw.startsWith('//') ? nextRaw : null
   const [mode, setMode] = useState<Mode>('password')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -41,6 +44,7 @@ function FormInner({ t }: Props) {
       invalid_credentials: t.login.invalidCredentials,
       invalid_email: t.login.invalidEmail,
       rate_limited: t.login.rateLimited,
+      wrong_account: t.login.wrongAccount,
     }
     return map[errorParam] ?? null
   })
@@ -60,7 +64,7 @@ function FormInner({ t }: Props) {
       void (async () => {
         const r = await signInWithPassword({ email, password })
         if (r.ok) {
-          window.location.href = '/portail'
+          window.location.href = nextPath ?? '/portail'
           return
         }
         if (r.error === 'invalid_credentials') setError(t.login.invalidCredentials)
@@ -80,7 +84,7 @@ function FormInner({ t }: Props) {
     }
     startTransition(() => {
       void (async () => {
-        const r = await requestPortalMagicLink({ email })
+        const r = await requestPortalMagicLink({ email, next: nextPath ?? undefined })
         if (r.ok) {
           setMagicSent(true)
           return

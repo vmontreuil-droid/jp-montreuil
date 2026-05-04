@@ -150,9 +150,15 @@ export async function requestPasswordReset(input: {
  */
 export async function requestPortalMagicLink(input: {
   email: string
+  next?: string
 }): Promise<RequestPortalLinkResult> {
   const email = (input.email ?? '').trim().toLowerCase()
   if (!email || !EMAIL_RX.test(email)) return { ok: false, error: 'invalid_email' }
+  // Voorkom open-redirect: enkel interne paden toelaten
+  const safeNext =
+    input.next && input.next.startsWith('/') && !input.next.startsWith('//')
+      ? input.next
+      : '/portail'
 
   const admin = createAdminClient()
 
@@ -189,7 +195,7 @@ export async function requestPortalMagicLink(input: {
   }
 
   const origin = PUBLIC_BASE_URL.replace(/\/$/, '')
-  const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent('/portail')}`
+  const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
 
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
     type: 'magiclink',
@@ -202,7 +208,7 @@ export async function requestPortalMagicLink(input: {
 
   const actionUrl = `${origin}/auth/confirm?token_hash=${encodeURIComponent(
     linkData.properties.hashed_token
-  )}&type=magiclink&next=${encodeURIComponent('/portail')}`
+  )}&type=magiclink&next=${encodeURIComponent(safeNext)}`
 
   const html = await render(PortalMagicLink({ actionUrl, locale }))
 
