@@ -20,6 +20,8 @@ import {
   CalendarCheck,
   Home as HomeIcon,
   MapPin,
+  ImageIcon,
+  Download,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -445,6 +447,55 @@ export default async function CommissionDetailPage({ params, searchParams }: Pro
               <MessageWithTranslate text={req.message} />
             </div>
           </section>
+
+          {/* Photos de référence — toujours visibles, JP en a besoin pour peindre */}
+          {signed.length > 0 && (
+            <section className="border border-(--color-bronze)/40 bg-(--color-bronze)/5 p-6">
+              <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-4 inline-flex items-center gap-2">
+                <ImageIcon className="w-3.5 h-3.5 text-(--color-bronze)" />
+                Photos de référence ({signed.length})
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {signed.map((a) => (
+                  <div
+                    key={a.id}
+                    className="group relative border border-(--color-frame) bg-(--color-canvas) overflow-hidden"
+                  >
+                    {a.url ? (
+                      <>
+                        <a href={a.url} target="_blank" rel="noopener noreferrer" className="block">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={a.url}
+                            alt={a.filename}
+                            className="aspect-square w-full object-cover group-hover:opacity-80 transition-opacity"
+                          />
+                        </a>
+                        <a
+                          href={a.url}
+                          download={a.filename}
+                          title={`Télécharger ${a.filename}`}
+                          className="absolute top-2 right-2 inline-flex items-center justify-center w-7 h-7 bg-(--color-ink)/80 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-(--color-bronze)"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </a>
+                      </>
+                    ) : (
+                      <div className="aspect-square flex items-center justify-center text-(--color-stone) text-xs">
+                        {a.filename}
+                      </div>
+                    )}
+                    <p className="px-2 py-1.5 text-[10px] text-(--color-stone) truncate border-t border-(--color-frame)/50">
+                      {a.filename}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-(--color-stone) italic">
+                Cliquez sur une photo pour l’ouvrir en grand · survolez pour télécharger.
+              </p>
+            </section>
+          )}
 
           {/* Prix indicatif */}
           {breakdown.lines.length > 0 && (
