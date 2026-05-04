@@ -173,10 +173,15 @@ export function DevisToClient(p: Props) {
         </table>
       </Section>
 
-      <Text style={{ ...text.body, marginBottom: 22 }}>
+      <Text style={{ ...text.body, marginBottom: 8 }}>
         {isFR
           ? 'Pour valider la commande, signez le devis en ligne. Vous recevrez ensuite les coordonnées de virement pour l’acompte.'
           : 'Om de bestelling te valideren, ondertekent u de offerte online. Daarna ontvangt u de overschrijvingsgegevens voor het voorschot.'}
+      </Text>
+      <Text style={{ ...text.small, marginBottom: 22 }}>
+        {isFR
+          ? 'Délai de réalisation : 5 à 20 jours ouvrables suivant la demande.'
+          : 'Uitvoeringstermijn: 5 tot 20 werkdagen na de aanvraag.'}
       </Text>
 
       <Link

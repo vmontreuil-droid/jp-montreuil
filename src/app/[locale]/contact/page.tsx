@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { Mail, Phone, MapPin, BookOpen } from 'lucide-react'
+import { Mail, Phone, MapPin, BookOpen, Clock } from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { whatsappHref } from '@/lib/links'
@@ -115,6 +115,14 @@ export default async function ContactPage({ params }: Props) {
               </li>
             )
           })}
+          <li className="flex items-start gap-3">
+            <Clock className="w-5 h-5 text-(--color-bronze) shrink-0 mt-0.5" />
+            <span>
+              {locale === 'fr'
+                ? 'Délai de réalisation : 5 à 20 jours ouvrables suivant la demande.'
+                : 'Uitvoeringstermijn: 5 tot 20 werkdagen na de aanvraag.'}
+            </span>
+          </li>
         </ul>
       </div>
 

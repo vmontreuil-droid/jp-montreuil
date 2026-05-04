@@ -155,7 +155,6 @@ const dict: Dictionary = {
       complex_decor: 'Complex decor',
       high_detail: 'Hoog detailniveau',
       hyperrealism: 'Hyper-realisme',
-      rush: 'Spoedlevering',
     },
 
     framingLabel: 'Inkadering',
@@ -166,10 +165,7 @@ const dict: Dictionary = {
     frameTypeLabel: 'Inkadering',
     frameTypeOptions: {
       aucun: 'Zonder kader',
-      simple: 'Eenvoudige kader (natuurlijk hout)',
-      standard: 'Standaard kader (geschilderd / gekleurd)',
-      travaille: 'Bewerkte kader (lijstwerk, vergulding…)',
-      sur_mesure: 'Kader op maat (op aanvraag)',
+      simple: 'Met kader',
     },
 
     nameLabel: 'Volledige naam',
@@ -242,6 +238,7 @@ const dict: Dictionary = {
     total: 'Te betalen',
     acompteLabel: 'Gevraagd voorschot',
     acompteHint: 'Het voorschot wordt na ondertekening per overschrijving betaald.',
+    deliveryNote: 'Uitvoeringstermijn: 5 tot 20 werkdagen na de aanvraag.',
 
     signTitle: 'Handtekening voor akkoord',
     signLead: 'Door te ondertekenen valideert u de offerte en geeft u groen licht voor de uitvoering.',

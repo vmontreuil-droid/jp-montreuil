@@ -12,15 +12,14 @@ type Defaults = {
   format_57x77: number
   format_60x90: number
   format_130x160: number
-  frame_simple: number
-  frame_standard: number
-  frame_travaille: number
-  frame_sur_mesure: number | null
+  frame_40x60: number
+  frame_57x77: number
+  frame_60x90: number
+  frame_130x160: number
   supplement_background: number
   supplement_complex_decor: number
   supplement_high_detail: number
   supplement_hyperrealism: number
-  supplement_rush: number
   extra_portrait: number
 }
 
@@ -46,13 +45,11 @@ function PriceField({
   name,
   label,
   defaultValue,
-  required = true,
   hint,
 }: {
   name: string
   label: string
   defaultValue: number | null
-  required?: boolean
   hint?: string
 }) {
   return (
@@ -67,9 +64,9 @@ function PriceField({
           name={name}
           min="0"
           step="0.01"
-          required={required}
+          required
           defaultValue={defaultValue ?? ''}
-          placeholder={required ? '0' : 'Sur devis'}
+          placeholder="0"
           className="w-full px-4 py-2 pr-10 input-elev bg-(--color-canvas) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink) text-right tabular-nums"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-(--color-stone) text-sm">
@@ -105,37 +102,23 @@ export default function PricingForm({ defaults }: Props) {
         />
       </section>
 
-      {/* Section 2: Cadres */}
+      {/* Section 2: Cadre — prix par format */}
       <section className="border border-(--color-frame) bg-(--color-paper) p-6 space-y-3">
         <header className="mb-3">
           <h2 className="text-base text-(--color-ink) font-[family-name:var(--font-display)]">
-            2. Suppléments cadre
+            2. Encadrement — supplément par format
           </h2>
           <p className="text-xs text-(--color-stone) mt-1">
-            Quel que soit le format de l'œuvre.
+            Un seul type de cadre, prix qui augmente selon la grandeur de l'œuvre.
           </p>
         </header>
+        <PriceField name="frame_40x60" label="Cadre 40 × 60 cm" defaultValue={defaults.frame_40x60} />
+        <PriceField name="frame_57x77" label="Cadre 57 × 77 cm" defaultValue={defaults.frame_57x77} />
+        <PriceField name="frame_60x90" label="Cadre 60 × 90 cm" defaultValue={defaults.frame_60x90} />
         <PriceField
-          name="frame_simple"
-          label="Cadre simple (bois naturel)"
-          defaultValue={defaults.frame_simple}
-        />
-        <PriceField
-          name="frame_standard"
-          label="Cadre standard (peint / coloré)"
-          defaultValue={defaults.frame_standard}
-        />
-        <PriceField
-          name="frame_travaille"
-          label="Cadre travaillé (moulures, dorures…)"
-          defaultValue={defaults.frame_travaille}
-        />
-        <PriceField
-          name="frame_sur_mesure"
-          label="Cadre sur mesure"
-          defaultValue={defaults.frame_sur_mesure}
-          required={false}
-          hint="Laissez vide pour afficher « sur devis » au client."
+          name="frame_130x160"
+          label="Cadre 130 × 160 cm"
+          defaultValue={defaults.frame_130x160}
         />
       </section>
 
@@ -168,11 +151,6 @@ export default function PricingForm({ defaults }: Props) {
           name="supplement_hyperrealism"
           label="Hyper-réalisme"
           defaultValue={defaults.supplement_hyperrealism}
-        />
-        <PriceField
-          name="supplement_rush"
-          label="Délai express"
-          defaultValue={defaults.supplement_rush}
         />
       </section>
 

@@ -15,14 +15,14 @@ const NUMERIC_FIELDS = [
   'format_57x77',
   'format_60x90',
   'format_130x160',
-  'frame_simple',
-  'frame_standard',
-  'frame_travaille',
+  'frame_40x60',
+  'frame_57x77',
+  'frame_60x90',
+  'frame_130x160',
   'supplement_background',
   'supplement_complex_decor',
   'supplement_high_detail',
   'supplement_hyperrealism',
-  'supplement_rush',
   'extra_portrait',
 ] as const
 
@@ -66,18 +66,6 @@ export async function savePricing(
       }
     }
     update[field] = value
-  }
-
-  // sur_mesure mag leeg blijven (= "sur devis")
-  const surMesureRaw = formData.get('frame_sur_mesure')
-  if (surMesureRaw != null && String(surMesureRaw).trim()) {
-    const v = parsePrice(surMesureRaw)
-    if (v == null) {
-      return { status: 'error', message: 'Valeur invalide pour cadre sur mesure.' }
-    }
-    update.frame_sur_mesure = v
-  } else {
-    update.frame_sur_mesure = null
   }
 
   const { error } = await admin

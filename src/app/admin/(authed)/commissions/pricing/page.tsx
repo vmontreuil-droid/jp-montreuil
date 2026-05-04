@@ -11,15 +11,14 @@ type Row = {
   format_57x77: number
   format_60x90: number
   format_130x160: number
-  frame_simple: number
-  frame_standard: number
-  frame_travaille: number
-  frame_sur_mesure: number | null
+  frame_40x60: number
+  frame_57x77: number
+  frame_60x90: number
+  frame_130x160: number
   supplement_background: number
   supplement_complex_decor: number
   supplement_high_detail: number
   supplement_hyperrealism: number
-  supplement_rush: number
   extra_portrait: number
   updated_at: string
 }
@@ -30,9 +29,9 @@ export default async function PricingPage() {
     .from('commission_pricing')
     .select(
       'format_40x60, format_57x77, format_60x90, format_130x160,' +
-        ' frame_simple, frame_standard, frame_travaille, frame_sur_mesure,' +
+        ' frame_40x60, frame_57x77, frame_60x90, frame_130x160,' +
         ' supplement_background, supplement_complex_decor, supplement_high_detail,' +
-        ' supplement_hyperrealism, supplement_rush, extra_portrait, updated_at'
+        ' supplement_hyperrealism, extra_portrait, updated_at'
     )
     .eq('id', 1)
     .maybeSingle<Row>()
@@ -43,15 +42,14 @@ export default async function PricingPage() {
     format_57x77: DEFAULT_PRICING.format['57x77'],
     format_60x90: DEFAULT_PRICING.format['60x90'],
     format_130x160: DEFAULT_PRICING.format['130x160'],
-    frame_simple: DEFAULT_PRICING.frame.simple as number,
-    frame_standard: DEFAULT_PRICING.frame.standard as number,
-    frame_travaille: DEFAULT_PRICING.frame.travaille as number,
-    frame_sur_mesure: DEFAULT_PRICING.frame.sur_mesure,
+    frame_40x60: DEFAULT_PRICING.frameByFormat['40x60'],
+    frame_57x77: DEFAULT_PRICING.frameByFormat['57x77'],
+    frame_60x90: DEFAULT_PRICING.frameByFormat['60x90'],
+    frame_130x160: DEFAULT_PRICING.frameByFormat['130x160'],
     supplement_background: DEFAULT_PRICING.supplement.background,
     supplement_complex_decor: DEFAULT_PRICING.supplement.complex_decor,
     supplement_high_detail: DEFAULT_PRICING.supplement.high_detail,
     supplement_hyperrealism: DEFAULT_PRICING.supplement.hyperrealism,
-    supplement_rush: DEFAULT_PRICING.supplement.rush,
     extra_portrait: DEFAULT_PRICING.extraPortrait,
     updated_at: '',
   }

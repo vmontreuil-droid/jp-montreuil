@@ -153,7 +153,6 @@ const dict = {
       complex_decor: 'Décor complexe',
       high_detail: 'Niveau de détail élevé',
       hyperrealism: 'Hyper-réalisme',
-      rush: 'Délai express',
     },
 
     framingLabel: 'Encadrement',
@@ -164,10 +163,7 @@ const dict = {
     frameTypeLabel: 'Encadrement',
     frameTypeOptions: {
       aucun: 'Sans cadre',
-      simple: 'Cadre simple (bois naturel)',
-      standard: 'Cadre standard (peint / coloré)',
-      travaille: 'Cadre travaillé (moulures, dorures…)',
-      sur_mesure: 'Cadre sur mesure (sur devis)',
+      simple: 'Avec cadre',
     },
 
     nameLabel: 'Nom complet',
@@ -240,6 +236,7 @@ const dict = {
     total: 'Total à régler',
     acompteLabel: 'Acompte demandé',
     acompteHint: "L'acompte de validation se règle par virement après la signature.",
+    deliveryNote: 'Délai de réalisation : 5 à 20 jours ouvrables suivant la demande.',
 
     signTitle: 'Signature pour accord',
     signLead: 'En signant ci-dessous, vous validez le devis et donnez le feu vert pour la réalisation.',

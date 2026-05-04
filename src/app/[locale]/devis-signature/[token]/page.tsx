@@ -254,6 +254,7 @@ export default async function DevisSignaturePage({ params }: Props) {
           </div>
         </div>
         <p className="mt-2 text-xs text-(--color-stone)">{tt.acompteHint}</p>
+        <p className="mt-1 text-xs text-(--color-stone)">{tt.deliveryNote}</p>
       </section>
 
       {/* Sign / Payment block */}

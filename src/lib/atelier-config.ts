@@ -45,8 +45,10 @@ export const FORMATS = [
 
 export type FormatId = (typeof FORMATS)[number]['id'] | 'custom'
 
-/** Frame keuzes — labels in i18n.devis.frameTypeOptions */
-export const FRAME_TYPES = ['aucun', 'simple', 'standard', 'travaille', 'sur_mesure'] as const
+/** Frame keuzes — slechts 2 opties: zonder kader of met kader.
+ * (De legacy enum bevat ook 'standard' / 'travaille' / 'sur_mesure' voor
+ * historische rijen, maar de form biedt enkel 'aucun' en 'simple' aan.) */
+export const FRAME_TYPES = ['aucun', 'simple'] as const
 export type FrameType = (typeof FRAME_TYPES)[number]
 
 /** Supplementen die de klant kan aanvinken — labels in i18n.devis.supplementOptions */
@@ -55,7 +57,6 @@ export const SUPPLEMENT_IDS = [
   'complex_decor',
   'high_detail',
   'hyperrealism',
-  'rush',
 ] as const
 
 export type SupplementId = (typeof SUPPLEMENT_IDS)[number]
@@ -67,10 +68,14 @@ export const PORTRAIT_COUNT_MAX = 10
 /**
  * Pricing-structuur (loaded uit DB tabel commission_pricing).
  * Defaults staan ook hier zodat de fallback klopt als DB-fetch faalt.
+ *
+ * Kader-prijs hangt af van het formaat (zelfde keys als `format`).
  */
+type PresetFormatId = (typeof FORMATS)[number]['id']
+
 export type Pricing = {
-  format: Record<(typeof FORMATS)[number]['id'], number>
-  frame: Record<Exclude<FrameType, 'aucun'>, number | null>
+  format: Record<PresetFormatId, number>
+  frameByFormat: Record<PresetFormatId, number>
   supplement: Record<SupplementId, number>
   extraPortrait: number
 }
@@ -82,18 +87,17 @@ export const DEFAULT_PRICING: Pricing = {
     '60x90': 720,
     '130x160': 2250,
   },
-  frame: {
-    simple: 80,
-    standard: 150,
-    travaille: 280,
-    sur_mesure: null, // "op aanvraag"
+  frameByFormat: {
+    '40x60': 80,
+    '57x77': 120,
+    '60x90': 180,
+    '130x160': 350,
   },
   supplement: {
     background: 120,
     complex_decor: 200,
     high_detail: 150,
     hyperrealism: 250,
-    rush: 180,
   },
   extraPortrait: 200,
 } as const
@@ -136,20 +140,20 @@ export function priceBreakdown(opts: {
     onRequest = true
     lines.push({ key: 'format:custom', amount: 0, onRequest: true })
   } else {
-    const fp = pricing.format[opts.formatId as keyof Pricing['format']]
+    const fp = pricing.format[opts.formatId as PresetFormatId]
     if (fp != null) lines.push({ key: `format:${opts.formatId}`, amount: fp })
   }
 
-  // Frame
-  if (opts.frameType !== 'aucun') {
-    const fk = opts.frameType as Exclude<FrameType, 'aucun'>
-    const fp = pricing.frame[fk]
-    if (fp == null) {
-      onRequest = true
-      lines.push({ key: `frame:${fk}`, amount: 0, onRequest: true })
-    } else if (fp > 0) {
-      lines.push({ key: `frame:${fk}`, amount: fp })
+  // Frame — prijs hangt af van het formaat
+  if (opts.frameType !== 'aucun' && opts.formatId !== 'custom') {
+    const fp = pricing.frameByFormat[opts.formatId as PresetFormatId]
+    if (fp != null && fp > 0) {
+      lines.push({ key: `frame:${opts.formatId}`, amount: fp })
     }
+  } else if (opts.frameType !== 'aucun' && opts.formatId === 'custom') {
+    // Custom formaat met kader → sur devis
+    onRequest = true
+    lines.push({ key: 'frame:custom', amount: 0, onRequest: true })
   }
 
   // Extra portraits
