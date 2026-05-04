@@ -16,7 +16,7 @@ const COPY_FR: Record<Status, { title: string; body: string }> = {
   },
   en_cours: {
     title: 'Votre œuvre est en cours',
-    body: 'Jean-Pierre travaille actuellement à votre œuvre. Comptez quelques semaines selon la complexité — vous recevrez un message dès qu’elle sera prête.',
+    body: 'Jean-Pierre travaille actuellement à votre œuvre. Comptez 5 à 20 jours ouvrables selon la complexité — vous recevrez un message dès qu’elle sera prête.',
   },
   livre: {
     title: 'Œuvre livrée',
@@ -35,7 +35,7 @@ const COPY_NL: Record<Status, { title: string; body: string }> = {
   },
   en_cours: {
     title: 'Uw werk is in uitvoering',
-    body: 'Jean-Pierre werkt nu aan uw werk. Reken op enkele weken afhankelijk van de complexiteit — u krijgt een bericht zodra het klaar is.',
+    body: 'Jean-Pierre werkt nu aan uw werk. Reken op 5 tot 20 werkdagen afhankelijk van de complexiteit — u krijgt een bericht zodra het klaar is.',
   },
   livre: {
     title: 'Werk afgeleverd',
