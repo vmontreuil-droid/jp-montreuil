@@ -139,7 +139,7 @@ export default async function DevisPage({ params }: Props) {
       </section>
 
       {/* HOE WERKT HET */}
-      <section id="how-it-works" className="scroll-mt-20 bg-(--color-canvas)">
+      <section id="how-it-works" className="scroll-mt-32 bg-(--color-canvas)">
         <div className="max-w-5xl mx-auto px-6 py-20">
           <header className="text-center mb-12">
             <p className="text-xs uppercase tracking-[0.3em] text-(--color-bronze) mb-3">
@@ -221,7 +221,7 @@ export default async function DevisPage({ params }: Props) {
       )}
 
       {/* FORM SECTIE — 2 kolommen : voorwaarden links, formulier rechts */}
-      <section id="commande" className="bg-(--color-canvas)">
+      <section id="commande" className="scroll-mt-32 bg-(--color-canvas)">
         <div className="max-w-6xl mx-auto px-6 pt-[105px] pb-20">
           <header className="text-center mb-10">
             <p className="text-xs uppercase tracking-[0.3em] text-(--color-bronze) mb-3">
