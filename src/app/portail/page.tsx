@@ -188,7 +188,15 @@ export default async function PortailDashboardPage() {
           <p className="mt-2 text-xs text-(--color-stone)">{t.dashboard.emptyHint}</p>
         </div>
       ) : albums.length === 0 ? null : (
-        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <section>
+          <div className="mb-4">
+            <h2 className="text-2xl text-(--color-ink) font-[family-name:var(--font-display)] inline-flex items-center gap-2">
+              <Camera className="w-5 h-5 text-(--color-bronze)" />
+              {t.albumsSectionTitle}
+            </h2>
+            <p className="mt-1 text-sm text-(--color-charcoal)">{t.albumsSectionLead}</p>
+          </div>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {albums.map((a) => (
             <li key={a.id}>
               <Link
@@ -236,7 +244,8 @@ export default async function PortailDashboardPage() {
               </Link>
             </li>
           ))}
-        </ul>
+          </ul>
+        </section>
       )}
     </div>
   )

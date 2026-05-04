@@ -142,6 +142,8 @@ const dict = {
       forbiddenBody: "Cet album n'est pas associé à votre adresse e-mail. Si vous pensez qu'il s'agit d'une erreur, contactez Jean-Pierre.",
       backFull: 'Retour à mes albums',
     },
+    albumsSectionTitle: 'Mes albums',
+    albumsSectionLead: 'Vos albums photo en un coup d’œil.',
     commissions: {
       sectionTitle: 'Mes commandes',
       sectionLead: 'Suivi de vos devis et commandes en cours.',
@@ -255,6 +257,42 @@ const dict = {
     },
 
     askedFields: 'Champs requis *',
+
+    howItWorksTitle: 'Comment ça marche',
+    howItWorksLead: 'De votre demande à la livraison de l’œuvre, en six étapes simples.',
+    howItWorksSteps: [
+      {
+        title: '1. Vous décrivez votre projet',
+        body: 'Choisissez la technique, le format, et téléchargez vos photos de référence.',
+      },
+      {
+        title: '2. Jean-Pierre étudie votre demande',
+        body: 'Sous quelques jours, vous recevez un devis personnalisé par e-mail.',
+      },
+      {
+        title: '3. Vous signez en ligne',
+        body: 'Signature numérique — pas de papier, pas de déplacement.',
+      },
+      {
+        title: '4. Acompte de 50 %',
+        body: 'Par virement classique ou via QR code Bancontact en un clic.',
+      },
+      {
+        title: '5. Réalisation',
+        body: 'Délai de 5 à 20 jours ouvrables, selon la complexité.',
+      },
+      {
+        title: '6. Livraison',
+        body: 'Œuvre remise en main propre ou expédiée. Solde à régler à la livraison.',
+      },
+    ],
+
+    examplesTitle: 'Quelques exemples',
+    examplesLead: 'Aperçu de réalisations passées — pour vous inspirer.',
+    examplesViewAll: 'Voir toute la collection',
+
+    ctaTitle: 'Prêt à commander ?',
+    ctaLead: 'Remplissez le formulaire ci-dessous. Vous recevrez votre devis sur mesure dans les 48 heures.',
 
     statusLabels: {
       nieuw: 'Reçue',

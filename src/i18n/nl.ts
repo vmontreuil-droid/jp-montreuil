@@ -144,6 +144,8 @@ const dict: Dictionary = {
       forbiddenBody: 'Dit album is niet gekoppeld aan uw e-mailadres. Denkt u dat dit een fout is, neem dan contact op met Jean-Pierre.',
       backFull: 'Terug naar mijn albums',
     },
+    albumsSectionTitle: 'Mijn albums',
+    albumsSectionLead: 'Uw fotoalbums in één oogopslag.',
     commissions: {
       sectionTitle: 'Mijn bestellingen',
       sectionLead: 'Opvolging van uw offertes en lopende bestellingen.',
@@ -257,6 +259,42 @@ const dict: Dictionary = {
     },
 
     askedFields: 'Verplichte velden *',
+
+    howItWorksTitle: 'Hoe werkt het',
+    howItWorksLead: 'Van uw aanvraag tot de levering van het werk, in zes eenvoudige stappen.',
+    howItWorksSteps: [
+      {
+        title: '1. U beschrijft uw project',
+        body: 'Kies de techniek, het formaat en upload uw referentiefoto’s.',
+      },
+      {
+        title: '2. Jean-Pierre bestudeert uw aanvraag',
+        body: 'Binnen enkele dagen ontvangt u een offerte op maat per e-mail.',
+      },
+      {
+        title: '3. U ondertekent online',
+        body: 'Digitale handtekening — geen papier, geen verplaatsing nodig.',
+      },
+      {
+        title: '4. Voorschot van 50 %',
+        body: 'Via klassieke overschrijving of in één tik via QR code Bancontact.',
+      },
+      {
+        title: '5. Uitvoering',
+        body: 'Termijn van 5 tot 20 werkdagen, afhankelijk van de complexiteit.',
+      },
+      {
+        title: '6. Levering',
+        body: 'Werk persoonlijk overhandigd of verstuurd. Saldo te betalen bij levering.',
+      },
+    ],
+
+    examplesTitle: 'Enkele voorbeelden',
+    examplesLead: 'Een blik op eerdere realisaties — ter inspiratie.',
+    examplesViewAll: 'Bekijk de volledige collectie',
+
+    ctaTitle: 'Klaar om te bestellen?',
+    ctaLead: 'Vul het formulier hieronder in. Binnen 48 uur ontvangt u uw offerte op maat.',
 
     statusLabels: {
       nieuw: 'Ontvangen',

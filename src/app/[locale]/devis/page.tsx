@@ -1,16 +1,40 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { Brush, Check } from 'lucide-react'
+import {
+  Brush,
+  Check,
+  PenLine,
+  Wallet,
+  Hammer,
+  Truck,
+  ClipboardList,
+  Mail,
+  ArrowRight,
+} from 'lucide-react'
 import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { pageMetadata } from '@/lib/og'
+import { localePath, workImageUrl } from '@/lib/links'
 import { loadPricing } from '@/lib/commission-pricing'
+import { createClient } from '@/lib/supabase/server'
 import CommissionForm from './CommissionForm'
 
 export const dynamic = 'force-dynamic'
 
 type Props = {
   params: Promise<{ locale: string }>
+}
+
+const STEP_ICONS = [ClipboardList, Mail, PenLine, Wallet, Hammer, Truck]
+
+type WorkRow = {
+  id: string
+  storage_path: string
+  title_fr: string | null
+  title_nl: string | null
+  technique_fr: string | null
+  technique_nl: string | null
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -32,38 +56,179 @@ export default async function DevisPage({ params }: Props) {
   if (!isLocale(locale)) notFound()
   const t = getDictionary(locale as Locale)
   const tt = t.devis
+  const isFR = locale === 'fr'
   const pricing = await loadPricing()
 
-  return (
-    <div className="max-w-5xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-3">
-          {tt.eyebrow}
-        </p>
-        <h1 className="text-4xl md:text-5xl text-(--color-ink) mb-6 font-[family-name:var(--font-display)]">
-          {tt.title}
-        </h1>
-        <p className="text-(--color-charcoal) mb-8 leading-relaxed">{tt.lead}</p>
+  // Voorbeeld-werken voor de inspiratie-grid
+  const supabase = await createClient()
+  const { data: worksData } = await supabase
+    .from('works')
+    .select('id, storage_path, title_fr, title_nl, technique_fr, technique_nl')
+    .order('sort_order', { ascending: true })
+    .limit(8)
+    .returns<WorkRow[]>()
+  const works = worksData ?? []
 
-        <section className="border border-(--color-frame) bg-(--color-paper) p-6">
-          <div className="flex items-center gap-2 mb-4 text-(--color-bronze)">
+  // Hero-foto: eerste werk als achtergrond
+  const heroPhoto = works[0]?.storage_path ? workImageUrl(works[0].storage_path) : null
+
+  return (
+    <>
+      {/* HERO */}
+      <section className="relative min-h-[60vh] flex items-center overflow-hidden bg-(--color-canvas)">
+        {heroPhoto && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={heroPhoto}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover opacity-40"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-b from-(--color-canvas)/40 via-(--color-canvas)/60 to-(--color-canvas)"
+            />
+          </>
+        )}
+        <div className="relative max-w-4xl mx-auto px-6 py-20 md:py-28">
+          <p className="text-xs uppercase tracking-[0.3em] text-(--color-bronze) mb-4">
+            {tt.eyebrow}
+          </p>
+          <h1 className="text-4xl md:text-6xl font-[family-name:var(--font-display)] text-(--color-ink) mb-6 leading-tight">
+            {tt.title}
+          </h1>
+          <p className="max-w-2xl text-lg md:text-xl text-(--color-charcoal) leading-relaxed mb-8">
+            {tt.lead}
+          </p>
+          <a
+            href="#commande"
+            className="inline-flex items-center gap-2 px-7 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm uppercase tracking-[0.2em] shadow-lg shadow-(--color-bronze)/30"
+          >
+            <Brush className="w-4 h-4" />
+            {tt.sendBtn}
+            <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+      </section>
+
+      {/* SUPPORTS & TECHNIEKEN */}
+      <section className="border-y border-(--color-frame) bg-(--color-paper)">
+        <div className="max-w-4xl mx-auto px-6 py-16">
+          <div className="flex items-center gap-3 mb-6 text-(--color-bronze)">
             <Brush className="w-5 h-5" />
             <h2 className="text-sm uppercase tracking-[0.2em]">{tt.introTitle}</h2>
           </div>
-          <ul className="space-y-3 text-sm text-(--color-charcoal)">
+          <ul className="grid sm:grid-cols-2 gap-4">
             {tt.introBody.map((line, i) => (
-              <li key={i} className="flex items-start gap-2">
+              <li key={i} className="flex items-start gap-3 text-sm text-(--color-charcoal)">
                 <Check className="w-4 h-4 text-(--color-bronze) shrink-0 mt-0.5" />
                 <span>{line}</span>
               </li>
             ))}
           </ul>
-        </section>
-      </div>
+        </div>
+      </section>
 
-      <div>
-        <CommissionForm locale={locale as Locale} t={t} pricing={pricing} />
-      </div>
-    </div>
+      {/* HOE WERKT HET */}
+      <section className="bg-(--color-canvas)">
+        <div className="max-w-5xl mx-auto px-6 py-20">
+          <header className="text-center mb-12">
+            <p className="text-xs uppercase tracking-[0.3em] text-(--color-bronze) mb-3">
+              {isFR ? 'Étapes' : 'Stappen'}
+            </p>
+            <h2 className="text-3xl md:text-4xl text-(--color-ink) font-[family-name:var(--font-display)] mb-3">
+              {tt.howItWorksTitle}
+            </h2>
+            <p className="text-(--color-charcoal) max-w-xl mx-auto">{tt.howItWorksLead}</p>
+          </header>
+
+          <ol className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {tt.howItWorksSteps.map((step, i) => {
+              const Icon = STEP_ICONS[i] ?? Brush
+              return (
+                <li
+                  key={i}
+                  className="relative bg-(--color-paper) border border-(--color-frame) p-6 hover:border-(--color-bronze)/40 transition-colors"
+                >
+                  <span className="absolute -top-3 -left-3 flex h-8 w-8 items-center justify-center bg-(--color-bronze) text-white">
+                    <Icon className="w-4 h-4" />
+                  </span>
+                  <h3 className="text-base text-(--color-ink) font-[family-name:var(--font-display)] mb-2 mt-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm text-(--color-charcoal) leading-relaxed">{step.body}</p>
+                </li>
+              )
+            })}
+          </ol>
+        </div>
+      </section>
+
+      {/* VOORBEELDEN */}
+      {works.length > 0 && (
+        <section className="border-y border-(--color-frame) bg-(--color-paper)">
+          <div className="max-w-6xl mx-auto px-6 py-20">
+            <header className="text-center mb-10">
+              <p className="text-xs uppercase tracking-[0.3em] text-(--color-bronze) mb-3">
+                {isFR ? 'Inspiration' : 'Inspiratie'}
+              </p>
+              <h2 className="text-3xl md:text-4xl text-(--color-ink) font-[family-name:var(--font-display)] mb-3">
+                {tt.examplesTitle}
+              </h2>
+              <p className="text-(--color-charcoal) max-w-xl mx-auto">{tt.examplesLead}</p>
+            </header>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+              {works.map((w) => {
+                const title = (locale === 'fr' ? w.title_fr : w.title_nl) || ''
+                return (
+                  <div
+                    key={w.id}
+                    className="aspect-square overflow-hidden bg-(--color-canvas) border border-(--color-frame) group"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={workImageUrl(w.storage_path)}
+                      alt={title}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="text-center">
+              <Link
+                href={localePath(locale as Locale, '/galerie')}
+                className="inline-flex items-center gap-2 px-5 py-3 border border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-ink) text-xs uppercase tracking-[0.2em] transition-colors"
+              >
+                {tt.examplesViewAll}
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* FORM */}
+      <section id="commande" className="bg-(--color-canvas)">
+        <div className="max-w-3xl mx-auto px-6 py-20">
+          <header className="text-center mb-10">
+            <p className="text-xs uppercase tracking-[0.3em] text-(--color-bronze) mb-3">
+              {isFR ? 'Commande' : 'Bestelling'}
+            </p>
+            <h2 className="text-3xl md:text-4xl text-(--color-ink) font-[family-name:var(--font-display)] mb-3">
+              {tt.ctaTitle}
+            </h2>
+            <p className="text-(--color-charcoal) max-w-xl mx-auto">{tt.ctaLead}</p>
+          </header>
+
+          <div className="bg-(--color-paper) border border-(--color-frame) p-6 md:p-8">
+            <CommissionForm locale={locale as Locale} t={t} pricing={pricing} />
+          </div>
+        </div>
+      </section>
+    </>
   )
 }

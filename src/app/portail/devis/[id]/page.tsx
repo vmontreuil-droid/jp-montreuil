@@ -300,17 +300,38 @@ export default async function PortailDevisDetailPage({ params }: Props) {
         </div>
       </section>
 
-      {/* Hero photo + cta */}
-      {heroPhotoUrl && (
-        <div className="aspect-[16/9] bg-(--color-paper) border border-(--color-frame) overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={heroPhotoUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        </div>
-      )}
+      {/* Hero photo (eerste referentie-upload van de klant) */}
+      <div className="relative aspect-[16/9] md:aspect-[21/9] bg-(--color-paper) border border-(--color-frame) overflow-hidden">
+        {heroPhotoUrl ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={heroPhotoUrl}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-(--color-canvas)/70 to-transparent"
+            />
+            <div className="absolute bottom-3 left-4 inline-flex items-center gap-1.5 px-2.5 py-1 bg-(--color-canvas)/70 backdrop-blur-sm border border-(--color-bronze)/30">
+              <ImageIcon className="w-3 h-3 text-(--color-bronze)" />
+              <span className="text-[10px] uppercase tracking-[0.15em] text-white">
+                {isFR ? 'Votre photo de référence' : 'Uw referentiefoto'}
+              </span>
+            </div>
+          </>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-(--color-paper) via-(--color-paper) to-(--color-bronze)/10">
+            <div className="flex h-12 w-12 items-center justify-center bg-(--color-bronze)/10 text-(--color-bronze)">
+              <Brush className="w-6 h-6" />
+            </div>
+            <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
+              {isFR ? 'Aucune photo de référence' : 'Geen referentiefoto'}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Action card — wat moet de klant nu doen? */}
       {!isComplete && (
