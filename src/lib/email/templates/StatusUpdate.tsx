@@ -19,8 +19,9 @@ const COPY_FR: Record<Status, { title: string; body: string }> = {
     body: 'Jean-Pierre travaille actuellement à votre œuvre. Comptez 5 à 20 jours ouvrables selon la complexité — vous recevrez un message dès qu’elle sera prête.',
   },
   livre: {
-    title: 'Œuvre livrée',
-    body: 'Votre œuvre vous a été remise. Si tout vous convient, le solde peut être réglé par virement avec la même communication que pour l’acompte.',
+    title: 'Œuvre livrée — merci !',
+    body:
+      'Votre œuvre vous a été remise en mains propres. Le solde ayant déjà été réglé, tout est en ordre — il ne vous reste qu’à profiter pleinement de votre tableau. Jean-Pierre vous remercie sincèrement pour la confiance que vous lui avez accordée et espère que cette œuvre vous accompagnera longtemps.',
   },
   complete: {
     title: 'Commande clôturée',
@@ -38,8 +39,9 @@ const COPY_NL: Record<Status, { title: string; body: string }> = {
     body: 'Jean-Pierre werkt nu aan uw werk. Reken op 5 tot 20 werkdagen afhankelijk van de complexiteit — u krijgt een bericht zodra het klaar is.',
   },
   livre: {
-    title: 'Werk afgeleverd',
-    body: 'Uw werk is overhandigd. Als alles in orde is, kunt u het saldo per overschrijving betalen met dezelfde mededeling als voor het voorschot.',
+    title: 'Werk afgeleverd — bedankt!',
+    body:
+      'Uw werk is persoonlijk overhandigd. Het saldo is reeds vereffend, dus alles is in orde — u hoeft enkel nog te genieten van uw schilderij. Jean-Pierre dankt u oprecht voor het vertrouwen en hoopt dat dit werk u nog lang vergezelt.',
   },
   complete: {
     title: 'Bestelling afgerond',
@@ -98,22 +100,6 @@ export function StatusUpdate(p: Props) {
           >
             {p.paymentAmountEur.toFixed(2)} €
           </Text>
-        </Section>
-      )}
-
-      {p.status === 'livre' && p.paymentReference && p.paymentAmountEur != null && (
-        <Section
-          style={{
-            backgroundColor: colors.canvas,
-            border: `1px solid ${colors.border}`,
-            padding: '14px 18px',
-            marginBottom: 22,
-          }}
-        >
-          <Text style={{ ...text.small, margin: '0 0 6px' }}>
-            {isFR ? 'Communication à mentionner' : 'Te vermelden mededeling'}
-          </Text>
-          <Text style={{ ...text.body, fontWeight: 600, margin: 0 }}>{p.paymentReference}</Text>
         </Section>
       )}
 
