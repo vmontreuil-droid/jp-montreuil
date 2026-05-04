@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { Menu, X, Home, LayoutGrid, User, Share2, Mail, UserCircle } from 'lucide-react'
+import { Menu, X, Home, LayoutGrid, User, Share2, Mail, UserCircle, Brush } from 'lucide-react'
 
-type IconName = 'home' | 'collection' | 'about' | 'social' | 'contact'
+type IconName = 'home' | 'collection' | 'about' | 'social' | 'contact' | 'devis'
 
 const ICONS: Record<IconName, React.ElementType> = {
   home: Home,
@@ -13,6 +13,7 @@ const ICONS: Record<IconName, React.ElementType> = {
   about: User,
   social: Share2,
   contact: Mail,
+  devis: Brush,
 }
 
 type Item = { href: string; label: string; iconName?: IconName }

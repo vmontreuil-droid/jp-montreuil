@@ -10,6 +10,7 @@ const dict: Dictionary = {
     about: 'Over mij',
     social: 'Sociale media',
     contact: 'Contact',
+    devis: 'Offerte op maat',
   },
 
   home: {
@@ -93,6 +94,81 @@ const dict: Dictionary = {
       forbiddenBody: 'Dit album is niet gekoppeld aan uw e-mailadres. Denkt u dat dit een fout is, neem dan contact op met Jean-Pierre.',
       backFull: 'Terug naar mijn albums',
     },
+  },
+
+  devis: {
+    eyebrow: 'Atelier Montreuil',
+    title: 'Offerte op maat',
+    lead: 'Een uniek werk, voor u gemaakt. Kies techniek en formaat, deel uw referentiefoto’s en ontvang een offerte op maat.',
+    introTitle: 'Dragers & technieken',
+    introBody: [
+      'Werken op aquarelpapier of linnen doek, naargelang het project.',
+      'Formaten volledig op maat.',
+      'Technieken: zwart-wit potlood, kleur aquarel, acryl op linnen.',
+      'Inkadering mogelijk als optie.',
+      'Elke opdracht krijgt een offerte op maat. Een voorschot wordt gevraagd ter validatie vóór de uitvoering.',
+    ],
+
+    techniqueLabel: 'Gewenste techniek',
+    techniqueOptions: {
+      crayon_nb: 'Zwart-wit potlood',
+      aquarelle_couleur: 'Kleur aquarel',
+      acrylique_toile: 'Acryl op linnen',
+      autre: 'Te bespreken',
+    },
+    supportLabel: 'Drager',
+    supportOptions: {
+      papier_aquarelle: 'Aquarelpapier',
+      toile_lin: 'Linnen doek',
+      peu_importe: 'Maakt niet uit — te bespreken',
+    },
+    sizeLabel: 'Gewenst formaat',
+    widthLabel: 'Breedte (cm)',
+    heightLabel: 'Hoogte (cm)',
+    sizeHint: 'Optioneel — laat leeg als u nog twijfelt, we bespreken het samen.',
+
+    framingLabel: 'Inkadering',
+    framingOptions: {
+      oui: 'Ja, ik wens een inkadering',
+      non: 'Nee, zonder inkadering',
+      peu_importe: 'Te bespreken',
+    },
+
+    nameLabel: 'Volledige naam',
+    namePlaceholder: 'Jan Jansen',
+    emailLabel: 'E-mailadres',
+    emailPlaceholder: 'jan@voorbeeld.be',
+    phoneLabel: 'Telefoonnummer',
+    phonePlaceholder: '+32 470 12 34 56',
+    budgetLabel: 'Indicatief budget (optioneel)',
+    budgetPlaceholder: 'Bv. 500–800 €',
+
+    messageLabel: 'Beschrijf uw project',
+    messagePlaceholder: 'Onderwerp, sfeer, gelegenheid, kleurenpalet, randvoorwaarden …',
+
+    referencesLabel: 'Referentiefoto’s',
+    referencesHint: 'Foto van een persoon, plek of inspiratie. JPG/PNG/WEBP — max 5, 10 MB per bestand.',
+    chooseFiles: 'Sleep uw foto’s hier of klik om te selecteren.',
+    removeFile: 'Verwijderen',
+
+    sendBtn: 'Aanvraag versturen',
+    sending: 'Verzenden…',
+    successTitle: 'Aanvraag ontvangen',
+    successBody: 'Bedankt, uw aanvraag is goed binnengekomen. Jean-Pierre stuurt u in de komende dagen een offerte op maat.',
+    successCta: 'Nieuwe aanvraag',
+
+    errors: {
+      required: 'Alle velden met een * zijn verplicht.',
+      email: 'Ongeldig e-mailadres.',
+      tooShort: 'Beschrijf uw project in een paar woorden.',
+      tooLong: 'Bericht te lang.',
+      tooManyFiles: 'Maximum 5 foto’s.',
+      fileTooBig: 'Foto te groot (max 10 MB).',
+      unsupportedFile: 'Niet-ondersteund formaat.',
+      server: 'Er is een fout opgetreden. Probeer het opnieuw.',
+    },
+
+    askedFields: 'Verplichte velden *',
   },
 }
 

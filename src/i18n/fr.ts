@@ -8,6 +8,7 @@ const dict = {
     about: 'À propos',
     social: 'Réseaux sociaux',
     contact: 'Contact',
+    devis: 'Devis sur mesure',
   },
 
   home: {
@@ -91,6 +92,81 @@ const dict = {
       forbiddenBody: "Cet album n'est pas associé à votre adresse e-mail. Si vous pensez qu'il s'agit d'une erreur, contactez Jean-Pierre.",
       backFull: 'Retour à mes albums',
     },
+  },
+
+  devis: {
+    eyebrow: 'Atelier Montreuil',
+    title: 'Devis sur mesure',
+    lead: "Une œuvre unique, faite pour vous. Choisissez la technique et le format, partagez vos photos de référence et recevez un devis personnalisé.",
+    introTitle: 'Supports & techniques',
+    introBody: [
+      'Réalisations sur papier aquarelle ou toile de lin, selon la nature du projet.',
+      'Formats entièrement personnalisés.',
+      'Techniques : crayon noir & blanc, aquarelle couleur, acrylique sur toile.',
+      'Encadrement possible en option.',
+      'Chaque commande fait l’objet d’un devis sur mesure. Un acompte est demandé pour validation avant exécution.',
+    ],
+
+    techniqueLabel: 'Technique souhaitée',
+    techniqueOptions: {
+      crayon_nb: 'Crayon noir & blanc',
+      aquarelle_couleur: 'Aquarelle couleur',
+      acrylique_toile: 'Acrylique sur toile',
+      autre: 'À discuter',
+    },
+    supportLabel: 'Support',
+    supportOptions: {
+      papier_aquarelle: 'Papier aquarelle',
+      toile_lin: 'Toile de lin',
+      peu_importe: 'Peu importe — à discuter',
+    },
+    sizeLabel: 'Format souhaité',
+    widthLabel: 'Largeur (cm)',
+    heightLabel: 'Hauteur (cm)',
+    sizeHint: 'Optionnel — laissez vide si vous hésitez encore, nous en discuterons ensemble.',
+
+    framingLabel: 'Encadrement',
+    framingOptions: {
+      oui: 'Oui, je souhaite un encadrement',
+      non: 'Non, sans encadrement',
+      peu_importe: 'À discuter',
+    },
+
+    nameLabel: 'Nom complet',
+    namePlaceholder: 'Jean Dupont',
+    emailLabel: 'Adresse e-mail',
+    emailPlaceholder: 'jean@exemple.be',
+    phoneLabel: 'Numéro de téléphone',
+    phonePlaceholder: '+32 470 12 34 56',
+    budgetLabel: 'Budget indicatif (optionnel)',
+    budgetPlaceholder: 'Ex. 500–800 €',
+
+    messageLabel: 'Décrivez votre projet',
+    messagePlaceholder: 'Sujet, ambiance, occasion, palette de couleurs, contraintes …',
+
+    referencesLabel: 'Photos de référence',
+    referencesHint: 'Photo d’une personne, d’un lieu ou d’une inspiration. JPG/PNG/WEBP — 5 max, 10 Mo par fichier.',
+    chooseFiles: 'Glissez vos photos ici ou cliquez pour les sélectionner.',
+    removeFile: 'Supprimer',
+
+    sendBtn: 'Envoyer la demande',
+    sending: 'Envoi en cours…',
+    successTitle: 'Demande reçue',
+    successBody: 'Merci, votre demande est bien arrivée. Jean-Pierre vous répond avec un devis sur mesure dans les jours qui suivent.',
+    successCta: 'Nouvelle demande',
+
+    errors: {
+      required: 'Tous les champs marqués d’un * sont obligatoires.',
+      email: 'Adresse e-mail invalide.',
+      tooShort: 'Décrivez votre projet en quelques mots.',
+      tooLong: 'Message trop long.',
+      tooManyFiles: 'Maximum 5 photos.',
+      fileTooBig: 'Photo trop volumineuse (max 10 Mo).',
+      unsupportedFile: 'Format non supporté.',
+      server: 'Une erreur est survenue. Veuillez réessayer.',
+    },
+
+    askedFields: 'Champs requis *',
   },
 }
 

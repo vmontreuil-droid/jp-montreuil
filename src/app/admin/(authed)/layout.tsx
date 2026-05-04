@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera, BookOpen, Activity, PenTool, User as UserIcon, CalendarDays } from 'lucide-react'
+import { LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera, BookOpen, Activity, PenTool, User as UserIcon, CalendarDays, Brush } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './SignOutButton'
 import ThemeToggle from '@/components/site/ThemeToggle'
@@ -42,6 +42,7 @@ export default async function AuthedAdminLayout({
     { count: albumsCount },
     { count: ibooksCount },
     { count: exhibitionsCount },
+    { count: unreadCommissions },
   ] = await Promise.all([
     supabase.from('categories').select('*', { count: 'exact', head: true }),
     supabase.from('works').select('*', { count: 'exact', head: true }),
@@ -53,6 +54,11 @@ export default async function AuthedAdminLayout({
     supabase.from('event_albums').select('*', { count: 'exact', head: true }),
     supabase.from('ibooks').select('*', { count: 'exact', head: true }),
     supabase.from('exhibitions').select('*', { count: 'exact', head: true }),
+    supabase
+      .from('commission_requests')
+      .select('*', { count: 'exact', head: true })
+      .is('read_at', null)
+      .is('archived_at', null),
   ])
 
   const navItems = [
@@ -77,6 +83,13 @@ export default async function AuthedAdminLayout({
       label: 'Messages',
       icon: Inbox,
       badge: unreadCount ?? null,
+      badgeStyle: 'accent' as const,
+    },
+    {
+      href: '/admin/commissions',
+      label: 'Demandes de devis',
+      icon: Brush,
+      badge: unreadCommissions ?? null,
       badgeStyle: 'accent' as const,
     },
     {

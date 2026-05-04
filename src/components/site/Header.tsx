@@ -40,6 +40,7 @@ export default async function Header({ locale, t, portailMode = false }: Props) 
     { href: localePath(locale, '/'), label: t.nav.home, iconName: 'home' as const },
     { href: localePath(locale, '/galerie'), label: t.nav.collection, iconName: 'collection' as const },
     { href: localePath(locale, '/a-propos'), label: t.nav.about, iconName: 'about' as const },
+    { href: localePath(locale, '/devis'), label: t.nav.devis, iconName: 'devis' as const },
     { href: localePath(locale, '/social'), label: t.nav.social, iconName: 'social' as const },
     { href: localePath(locale, '/contact'), label: t.nav.contact, iconName: 'contact' as const },
   ]
