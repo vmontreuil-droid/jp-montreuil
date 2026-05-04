@@ -18,10 +18,10 @@ export function PortalMagicLink({ actionUrl, locale }: Props) {
   const greeting = isFR ? 'Bonjour,' : 'Hallo,'
 
   const intro = isFR
-    ? 'Voici votre lien de connexion personnel pour accéder à vos photos. Cliquez sur le bouton ci-dessous — vous serez automatiquement connecté(e). Aucun mot de passe à retenir.'
-    : "Hier is uw persoonlijke login-link om uw foto's te bekijken. Klik op de knop hieronder — u wordt automatisch ingelogd. Geen wachtwoord om te onthouden."
+    ? 'Voici votre lien de connexion personnel pour accéder à votre espace client. Cliquez sur le bouton ci-dessous — vous serez automatiquement connecté(e). Aucun mot de passe à retenir.'
+    : 'Hier is uw persoonlijke login-link om uw klantenportaal te openen. Klik op de knop hieronder — u wordt automatisch ingelogd. Geen wachtwoord om te onthouden.'
 
-  const buttonLabel = isFR ? 'Accéder à mes photos' : "Mijn foto's bekijken"
+  const buttonLabel = isFR ? 'Accéder à mon espace' : 'Naar mijn portaal'
 
   const validityNote = isFR
     ? 'Ce lien est valide 1 heure. Vous pouvez en demander un nouveau à tout moment sur montreuil.be/portail/login.'

@@ -42,6 +42,13 @@ export function buildStructuredReference(year: number, sequence: number): string
   return `+++${num.slice(0, 3)}/${num.slice(3, 7)}/${num.slice(7, 10)}${check}+++`
 }
 
+/** Tweede OGM voor het saldo (anders dan voorschot). Gebruikt sequence
+ *  + 5 000 000 als offset zodat het nummer duidelijk verschilt van dat
+ *  van het voorschot, met identieke format en geldige modulo-97 check. */
+export function buildBalanceReference(year: number, sequence: number): string {
+  return buildStructuredReference(year, sequence + 5_000_000)
+}
+
 /** Backwards compat: vroeger gebruikten we 'Devis DV-2026-0001'. */
 export function buildPaymentReference(devisNumber: string): string {
   return `Devis ${devisNumber}`

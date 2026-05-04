@@ -16,6 +16,10 @@ import {
   RefreshCw,
   Send,
   AlertTriangle,
+  PackageCheck,
+  CalendarCheck,
+  Home as HomeIcon,
+  MapPin,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -81,6 +85,9 @@ import {
   deleteCommission,
   markAcompteReceived,
   markInProgress,
+  markReady,
+  markBalanceReceived,
+  confirmDeliveryDate,
   markDelivered,
   markComplete,
   markRefused,
@@ -105,6 +112,9 @@ const STATUSES = [
   'refuse',
   'acompte_recu',
   'en_cours',
+  'pret',
+  'solde_recu',
+  'livraison_planifiee',
   'livre',
   'complete',
 ] as const
@@ -118,6 +128,9 @@ const STATUS_LABEL_FR: Record<StatusKey, string> = {
   refuse: 'Refusée',
   acompte_recu: 'Acompte reçu',
   en_cours: 'En cours',
+  pret: 'Œuvre prête',
+  solde_recu: 'Solde reçu',
+  livraison_planifiee: 'Livraison planifiée',
   livre: 'Livrée',
   complete: 'Terminée',
 }
@@ -202,9 +215,20 @@ type CommissionRow = {
 
   acompte_received_at: string | null
   in_progress_at: string | null
+  ready_at: string | null
+  balance_received_at: string | null
+  delivery_proposed_at: string | null
+  delivery_proposed_date: string | null
+  delivery_confirmed_at: string | null
+  delivery_confirmed_date: string | null
   delivered_at: string | null
   completed_at: string | null
   refused_at: string | null
+
+  delivery_address: string | null
+  delivery_alt_option: string | null
+  delivery_alt_specs: string | null
+  devis_balance_reference: string | null
 
   commission_attachments: Attachment[]
 }
@@ -303,14 +327,16 @@ export default async function CommissionDetailPage({ params, searchParams }: Pro
             { key: 'created', label: 'Reçue', at: req.created_at },
             { key: 'devis_sent', label: 'Devis envoyé', at: req.devis_sent_at },
             { key: 'signed', label: 'Signée', at: req.signed_at },
-            {
-              key: 'acompte',
-              label: 'Acompte reçu',
-              at: req.acompte_received_at,
-            },
+            { key: 'acompte', label: 'Acompte', at: req.acompte_received_at },
             { key: 'in_progress', label: 'En cours', at: req.in_progress_at },
+            { key: 'ready', label: 'Prête', at: req.ready_at },
+            { key: 'balance', label: 'Solde reçu', at: req.balance_received_at },
+            {
+              key: 'delivery_set',
+              label: 'Livraison fixée',
+              at: req.delivery_confirmed_at,
+            },
             { key: 'delivered', label: 'Livrée', at: req.delivered_at },
-            { key: 'complete', label: 'Terminée', at: req.completed_at },
           ]}
         />
       </div>
@@ -626,6 +652,103 @@ export default async function CommissionDetailPage({ params, searchParams }: Pro
             )}
           </section>
 
+          {/* Livraison — adres + datums (zichtbaar zodra klant iets heeft ingevuld of JP iets bevestigd) */}
+          {(req.delivery_address ||
+            req.delivery_proposed_date ||
+            req.delivery_confirmed_date ||
+            req.devis_balance_reference) && (
+            <section className="border border-(--color-frame) bg-(--color-paper) p-6 space-y-4">
+              <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) inline-flex items-center gap-2">
+                <Truck className="w-3.5 h-3.5" /> Livraison
+              </h2>
+
+              <dl className="grid sm:grid-cols-2 gap-3 text-sm">
+                {req.delivery_address && (
+                  <div className="sm:col-span-2">
+                    <dt className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5 inline-flex items-center gap-1">
+                      <HomeIcon className="w-3 h-3" /> Adresse
+                    </dt>
+                    <dd className="text-(--color-ink) whitespace-pre-wrap">
+                      {req.delivery_address}
+                    </dd>
+                    <a
+                      href={`https://maps.apple.com/?q=${encodeURIComponent(req.delivery_address.replace(/\n/g, ', '))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] border border-(--color-bronze)/40 bg-(--color-bronze)/10 text-(--color-bronze) hover:bg-(--color-bronze)/20"
+                    >
+                      <MapPin className="w-3 h-3" />
+                      Ouvrir dans Plans
+                    </a>
+                  </div>
+                )}
+                {req.delivery_proposed_date && (
+                  <div>
+                    <dt className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5">
+                      Date proposée par le client
+                    </dt>
+                    <dd className="text-(--color-ink)">
+                      {new Date(req.delivery_proposed_date).toLocaleString('fr-BE', {
+                        dateStyle: 'long',
+                        timeStyle: 'short',
+                      })}
+                    </dd>
+                  </div>
+                )}
+                {req.delivery_confirmed_date && (
+                  <div>
+                    <dt className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5">
+                      Date confirmée
+                    </dt>
+                    <dd className="text-(--color-bronze) font-semibold">
+                      {new Date(req.delivery_confirmed_date).toLocaleString('fr-BE', {
+                        dateStyle: 'long',
+                        timeStyle: 'short',
+                      })}
+                    </dd>
+                    <a
+                      href={`/api/admin/commissions/${req.id}/ics`}
+                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] border border-(--color-bronze)/40 bg-(--color-bronze)/10 text-(--color-bronze) hover:bg-(--color-bronze)/20"
+                    >
+                      <CalendarCheck className="w-3 h-3" />
+                      Ajouter au calendrier
+                    </a>
+                  </div>
+                )}
+                {req.delivery_alt_option && (
+                  <div className="sm:col-span-2">
+                    <dt className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5">
+                      En cas d’absence
+                    </dt>
+                    <dd className="text-(--color-ink)">
+                      {
+                        ({
+                          home: 'Présent à domicile',
+                          neighbours: 'Remettre aux voisins',
+                          door: 'Déposer à la porte',
+                          safe_place: 'Endroit sûr',
+                          other: 'Autre',
+                        } as Record<string, string>)[req.delivery_alt_option] ||
+                          req.delivery_alt_option
+                      }
+                      {req.delivery_alt_specs && ` — ${req.delivery_alt_specs}`}
+                    </dd>
+                  </div>
+                )}
+                {req.devis_balance_reference && (
+                  <div className="sm:col-span-2">
+                    <dt className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5 inline-flex items-center gap-1">
+                      <Copy className="w-3 h-3" /> Communication structurée — solde
+                    </dt>
+                    <dd className="text-(--color-ink) font-mono text-sm select-all bg-(--color-canvas) border border-(--color-frame) px-3 py-2 inline-block mt-1">
+                      {req.devis_balance_reference}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </section>
+          )}
+
           {/* Notes */}
           <section className="border border-(--color-frame) bg-(--color-paper) p-6">
             <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-4">
@@ -686,12 +809,99 @@ export default async function CommissionDetailPage({ params, searchParams }: Pro
               {req.acompte_received_at && !req.in_progress_at && (
                 <ActionButton id={req.id} action={markInProgress} icon={<Hammer className="w-3.5 h-3.5" />} label="Marquer en cours" />
               )}
-              {req.in_progress_at && !req.delivered_at && (
+              {req.in_progress_at && !req.ready_at && (
+                <ActionButton id={req.id} action={markReady} icon={<PackageCheck className="w-3.5 h-3.5" />} label="Œuvre prête (envoyer solde)" />
+              )}
+              {req.ready_at && !req.balance_received_at && (
+                <ActionButton id={req.id} action={markBalanceReceived} icon={<Wallet className="w-3.5 h-3.5" />} label="Solde reçu (demander date)" />
+              )}
+              {req.delivery_confirmed_at && !req.delivered_at && (
                 <ActionButton id={req.id} action={markDelivered} icon={<Truck className="w-3.5 h-3.5" />} label="Œuvre livrée" />
               )}
               {req.delivered_at && !req.completed_at && (
-                <ActionButton id={req.id} action={markComplete} icon={<Flag className="w-3.5 h-3.5" />} label="Solde reçu — clôturer" />
+                <ActionButton id={req.id} action={markComplete} icon={<Flag className="w-3.5 h-3.5" />} label="Clôturer le dossier" />
               )}
+            </section>
+          )}
+
+          {/* Leveringsvoorstel van de klant — JP keurt goed of past aan */}
+          {req.delivery_proposed_at && !req.delivery_confirmed_at && (
+            <section className="border border-(--color-bronze)/40 bg-(--color-bronze)/5 p-5 space-y-3">
+              <div className="flex items-start gap-2">
+                <CalendarCheck className="w-4 h-4 text-(--color-bronze) mt-0.5 shrink-0" />
+                <div>
+                  <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-ink)">
+                    Proposition du client
+                  </h2>
+                  <p className="mt-1 text-[10px] text-(--color-stone) leading-relaxed">
+                    Le client propose une date de livraison. Confirmez ou
+                    ajustez la date/heure ci-dessous.
+                  </p>
+                </div>
+              </div>
+              {req.delivery_proposed_date && (
+                <p className="text-sm text-(--color-ink)">
+                  <span className="text-(--color-stone) text-xs">Proposé : </span>
+                  {new Date(req.delivery_proposed_date).toLocaleString('fr-BE', {
+                    dateStyle: 'long',
+                    timeStyle: 'short',
+                  })}
+                </p>
+              )}
+              {req.delivery_address && (
+                <div className="text-xs text-(--color-charcoal)">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5 inline-flex items-center gap-1">
+                    <MapPin className="w-3 h-3" /> Adresse
+                  </p>
+                  <p className="whitespace-pre-wrap">{req.delivery_address}</p>
+                </div>
+              )}
+              {req.delivery_alt_option && (
+                <div className="text-xs text-(--color-charcoal)">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-(--color-stone) mb-0.5">
+                    En cas d’absence
+                  </p>
+                  <p>
+                    {
+                      ({
+                        home: 'Présent à domicile',
+                        neighbours: 'Remettre aux voisins',
+                        door: 'Déposer à la porte',
+                        safe_place: 'Endroit sûr',
+                        other: 'Autre',
+                      } as Record<string, string>)[req.delivery_alt_option] ||
+                        req.delivery_alt_option
+                    }
+                    {req.delivery_alt_specs && ` — ${req.delivery_alt_specs}`}
+                  </p>
+                </div>
+              )}
+              <form action={confirmDeliveryDate} className="space-y-2 pt-2 border-t border-(--color-bronze)/20">
+                <input type="hidden" name="id" value={req.id} />
+                <label className="block text-[10px] uppercase tracking-[0.15em] text-(--color-stone)">
+                  Date & heure confirmées
+                </label>
+                <input
+                  type="datetime-local"
+                  name="confirmed_date"
+                  required
+                  defaultValue={
+                    req.delivery_proposed_date
+                      ? new Date(req.delivery_proposed_date)
+                          .toISOString()
+                          .slice(0, 16)
+                      : ''
+                  }
+                  className="w-full px-3 py-2 input-elev bg-(--color-canvas) border border-(--color-frame) focus:border-(--color-bronze) focus:outline-none text-(--color-ink) text-sm"
+                />
+                <button
+                  type="submit"
+                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs uppercase tracking-[0.15em] bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark)"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Confirmer la livraison
+                </button>
+              </form>
             </section>
           )}
 

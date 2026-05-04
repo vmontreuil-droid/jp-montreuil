@@ -4,15 +4,16 @@ import {
   ArrowLeft,
   ArrowRight,
   Brush,
+  CalendarCheck,
   CheckCircle2,
   Clock,
-  Copy,
   ImageIcon,
+  MapPin,
   PenLine,
   Wallet,
   Truck,
   Hammer,
-  Flag,
+  PackageCheck,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -25,10 +26,10 @@ import {
   priceBreakdown,
   FORMATS,
   type FrameType,
-  type PriceLineItem,
 } from '@/lib/atelier-config'
 import { loadPricing } from '@/lib/commission-pricing'
 import { generateEpcQrDataUrl } from '@/lib/epc-qr'
+import DeliveryForm from './DeliveryForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,12 +66,22 @@ type Commission = {
   devis_acompte_eur: number | null
   devis_valid_until: string | null
   devis_payment_reference: string | null
+  devis_balance_reference: string | null
   devis_sent_at: string | null
   signature_token: string | null
   signed_at: string | null
   signer_name: string | null
   acompte_received_at: string | null
   in_progress_at: string | null
+  ready_at: string | null
+  balance_received_at: string | null
+  delivery_proposed_at: string | null
+  delivery_proposed_date: string | null
+  delivery_confirmed_at: string | null
+  delivery_confirmed_date: string | null
+  delivery_address: string | null
+  delivery_alt_option: string | null
+  delivery_alt_specs: string | null
   delivered_at: string | null
   completed_at: string | null
   created_at: string
@@ -90,6 +101,9 @@ const STEP_LABELS_FR = {
   signe: 'Signée',
   acompte: 'Acompte',
   en_cours: 'En cours',
+  pret: 'Prête',
+  solde: 'Solde reçu',
+  livraison: 'Livraison fixée',
   livre: 'Livrée',
   complete: 'Terminée',
 } as const
@@ -100,6 +114,9 @@ const STEP_LABELS_NL = {
   signe: 'Ondertekend',
   acompte: 'Voorschot',
   en_cours: 'In uitvoering',
+  pret: 'Klaar',
+  solde: 'Saldo ontvangen',
+  livraison: 'Levering vastgelegd',
   livre: 'Afgeleverd',
   complete: 'Afgerond',
 } as const
@@ -187,20 +204,30 @@ export default async function PortailDevisDetailPage({ params }: Props) {
     }
   }
 
-  // Saldo voor na levering
+  // Saldo
   const balanceEur =
     devisTotal != null && acompteEur != null
       ? Math.round((devisTotal - acompteEur) * 100) / 100
       : null
 
+  // Het saldo gebruikt een aparte gestructureerde mededeling
+  const balanceReference = req.devis_balance_reference ?? reference
+
+  // QR voor het saldo (na 'pret', vóór balance_received_at)
   let qrBalanceUrl: string | null = null
-  if (req.delivered_at && !req.completed_at && balanceEur && reference) {
+  if (
+    req.ready_at &&
+    !req.balance_received_at &&
+    balanceEur &&
+    balanceEur > 0 &&
+    balanceReference
+  ) {
     try {
       qrBalanceUrl = await generateEpcQrDataUrl({
         beneficiaryName: ATELIER.ibanHolder,
         iban: ATELIER.iban,
         amountEur: balanceEur,
-        communication: reference,
+        communication: balanceReference,
       })
     } catch {
       qrBalanceUrl = null
@@ -215,8 +242,14 @@ export default async function PortailDevisDetailPage({ params }: Props) {
     { key: 'signed', label: stepLabels.signe, at: req.signed_at },
     { key: 'acompte', label: stepLabels.acompte, at: req.acompte_received_at },
     { key: 'in_progress', label: stepLabels.en_cours, at: req.in_progress_at },
+    { key: 'ready', label: stepLabels.pret, at: req.ready_at },
+    { key: 'balance', label: stepLabels.solde, at: req.balance_received_at },
+    {
+      key: 'delivery_set',
+      label: stepLabels.livraison,
+      at: req.delivery_confirmed_at,
+    },
     { key: 'delivered', label: stepLabels.livre, at: req.delivered_at },
-    { key: 'complete', label: stepLabels.complete, at: req.completed_at },
   ]
   const lastDoneIdx = steps.reduce((acc, s, i) => (s.at ? i : acc), -1)
   const progressPct = (lastDoneIdx / (steps.length - 1)) * 100
@@ -332,18 +365,28 @@ export default async function PortailDevisDetailPage({ params }: Props) {
       {/* Action card — wat moet de klant nu doen? */}
       {!isComplete && (
         <NextActionCard
+          id={req.id}
           locale={locale}
           isFR={isFR}
           isSigned={isSigned}
           isAcompteReceived={isAcompteReceived}
           isInProgress={!!req.in_progress_at}
+          isReady={!!req.ready_at}
+          isBalanceReceived={!!req.balance_received_at}
+          isDeliveryProposed={!!req.delivery_proposed_at}
+          isDeliveryConfirmed={!!req.delivery_confirmed_at}
           isDelivered={!!req.delivered_at}
           signUrl={signUrl}
           qrDataUrl={qrDataUrl}
           qrBalanceUrl={qrBalanceUrl}
+          balanceReference={balanceReference}
+          deliveryProposedDate={req.delivery_proposed_date}
+          deliveryConfirmedDate={req.delivery_confirmed_date}
+          deliveryAddress={req.delivery_address}
           acompteEur={acompteEur}
           balanceEur={balanceEur}
           reference={reference}
+          dateLocale={dateLocale}
         />
       )}
 
@@ -463,31 +506,51 @@ export default async function PortailDevisDetailPage({ params }: Props) {
 }
 
 function NextActionCard({
+  id,
   locale,
   isFR,
   isSigned,
   isAcompteReceived,
   isInProgress,
+  isReady,
+  isBalanceReceived,
+  isDeliveryProposed,
+  isDeliveryConfirmed,
   isDelivered,
   signUrl,
   qrDataUrl,
   qrBalanceUrl,
+  balanceReference,
+  deliveryProposedDate,
+  deliveryConfirmedDate,
+  deliveryAddress,
   acompteEur,
   balanceEur,
   reference,
+  dateLocale,
 }: {
+  id: string
   locale: string
   isFR: boolean
   isSigned: boolean
   isAcompteReceived: boolean
   isInProgress: boolean
+  isReady: boolean
+  isBalanceReceived: boolean
+  isDeliveryProposed: boolean
+  isDeliveryConfirmed: boolean
   isDelivered: boolean
   signUrl: string | null
   qrDataUrl: string | null
   qrBalanceUrl: string | null
+  balanceReference: string | null
+  deliveryProposedDate: string | null
+  deliveryConfirmedDate: string | null
+  deliveryAddress: string | null
   acompteEur: number | null
   balanceEur: number | null
   reference: string | null
+  dateLocale: string
 }) {
   // Stap 1 — moet nog tekenen
   if (!isSigned && signUrl) {
@@ -535,8 +598,8 @@ function NextActionCard({
     )
   }
 
-  // Stap 3 — wachtt op uitvoering / in cours
-  if (isAcompteReceived && !isInProgress) {
+  // Stap 3 — acompte ontvangen, nog niet in uitvoering
+  if (isAcompteReceived && !isInProgress && !isReady) {
     const balanceNote =
       balanceEur && balanceEur > 0
         ? isFR
@@ -556,7 +619,8 @@ function NextActionCard({
     )
   }
 
-  if (isInProgress && !isDelivered) {
+  // Stap 4 — in uitvoering, nog niet klaar
+  if (isInProgress && !isReady) {
     const balanceNote =
       balanceEur && balanceEur > 0
         ? isFR
@@ -576,26 +640,106 @@ function NextActionCard({
     )
   }
 
-  // Stap 4 — geleverd, saldo betalen
-  if (isDelivered && balanceEur && reference) {
+  // Stap 5 — klaar, saldo te betalen
+  if (isReady && !isBalanceReceived && balanceEur && balanceEur > 0 && balanceReference) {
     return (
       <ActionShell
-        icon={<Truck className="w-5 h-5" />}
-        title={isFR ? 'Œuvre livrée — solde à régler' : 'Werk afgeleverd — saldo betalen'}
+        icon={<PackageCheck className="w-5 h-5" />}
+        title={isFR ? 'Œuvre prête — réglez le solde' : 'Werk klaar — betaal het saldo'}
         body={
           isFR
-            ? `Votre œuvre est livrée. Réglez le solde de ${formatEur(balanceEur)} avec la même communication.`
-            : `Uw werk is afgeleverd. Betaal het saldo van ${formatEur(balanceEur)} met dezelfde mededeling.`
+            ? `Excellente nouvelle : votre œuvre est terminée. Réglez le solde de ${formatEur(balanceEur)} avec la communication structurée ci-dessous. Dès réception, vous pourrez fixer une date de livraison.`
+            : `Goed nieuws: uw werk is af. Betaal het saldo van ${formatEur(balanceEur)} met de gestructureerde mededeling hieronder. Zodra Jean-Pierre het ontvangt, kunt u een leveringsdatum kiezen.`
         }
       >
         <PaymentDetails
           locale={locale}
           isFR={isFR}
           amount={balanceEur}
-          reference={reference}
+          reference={balanceReference}
           qrDataUrl={qrBalanceUrl}
         />
       </ActionShell>
+    )
+  }
+
+  // Stap 6 — saldo ontvangen, klant moet datum + adres + alt-optie kiezen
+  if (isBalanceReceived && !isDeliveryProposed && !isDeliveryConfirmed) {
+    return (
+      <ActionShell
+        icon={<CalendarCheck className="w-5 h-5" />}
+        title={isFR ? 'Choisissez votre date de livraison' : 'Kies uw leveringsdatum'}
+        body={
+          isFR
+            ? 'Solde bien reçu — merci ! Indiquez la date et l’heure souhaitées, votre adresse de livraison, et ce qu’il faut faire si vous n’êtes pas chez vous. Jean-Pierre confirmera le rendez-vous.'
+            : 'Saldo goed ontvangen — bedankt! Geef de gewenste datum en uur, uw leveringsadres en wat te doen als u niet thuis bent. Jean-Pierre zal de afspraak bevestigen.'
+        }
+      >
+        <DeliveryForm id={id} isFR={isFR} defaultAddress={deliveryAddress} />
+      </ActionShell>
+    )
+  }
+
+  // Stap 7 — voorstel ingediend, wacht op JP
+  if (isDeliveryProposed && !isDeliveryConfirmed && deliveryProposedDate) {
+    const proposed = new Date(deliveryProposedDate).toLocaleString(dateLocale, {
+      dateStyle: 'long',
+      timeStyle: 'short',
+    })
+    return (
+      <ActionShell
+        icon={<Clock className="w-5 h-5" />}
+        title={isFR ? 'Proposition envoyée' : 'Voorstel verzonden'}
+        body={
+          isFR
+            ? `Votre proposition (${proposed}) a bien été transmise à Jean-Pierre. Il vous confirmera le rendez-vous par e-mail dès que possible.`
+            : `Uw voorstel (${proposed}) is goed bij Jean-Pierre aangekomen. Hij bevestigt de afspraak per e-mail zodra het kan.`
+        }
+      />
+    )
+  }
+
+  // Stap 8 — datum bevestigd
+  if (isDeliveryConfirmed && !isDelivered && deliveryConfirmedDate) {
+    const confirmed = new Date(deliveryConfirmedDate).toLocaleString(dateLocale, {
+      dateStyle: 'long',
+      timeStyle: 'short',
+    })
+    return (
+      <ActionShell
+        icon={<CalendarCheck className="w-5 h-5" />}
+        title={isFR ? 'Livraison confirmée' : 'Levering bevestigd'}
+        body={
+          isFR
+            ? `Rendez-vous confirmé pour le ${confirmed}. Jean-Pierre passera vous remettre votre œuvre en personne.`
+            : `Afspraak bevestigd op ${confirmed}. Jean-Pierre komt uw werk persoonlijk overhandigen.`
+        }
+      >
+        {deliveryAddress && (
+          <div className="bg-(--color-paper) border border-(--color-frame) p-4 text-sm">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone) mb-1 inline-flex items-center gap-1.5">
+              <MapPin className="w-3 h-3" />
+              {isFR ? 'Adresse' : 'Adres'}
+            </p>
+            <p className="text-(--color-ink) whitespace-pre-wrap">{deliveryAddress}</p>
+          </div>
+        )}
+      </ActionShell>
+    )
+  }
+
+  // Stap 9 — geleverd
+  if (isDelivered) {
+    return (
+      <ActionShell
+        icon={<Truck className="w-5 h-5" />}
+        title={isFR ? 'Œuvre livrée' : 'Werk afgeleverd'}
+        body={
+          isFR
+            ? 'Votre œuvre vous a été remise. Merci pour votre confiance — Jean-Pierre espère qu’elle vous accompagnera longtemps.'
+            : 'Uw werk is overhandigd. Bedankt voor uw vertrouwen — Jean-Pierre hoopt dat het u nog lang vergezelt.'
+        }
+      />
     )
   }
 

@@ -11,11 +11,15 @@ import { DevisToClient } from '@/lib/email/templates/DevisToClient'
 import { StatusUpdate } from '@/lib/email/templates/StatusUpdate'
 import { PortalWelcome } from '@/lib/email/templates/PortalWelcome'
 import { PaymentReminder } from '@/lib/email/templates/PaymentReminder'
+import { BalanceRequest } from '@/lib/email/templates/BalanceRequest'
+import { DeliveryDateRequest } from '@/lib/email/templates/DeliveryDateRequest'
+import { DeliveryConfirmed } from '@/lib/email/templates/DeliveryConfirmed'
 import { generateEpcQrDataUrl } from '@/lib/epc-qr'
 import { PUBLIC_BASE_URL } from '@/lib/public-url'
 import {
   ATELIER,
   buildStructuredReference,
+  buildBalanceReference,
   generateDevisNumber,
 } from '@/lib/atelier-config'
 
@@ -29,6 +33,9 @@ const STATUSES = [
   'refuse',
   'acompte_recu',
   'en_cours',
+  'pret',
+  'solde_recu',
+  'livraison_planifiee',
   'livre',
   'complete',
 ] as const
@@ -315,7 +322,9 @@ export async function composeDevis(
   return { status: 'success' }
 }
 
-// Status-actie met email naar klant
+// Status-actie met email naar klant (enkel voor de 'simpele' overgangen
+// — voor pret/solde_recu/livraison_planifiee worden dedicated functies
+// gebruikt verder in dit bestand met specifieke email-templates).
 async function transitionStatus(
   id: string,
   newStatus: 'acompte_recu' | 'en_cours' | 'livre' | 'complete' | 'refuse',
@@ -426,6 +435,357 @@ export async function markComplete(formData: FormData) {
 export async function markRefused(formData: FormData) {
   const id = String(formData.get('id') || '')
   await transitionStatus(id, 'refuse', 'refused_at')
+}
+
+// ─── Werk klaar — saldo opvragen ─────────────────────────────────────
+
+async function loadCommissionForBalance(id: string) {
+  const admin = createAdminClient()
+  const { data } = await admin
+    .from('commission_requests')
+    .select(
+      'id, name, email, locale, signature_token, devis_total_eur, devis_acompte_eur,' +
+        ' devis_payment_reference, devis_balance_reference, acompte_received_at,' +
+        ' delivery_address'
+    )
+    .eq('id', id)
+    .single<{
+      id: string
+      name: string
+      email: string
+      locale: 'fr' | 'nl'
+      signature_token: string | null
+      devis_total_eur: number | null
+      devis_acompte_eur: number | null
+      devis_payment_reference: string | null
+      devis_balance_reference: string | null
+      acompte_received_at: string | null
+      delivery_address: string | null
+    }>()
+  return data
+}
+
+/** Markeer werk als klaar — verstuurt mail met afrekening + saldo-OGM. */
+export async function markReady(formData: FormData) {
+  await requireAdmin()
+  const id = String(formData.get('id') || '')
+  if (!id) return
+
+  const req = await loadCommissionForBalance(id)
+  if (!req) return
+
+  const total = req.devis_total_eur ?? 0
+  const acompte = req.devis_acompte_eur ?? 0
+  const balance = Math.round((total - acompte) * 100) / 100
+
+  const admin = createAdminClient()
+
+  // Bouw een aparte OGM voor het saldo (anders dan voor het voorschot)
+  let balanceRef = req.devis_balance_reference
+  if (!balanceRef) {
+    const year = new Date().getFullYear()
+    const { count } = await admin
+      .from('commission_requests')
+      .select('id', { count: 'exact', head: true })
+      .not('devis_sent_at', 'is', null)
+      .gte('devis_sent_at', `${year}-01-01`)
+    balanceRef = buildBalanceReference(year, count ?? 1)
+  }
+
+  await admin
+    .from('commission_requests')
+    .update({
+      status: 'pret',
+      ready_at: new Date().toISOString(),
+      devis_balance_reference: balanceRef,
+    })
+    .eq('id', id)
+
+  if (balance > 0) {
+    let qrDataUrl: string | null = null
+    try {
+      qrDataUrl = await generateEpcQrDataUrl({
+        beneficiaryName: ATELIER.ibanHolder,
+        iban: ATELIER.iban,
+        amountEur: balance,
+        communication: balanceRef,
+      })
+    } catch (err) {
+      console.error('markReady QR failed', err)
+    }
+
+    try {
+      const isFR = req.locale === 'fr'
+      const portalUrl = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/portail/devis/${id}`
+      const html = await render(
+        BalanceRequest({
+          recipientName: req.name,
+          totalEur: total,
+          acompteEur: acompte,
+          acompteReceivedAt: req.acompte_received_at
+            ? new Date(req.acompte_received_at)
+            : null,
+          balanceEur: balance,
+          reference: balanceRef,
+          iban: ATELIER.iban,
+          ibanHolder: ATELIER.ibanHolder,
+          qrDataUrl,
+          portalUrl,
+          locale: req.locale,
+        })
+      )
+      await sendEmail({
+        to: req.email,
+        subject: isFR
+          ? 'Votre œuvre est prête — solde à régler'
+          : 'Uw werk is klaar — saldo te betalen',
+        html,
+        text: isFR
+          ? `${req.name}, votre œuvre est prête. Solde à régler : ${balance.toFixed(2)} € avec la communication ${balanceRef}.`
+          : `${req.name}, uw werk is klaar. Saldo te betalen: ${balance.toFixed(2)} € met mededeling ${balanceRef}.`,
+        replyTo: ATELIER.email,
+      })
+    } catch (err) {
+      console.error('markReady email failed', err)
+    }
+  }
+
+  revalidatePath(`/admin/commissions/${id}`)
+  revalidatePath('/admin/commissions')
+  redirect(`/admin/commissions/${id}?notice=ready_marked`)
+}
+
+/** Markeer saldo als ontvangen — vraagt klant naar leveringsdatum. */
+export async function markBalanceReceived(formData: FormData) {
+  await requireAdmin()
+  const id = String(formData.get('id') || '')
+  if (!id) return
+
+  const admin = createAdminClient()
+  const { data: req } = await admin
+    .from('commission_requests')
+    .select('id, name, email, locale')
+    .eq('id', id)
+    .single<{ id: string; name: string; email: string; locale: 'fr' | 'nl' }>()
+
+  if (!req) return
+
+  const paidAt = new Date()
+  await admin
+    .from('commission_requests')
+    .update({
+      status: 'solde_recu',
+      balance_received_at: paidAt.toISOString(),
+    })
+    .eq('id', id)
+
+  try {
+    const isFR = req.locale === 'fr'
+    const portalUrl = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/portail/devis/${id}`
+    const html = await render(
+      DeliveryDateRequest({
+        recipientName: req.name,
+        paidAt,
+        portalUrl,
+        locale: req.locale,
+      })
+    )
+    await sendEmail({
+      to: req.email,
+      subject: isFR
+        ? 'Solde reçu — choisissez votre date de livraison'
+        : 'Saldo ontvangen — kies uw leveringsdatum',
+      html,
+      text: isFR
+        ? `${req.name}, votre solde est bien reçu. Connectez-vous à votre espace client pour choisir une date de livraison : ${portalUrl}`
+        : `${req.name}, uw saldo is goed ontvangen. Log in op uw klantenportaal om een leveringsdatum te kiezen: ${portalUrl}`,
+      replyTo: ATELIER.email,
+    })
+  } catch (err) {
+    console.error('markBalanceReceived email failed', err)
+  }
+
+  revalidatePath(`/admin/commissions/${id}`)
+  revalidatePath('/admin/commissions')
+  redirect(`/admin/commissions/${id}?notice=balance_marked`)
+}
+
+/** Bevestig de door de klant voorgestelde leveringsdatum (eventueel
+ *  aangepast door JP). Stuurt definitieve bevestiging-mail. */
+export async function confirmDeliveryDate(formData: FormData) {
+  await requireAdmin()
+  const id = String(formData.get('id') || '')
+  const dateStr = String(formData.get('confirmed_date') || '').trim()
+  if (!id || !dateStr) return
+
+  const confirmedDate = new Date(dateStr)
+  if (Number.isNaN(confirmedDate.getTime())) {
+    redirect(`/admin/commissions/${id}?notice=invalid_date`)
+  }
+
+  const admin = createAdminClient()
+  const { data: req } = await admin
+    .from('commission_requests')
+    .select(
+      'id, name, email, locale, delivery_address, delivery_alt_option, delivery_alt_specs'
+    )
+    .eq('id', id)
+    .single<{
+      id: string
+      name: string
+      email: string
+      locale: 'fr' | 'nl'
+      delivery_address: string | null
+      delivery_alt_option: string | null
+      delivery_alt_specs: string | null
+    }>()
+  if (!req) return
+
+  await admin
+    .from('commission_requests')
+    .update({
+      status: 'livraison_planifiee',
+      delivery_confirmed_at: new Date().toISOString(),
+      delivery_confirmed_date: confirmedDate.toISOString(),
+    })
+    .eq('id', id)
+
+  try {
+    const isFR = req.locale === 'fr'
+    const altLabels: Record<string, { fr: string; nl: string }> = {
+      home: {
+        fr: 'Présent à domicile',
+        nl: 'Aanwezig thuis',
+      },
+      neighbours: {
+        fr: 'Remettre aux voisins',
+        nl: 'Bij de buren afgeven',
+      },
+      door: {
+        fr: 'Déposer à la porte',
+        nl: 'Aan de deur leggen',
+      },
+      safe_place: {
+        fr: 'Endroit sûr',
+        nl: 'Veilige plek',
+      },
+      other: {
+        fr: 'Autre',
+        nl: 'Andere',
+      },
+    }
+    const altLabel = req.delivery_alt_option
+      ? altLabels[req.delivery_alt_option]?.[req.locale] || req.delivery_alt_option
+      : null
+    const altInstruction = altLabel
+      ? req.delivery_alt_specs
+        ? `${altLabel} — ${req.delivery_alt_specs}`
+        : altLabel
+      : null
+
+    const portalUrl = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/portail/devis/${id}`
+    const html = await render(
+      DeliveryConfirmed({
+        recipientName: req.name,
+        confirmedDate,
+        deliveryAddress: req.delivery_address,
+        altInstruction,
+        portalUrl,
+        locale: req.locale,
+      })
+    )
+    await sendEmail({
+      to: req.email,
+      subject: isFR
+        ? 'Livraison confirmée — Atelier Montreuil'
+        : 'Levering bevestigd — Atelier Montreuil',
+      html,
+      text: isFR
+        ? `${req.name}, votre livraison est confirmée pour le ${confirmedDate.toLocaleString('fr-BE', { dateStyle: 'long', timeStyle: 'short' })}.`
+        : `${req.name}, uw levering is bevestigd voor ${confirmedDate.toLocaleString('nl-BE', { dateStyle: 'long', timeStyle: 'short' })}.`,
+      replyTo: ATELIER.email,
+    })
+  } catch (err) {
+    console.error('confirmDeliveryDate email failed', err)
+  }
+
+  revalidatePath(`/admin/commissions/${id}`)
+  revalidatePath('/admin/commissions')
+  redirect(`/admin/commissions/${id}?notice=delivery_confirmed`)
+}
+
+/** Klant-actie : voorstel leveringsdatum + adres + alt-opties. */
+export async function proposeDeliveryByClient(formData: FormData) {
+  // Geen requireAdmin — dit komt vanuit /portail. We checken sessie + email.
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user || !user.email) redirect('/portail/login')
+
+  const id = String(formData.get('id') || '')
+  const proposed = String(formData.get('proposed_date') || '').trim()
+  const address = String(formData.get('delivery_address') || '').trim()
+  const altOption = String(formData.get('delivery_alt_option') || '').trim() || null
+  const altSpecs = String(formData.get('delivery_alt_specs') || '').trim() || null
+
+  if (!id || !proposed || !address) {
+    redirect(`/portail/devis/${id}?err=missing_fields`)
+  }
+
+  const proposedDate = new Date(proposed)
+  if (Number.isNaN(proposedDate.getTime())) {
+    redirect(`/portail/devis/${id}?err=invalid_date`)
+  }
+
+  const allowedAlt = ['home', 'neighbours', 'door', 'safe_place', 'other']
+  const safeAlt = altOption && allowedAlt.includes(altOption) ? altOption : null
+
+  const admin = createAdminClient()
+  // Controleer dat de bezoeker eigenaar is van deze commission
+  const { data: existing } = await admin
+    .from('commission_requests')
+    .select('email')
+    .eq('id', id)
+    .single<{ email: string }>()
+  if (!existing || existing.email.toLowerCase() !== user.email.toLowerCase()) {
+    redirect('/portail')
+  }
+
+  await admin
+    .from('commission_requests')
+    .update({
+      delivery_proposed_at: new Date().toISOString(),
+      delivery_proposed_date: proposedDate.toISOString(),
+      delivery_address: address,
+      delivery_alt_option: safeAlt,
+      delivery_alt_specs: altSpecs,
+    })
+    .eq('id', id)
+
+  // Mail naar JP zodat hij weet dat er een voorstel ligt
+  try {
+    const dateStr = proposedDate.toLocaleString('fr-BE', {
+      dateStyle: 'long',
+      timeStyle: 'short',
+    })
+    await sendEmail({
+      to: ATELIER.email,
+      subject: 'Nouvelle proposition de livraison — Atelier Montreuil',
+      html: `<p>Le client a proposé une date de livraison.</p>
+<p><strong>${dateStr}</strong></p>
+<p>Adresse : ${address.replace(/\n/g, '<br/>')}</p>
+${safeAlt ? `<p>En cas d’absence : ${safeAlt}${altSpecs ? ` — ${altSpecs}` : ''}</p>` : ''}
+<p><a href="${PUBLIC_BASE_URL.replace(/\/$/, '')}/admin/commissions/${id}">Ouvrir dans l’admin</a></p>`,
+      text: `Le client propose une livraison le ${dateStr} à l’adresse : ${address}.`,
+    })
+  } catch (err) {
+    console.error('proposeDeliveryByClient JP-notif failed', err)
+  }
+
+  revalidatePath(`/admin/commissions/${id}`)
+  revalidatePath(`/portail/devis/${id}`)
+  redirect(`/portail/devis/${id}?notice=delivery_proposed`)
 }
 
 // ─── Noodknoppen — herversturen mails ───────────────────────────────

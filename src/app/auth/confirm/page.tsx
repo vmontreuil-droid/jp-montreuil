@@ -69,7 +69,13 @@ export default async function ConfirmPage({ searchParams }: Props) {
   const body = isFR
     ? 'Pour des raisons de sécurité, cliquez sur le bouton ci-dessous pour activer votre lien de connexion.'
     : 'Klik op de knop hieronder om uw login-link te activeren.'
-  const button = isFR ? 'Continuer vers mes photos' : "Doorgaan naar mijn foto's"
+  const button = isPortail
+    ? isFR
+      ? 'Continuer vers mon espace client'
+      : 'Doorgaan naar mijn klantenportaal'
+    : isFR
+      ? 'Continuer'
+      : 'Doorgaan'
   const note = isFR
     ? 'Une étape supplémentaire — ce clic est nécessaire pour empêcher les filtres anti-spam de consommer votre lien.'
     : 'Een extra klik — dit voorkomt dat spamfilters uw link verbruiken voordat u hem opent.'
