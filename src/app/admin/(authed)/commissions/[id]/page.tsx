@@ -83,6 +83,7 @@ import {
 } from '../actions'
 import DevisComposeForm from './DevisComposeForm'
 import MessageWithTranslate from './MessageWithTranslate'
+import CommissionTimeline from './CommissionTimeline'
 
 export const dynamic = 'force-dynamic'
 
@@ -282,6 +283,25 @@ export default async function CommissionDetailPage({ params }: Props) {
           {STATUS_LABEL_FR[req.status] ?? req.status}
         </span>
       </header>
+
+      {/* Tijdsbalk — horizontale voortgang */}
+      <div className="mb-8">
+        <CommissionTimeline
+          steps={[
+            { key: 'created', label: 'Reçue', at: req.created_at },
+            { key: 'devis_sent', label: 'Devis envoyé', at: req.devis_sent_at },
+            { key: 'signed', label: 'Signée', at: req.signed_at },
+            {
+              key: 'acompte',
+              label: 'Acompte reçu',
+              at: req.acompte_received_at,
+            },
+            { key: 'in_progress', label: 'En cours', at: req.in_progress_at },
+            { key: 'delivered', label: 'Livrée', at: req.delivered_at },
+            { key: 'complete', label: 'Terminée', at: req.completed_at },
+          ]}
+        />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
