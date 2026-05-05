@@ -2,11 +2,53 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import {
+  ChevronDown,
+  Plus,
+  Image as ImageIcon,
+  FolderTree,
+  Camera,
+  Send,
+  BookOpen,
+  Inbox,
+  Mail,
+  Tags,
+  Sparkles,
+  Brush,
+  Users,
+  Activity,
+  PenTool,
+  Globe,
+  User as UserIcon,
+  Calendar,
+  type LucideIcon,
+} from 'lucide-react'
+
+const ICONS: Record<string, LucideIcon> = {
+  Plus,
+  ImageIcon,
+  FolderTree,
+  Camera,
+  Send,
+  BookOpen,
+  Inbox,
+  Mail,
+  Tags,
+  Sparkles,
+  Brush,
+  Users,
+  Activity,
+  PenTool,
+  Globe,
+  UserIcon,
+  Calendar,
+}
+
+export type ActionIconName = keyof typeof ICONS
 
 type Action = {
   href: string
-  icon: React.ElementType
+  icon: ActionIconName
   label: string
   primary?: boolean
   badge?: number
@@ -14,12 +56,13 @@ type Action = {
 
 type Props = {
   title: string
-  icon: React.ElementType
+  icon: ActionIconName
   actions: Action[]
   defaultOpen?: boolean
 }
 
-export default function ActionGroup({ title, icon: Icon, actions, defaultOpen }: Props) {
+export default function ActionGroup({ title, icon, actions, defaultOpen }: Props) {
+  const Icon = ICONS[icon] ?? Brush
   const [open, setOpen] = useState(defaultOpen ?? false)
   const totalBadges = actions.reduce((sum, a) => sum + (a.badge ?? 0), 0)
 
@@ -49,25 +92,28 @@ export default function ActionGroup({ title, icon: Icon, actions, defaultOpen }:
       {open && (
         <div className="px-5 pb-4 pt-1 border-t border-(--color-frame)/40">
           <div className="flex flex-wrap gap-2">
-            {actions.map(({ href, icon: ActionIcon, label, primary, badge }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-xs uppercase tracking-[0.15em] transition-colors ${
-                  primary
-                    ? 'bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark)'
-                    : 'border border-(--color-frame) text-(--color-charcoal) hover:text-(--color-ink) hover:border-(--color-stone)'
-                }`}
-              >
-                <ActionIcon className="w-4 h-4" />
-                {label}
-                {badge != null && badge > 0 && (
-                  <span className="inline-flex items-center justify-center min-w-4 h-4 px-1 text-[9px] font-bold text-white bg-red-600 rounded-full">
-                    {badge > 99 ? '99+' : badge}
-                  </span>
-                )}
-              </Link>
-            ))}
+            {actions.map(({ href, icon: actionIcon, label, primary, badge }) => {
+              const ActionIcon = ICONS[actionIcon] ?? Brush
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-xs uppercase tracking-[0.15em] transition-colors ${
+                    primary
+                      ? 'bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark)'
+                      : 'border border-(--color-frame) text-(--color-charcoal) hover:text-(--color-ink) hover:border-(--color-stone)'
+                  }`}
+                >
+                  <ActionIcon className="w-4 h-4" />
+                  {label}
+                  {badge != null && badge > 0 && (
+                    <span className="inline-flex items-center justify-center min-w-4 h-4 px-1 text-[9px] font-bold text-white bg-red-600 rounded-full">
+                      {badge > 99 ? '99+' : badge}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
           </div>
         </div>
       )}

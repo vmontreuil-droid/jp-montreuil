@@ -865,43 +865,43 @@ export default async function AdminDashboardPage() {
         <div className="space-y-3">
           <ActionGroup
             title="Commandes & clients"
-            icon={Brush}
+            icon="Brush"
             defaultOpen
             actions={[
-              { href: '/admin/commissions', icon: Inbox, label: 'Toutes les commandes', badge: newRequests },
-              { href: '/admin/clients', icon: Users, label: 'Liste clients' },
-              { href: '/admin/messages', icon: Mail, label: 'Messages', badge: unreadCount ?? 0 },
-              { href: '/admin/commissions/pricing', icon: Tags, label: 'Tarifs commission' },
-              { href: '/admin/commissions/devis-examples', icon: Sparkles, label: 'Exemples sur /devis' },
+              { href: '/admin/commissions', icon: 'Inbox', label: 'Toutes les commandes', badge: newRequests },
+              { href: '/admin/clients', icon: 'Users', label: 'Liste clients' },
+              { href: '/admin/messages', icon: 'Mail', label: 'Messages', badge: unreadCount ?? 0 },
+              { href: '/admin/commissions/pricing', icon: 'Tags', label: 'Tarifs commission' },
+              { href: '/admin/commissions/devis-examples', icon: 'Sparkles', label: 'Exemples sur /devis' },
             ]}
           />
           <ActionGroup
             title="Œuvres & catalogue"
-            icon={ImageIcon}
+            icon="ImageIcon"
             actions={[
-              { href: '/admin/works/upload', icon: Plus, label: 'Téléverser œuvres', primary: true },
-              { href: '/admin/works', icon: ImageIcon, label: 'Toutes les œuvres' },
-              { href: '/admin/categories', icon: FolderTree, label: 'Catégories' },
+              { href: '/admin/works/upload', icon: 'Plus', label: 'Téléverser œuvres', primary: true },
+              { href: '/admin/works', icon: 'ImageIcon', label: 'Toutes les œuvres' },
+              { href: '/admin/categories', icon: 'FolderTree', label: 'Catégories' },
             ]}
           />
           <ActionGroup
             title="Albums & partage"
-            icon={Camera}
+            icon="Camera"
             actions={[
-              { href: '/admin/events', icon: Camera, label: 'Albums clients' },
-              { href: '/admin/compose', icon: Send, label: 'Composer & partager' },
-              { href: '/admin/ibook', icon: BookOpen, label: 'Ibook' },
+              { href: '/admin/events', icon: 'Camera', label: 'Albums clients' },
+              { href: '/admin/compose', icon: 'Send', label: 'Composer & partager' },
+              { href: '/admin/ibook', icon: 'BookOpen', label: 'Ibook' },
             ]}
           />
           <ActionGroup
             title="Site & contenus"
-            icon={Globe}
+            icon="Globe"
             actions={[
-              { href: '/admin/about', icon: User, label: 'À propos' },
-              { href: '/admin/exhibitions', icon: Calendar, label: 'Expositions' },
-              { href: '/admin/social', icon: Send, label: 'Réseaux sociaux' },
-              { href: '/admin/signature', icon: PenTool, label: 'Signature mail' },
-              { href: '/admin/analytics', icon: Activity, label: 'Activité web' },
+              { href: '/admin/about', icon: 'UserIcon', label: 'À propos' },
+              { href: '/admin/exhibitions', icon: 'Calendar', label: 'Expositions' },
+              { href: '/admin/social', icon: 'Send', label: 'Réseaux sociaux' },
+              { href: '/admin/signature', icon: 'PenTool', label: 'Signature mail' },
+              { href: '/admin/analytics', icon: 'Activity', label: 'Activité web' },
             ]}
           />
         </div>
