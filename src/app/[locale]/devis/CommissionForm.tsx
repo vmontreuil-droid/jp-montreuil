@@ -18,11 +18,14 @@ import {
   type PriceLineItem,
 } from '@/lib/atelier-config'
 import { submitCommission, type CommissionState } from './actions'
+import { compressImage } from './compress-image'
 
 const initial: CommissionState = { status: 'idle' }
 const MAX_FILES = 5
 const MAX_FILE_SIZE = 10 * 1024 * 1024
-const ACCEPT = 'image/*'
+// Expliciet — iOS Safari opent dan rechtstreeks Foto's (HEIC of JPEG),
+// geen verwarring met bestandsbeheerder of camera-app.
+const ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif,image/*'
 const TECHNIQUES = ['crayon_nb', 'aquarelle_couleur', 'acrylique_toile'] as const
 const SUPPORTS = ['papier_aquarelle', 'toile_lin'] as const
 type FormatChoice = (typeof FORMATS)[number]['id'] | 'custom'
@@ -39,19 +42,30 @@ function scrollIntoView(el: HTMLElement | null) {
   window.scrollTo({ top, behavior: 'smooth' })
 }
 
-function SubmitButton({ label, sendingLabel }: { label: string; sendingLabel: string }) {
+function SubmitButton({
+  label,
+  sendingLabel,
+  externallyDisabled,
+  externalLabel,
+}: {
+  label: string
+  sendingLabel: string
+  externallyDisabled?: boolean
+  externalLabel?: string
+}) {
   const { pending } = useFormStatus()
+  const disabled = pending || !!externallyDisabled
   return (
     <div className="flex flex-col items-start gap-2">
       <button
         type="submit"
-        disabled={pending}
+        disabled={disabled}
         className="inline-flex items-center gap-2 px-7 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) transition-colors text-sm uppercase tracking-[0.2em] disabled:opacity-50"
       >
-        {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-        {pending ? sendingLabel : label}
+        {disabled ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        {pending ? sendingLabel : externallyDisabled ? externalLabel ?? sendingLabel : label}
       </button>
-      {pending && (
+      {disabled && (
         <div className="w-full max-w-xs h-1 bg-(--color-frame) overflow-hidden rounded-full">
           <div className="h-full w-1/3 bg-(--color-bronze) rounded-full devis-progress-bar" />
         </div>
@@ -162,28 +176,53 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
     else if (state.status === 'error') scrollIntoView(errorRef.current)
   }, [state.status])
 
-  const addFiles = (newFiles: FileList | File[]) => {
+  const [compressing, setCompressing] = useState(false)
+
+  const addFiles = async (newFiles: FileList | File[]) => {
     setLocalError(null)
     const arr = Array.from(newFiles)
-    const valid: File[] = []
+    const initialValid: File[] = []
     for (const f of arr) {
-      if (!f.type.startsWith('image/')) {
+      // Op iPhone heeft de FileList soms een lege MIME ('') voor HEIC.
+      // We accepteren alles wat er minstens als image binnenkomt of een
+      // bekende foto-extensie heeft.
+      const looksLikeImage =
+        f.type.startsWith('image/') || /\.(heic|heif|jpg|jpeg|png|webp|gif)$/i.test(f.name)
+      if (!looksLikeImage) {
         setLocalError(tt.errors.unsupportedFile)
         continue
       }
-      if (f.size > MAX_FILE_SIZE) {
+      if (f.size > MAX_FILE_SIZE * 4) {
+        // Boven de 40MB überhaupt niet proberen — telefoon-camera's halen
+        // dat nooit. Anders leggen we de browser plat met canvas-decoding.
         setLocalError(tt.errors.fileTooBig)
         continue
       }
-      valid.push(f)
+      initialValid.push(f)
     }
-    setFiles((prev) => {
-      const combined = [...prev, ...valid].slice(0, MAX_FILES)
-      if (prev.length + valid.length > MAX_FILES) {
-        setLocalError(tt.errors.tooManyFiles)
-      }
-      return combined
-    })
+
+    // Compressie: groot HEIC/JPEG → max 1800px JPEG q=0.85. Kritiek voor
+    // iPhone uploads waar 5×8MB = 40MB anders door de timeout zou ploffen.
+    setCompressing(true)
+    try {
+      const compressed = await Promise.all(initialValid.map((f) => compressImage(f)))
+      const valid = compressed.filter((f) => {
+        if (f.size > MAX_FILE_SIZE) {
+          setLocalError(tt.errors.fileTooBig)
+          return false
+        }
+        return true
+      })
+      setFiles((prev) => {
+        const combined = [...prev, ...valid].slice(0, MAX_FILES)
+        if (prev.length + valid.length > MAX_FILES) {
+          setLocalError(tt.errors.tooManyFiles)
+        }
+        return combined
+      })
+    } finally {
+      setCompressing(false)
+    }
   }
 
   const removeFile = (idx: number) => {
@@ -194,7 +233,7 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
-    if (e.dataTransfer.files) addFiles(e.dataTransfer.files)
+    if (e.dataTransfer.files) void addFiles(e.dataTransfer.files)
   }
 
   if (state.status === 'success') {
@@ -642,7 +681,7 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
           multiple
           accept={ACCEPT}
           onChange={(e) => {
-            if (e.target.files) addFiles(e.target.files)
+            if (e.target.files) void addFiles(e.target.files)
             e.target.value = ''
           }}
           className="hidden"
@@ -706,7 +745,12 @@ export default function CommissionForm({ locale, t, pricing }: Props) {
 
       <p className="text-xs text-(--color-stone)">{tt.askedFields}</p>
 
-      <SubmitButton label={tt.sendBtn} sendingLabel={tt.sending} />
+      <SubmitButton
+        label={tt.sendBtn}
+        sendingLabel={tt.sending}
+        externallyDisabled={compressing}
+        externalLabel={locale === 'fr' ? 'Préparation des photos…' : 'Foto’s voorbereiden…'}
+      />
     </form>
   )
 }
