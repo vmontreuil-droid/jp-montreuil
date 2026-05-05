@@ -30,6 +30,7 @@ import {
 import { loadPricing } from '@/lib/commission-pricing'
 import { generateEpcQrDataUrl } from '@/lib/epc-qr'
 import DeliveryForm from './DeliveryForm'
+import MessageForm from '@/app/portail/compte/MessageForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -475,6 +476,78 @@ export default async function PortailDevisDetailPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      {/* Betalingsoverzicht */}
+      {(req.acompte_received_at || req.balance_received_at || (req.devis_total_eur != null && req.signed_at)) && (
+        <section className="bg-(--color-paper) border border-(--color-frame) p-6">
+          <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-4">
+            {isFR ? 'Paiements' : 'Betalingen'}
+          </h2>
+          <ul className="space-y-2 text-sm">
+            {acompteEur != null && (
+              <li className="flex items-center justify-between gap-3 py-1.5 border-b border-(--color-frame)/50">
+                <div className="min-w-0 flex-1">
+                  <p className="text-(--color-ink)">
+                    {isFR ? 'Acompte' : 'Voorschot'}
+                  </p>
+                  {req.acompte_received_at ? (
+                    <p className="text-[10px] text-(--color-bronze) inline-flex items-center gap-1 mt-0.5">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {isFR ? 'Reçu le' : 'Ontvangen op'}{' '}
+                      {new Date(req.acompte_received_at).toLocaleDateString(dateLocale, {
+                        dateStyle: 'long',
+                      })}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-(--color-stone) italic mt-0.5">
+                      {isFR ? 'En attente' : 'In afwachting'}
+                    </p>
+                  )}
+                </div>
+                <span className="tabular-nums text-(--color-ink)">{formatEur(acompteEur)}</span>
+              </li>
+            )}
+            {balanceEur != null && balanceEur > 0 && (
+              <li className="flex items-center justify-between gap-3 py-1.5 border-b border-(--color-frame)/50">
+                <div className="min-w-0 flex-1">
+                  <p className="text-(--color-ink)">{isFR ? 'Solde' : 'Saldo'}</p>
+                  {req.balance_received_at ? (
+                    <p className="text-[10px] text-(--color-bronze) inline-flex items-center gap-1 mt-0.5">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {isFR ? 'Reçu le' : 'Ontvangen op'}{' '}
+                      {new Date(req.balance_received_at).toLocaleDateString(dateLocale, {
+                        dateStyle: 'long',
+                      })}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-(--color-stone) italic mt-0.5">
+                      {isFR ? 'À payer à la livraison' : 'Te betalen voor levering'}
+                    </p>
+                  )}
+                </div>
+                <span className="tabular-nums text-(--color-ink)">{formatEur(balanceEur)}</span>
+              </li>
+            )}
+            {devisTotal != null && (
+              <li className="flex items-center justify-between gap-3 pt-2">
+                <span className="text-(--color-charcoal) font-semibold">
+                  {isFR ? 'Total' : 'Totaal'}
+                </span>
+                <span className="text-(--color-ink) font-semibold tabular-nums">
+                  {formatEur(devisTotal)}
+                </span>
+              </li>
+            )}
+          </ul>
+        </section>
+      )}
+
+      {/* Vraag stellen aan JP — vanuit dit dossier */}
+      <MessageForm
+        locale={locale}
+        commissionId={req.id}
+        labels={t.portail.account.message}
+      />
 
       {/* Reference photos */}
       {attachments.length > 0 && (

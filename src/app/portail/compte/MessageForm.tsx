@@ -7,6 +7,9 @@ import { sendMessageToJP, type SendMessageState } from './actions'
 
 type Props = {
   locale: 'fr' | 'nl'
+  /** Wanneer ingesteld, wordt het dossier in de mail vermeld zodat JP weet
+   *  over welke commission de vraag gaat. */
+  commissionId?: string
   labels: {
     title: string
     lead: string
@@ -34,7 +37,7 @@ function SubmitButton({ submit, sending }: { submit: string; sending: string }) 
   )
 }
 
-export default function MessageForm({ locale, labels }: Props) {
+export default function MessageForm({ locale, commissionId, labels }: Props) {
   const [state, action] = useActionState(sendMessageToJP, initialState)
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -70,6 +73,7 @@ export default function MessageForm({ locale, labels }: Props) {
 
       <form ref={formRef} action={action} className="space-y-4">
         <input type="hidden" name="locale" value={locale} />
+        {commissionId && <input type="hidden" name="commission_id" value={commissionId} />}
         <textarea
           name="message"
           rows={5}

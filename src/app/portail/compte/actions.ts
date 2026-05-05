@@ -76,6 +76,8 @@ export async function sendMessageToJP(
   const localeRaw = String(formData.get('locale') ?? 'fr')
   const locale: 'fr' | 'nl' = localeRaw === 'nl' ? 'nl' : 'fr'
   const isFR = locale === 'fr'
+  // Optionele commission-id (wanneer vraag gesteld vanuit dossier-pagina)
+  const commissionId = String(formData.get('commission_id') ?? '').trim() || null
 
   if (message.length < 5) {
     return {
@@ -104,12 +106,31 @@ export async function sendMessageToJP(
   const name = lastReq?.name || user.email
   const phone = lastReq?.phone || ''
 
+  // Optioneel: dossier-context ophalen voor in subject/body
+  let commissionContext = ''
+  if (commissionId) {
+    const { data: comm } = await admin
+      .from('commission_requests')
+      .select('id, devis_subject, email')
+      .eq('id', commissionId)
+      .maybeSingle<{ id: string; devis_subject: string | null; email: string }>()
+    if (comm && comm.email.toLowerCase() === user.email.toLowerCase()) {
+      const subjectStr = comm.devis_subject || `${comm.id.slice(0, 8)}`
+      commissionContext = isFR
+        ? `Concerne le dossier : ${subjectStr}\n`
+        : `Betreft dossier: ${subjectStr}\n`
+    }
+  }
+
   const h = await headers()
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || null
   const userAgent = h.get('user-agent') ?? null
 
   // Tag de boodschap zodat JP weet dat ze uit het portaal komt
-  const taggedMessage = `[${isFR ? 'Message via espace client' : 'Bericht via klantenportaal'}]\n\n${message}`
+  const taggedMessage =
+    `[${isFR ? 'Message via espace client' : 'Bericht via klantenportaal'}]\n` +
+    (commissionContext ? `${commissionContext}\n` : '\n') +
+    message
 
   const { error: insErr } = await admin.from('contact_messages').insert({
     name,
