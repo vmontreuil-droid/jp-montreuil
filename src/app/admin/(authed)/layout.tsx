@@ -1,26 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import {
-  LayoutGrid,
-  FolderTree,
-  Image as ImageIcon,
-  Share2,
-  Inbox,
-  Home,
-  Send,
-  Camera,
-  BookOpen,
-  Activity,
-  PenTool,
-  User as UserIcon,
-  CalendarDays,
-  Brush,
-  Tags,
-  Sparkles,
-  Users,
-  Globe,
-} from 'lucide-react'
+import { Home } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './SignOutButton'
 import ThemeToggle from '@/components/site/ThemeToggle'
@@ -82,55 +63,55 @@ export default async function AuthedAdminLayout({
   ])
 
   const pinned: SidebarItem[] = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutGrid },
+    { href: '/admin', label: 'Dashboard', icon: 'LayoutGrid' },
   ]
 
   const groups: SidebarGroup[] = [
     {
       id: 'commandes',
       title: 'Commandes & clients',
-      icon: Brush,
+      icon: 'Brush',
       defaultOpen: true,
       items: [
         {
           href: '/admin/commissions',
           label: 'Toutes les commandes',
-          icon: Brush,
+          icon: 'Brush',
           badge: unreadCommissions ?? null,
           badgeStyle: 'accent',
         },
-        { href: '/admin/clients', label: 'Liste clients', icon: Users },
+        { href: '/admin/clients', label: 'Liste clients', icon: 'Users' },
         {
           href: '/admin/messages',
           label: 'Messages',
-          icon: Inbox,
+          icon: 'Inbox',
           badge: unreadCount ?? null,
           badgeStyle: 'accent',
         },
-        { href: '/admin/commissions/pricing', label: 'Tarifs commission', icon: Tags },
+        { href: '/admin/commissions/pricing', label: 'Tarifs commission', icon: 'Tags' },
         {
           href: '/admin/commissions/devis-examples',
           label: 'Exemples /devis',
-          icon: Sparkles,
+          icon: 'Sparkles',
         },
       ],
     },
     {
       id: 'oeuvres',
       title: 'Œuvres & catalogue',
-      icon: ImageIcon,
+      icon: 'ImageIcon',
       items: [
         {
           href: '/admin/works',
           label: 'Œuvres',
-          icon: ImageIcon,
+          icon: 'ImageIcon',
           badge: worksCount ?? null,
           badgeStyle: 'subtle',
         },
         {
           href: '/admin/categories',
           label: 'Catégories',
-          icon: FolderTree,
+          icon: 'FolderTree',
           badge: categoriesCount ?? null,
           badgeStyle: 'subtle',
         },
@@ -139,20 +120,20 @@ export default async function AuthedAdminLayout({
     {
       id: 'albums',
       title: 'Albums & partage',
-      icon: Camera,
+      icon: 'Camera',
       items: [
         {
           href: '/admin/events',
           label: 'Albums clients',
-          icon: Camera,
+          icon: 'Camera',
           badge: albumsCount ?? null,
           badgeStyle: 'subtle',
         },
-        { href: '/admin/compose', label: 'Composer & partager', icon: Send },
+        { href: '/admin/compose', label: 'Composer & partager', icon: 'Send' },
         {
           href: '/admin/ibook',
           label: 'Ibook',
-          icon: BookOpen,
+          icon: 'BookOpen',
           badge: ibooksCount ?? null,
           badgeStyle: 'subtle',
         },
@@ -161,19 +142,19 @@ export default async function AuthedAdminLayout({
     {
       id: 'site',
       title: 'Site & contenus',
-      icon: Globe,
+      icon: 'Globe',
       items: [
-        { href: '/admin/about', label: 'À propos', icon: UserIcon },
+        { href: '/admin/about', label: 'À propos', icon: 'UserIcon' },
         {
           href: '/admin/exhibitions',
           label: 'Expositions',
-          icon: CalendarDays,
+          icon: 'CalendarDays',
           badge: exhibitionsCount ?? null,
           badgeStyle: 'subtle',
         },
-        { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2 },
-        { href: '/admin/analytics', label: 'Activité web', icon: Activity },
-        { href: '/admin/signature', label: 'Signature mail', icon: PenTool },
+        { href: '/admin/social', label: 'Réseaux sociaux', icon: 'Share2' },
+        { href: '/admin/analytics', label: 'Activité web', icon: 'Activity' },
+        { href: '/admin/signature', label: 'Signature mail', icon: 'PenTool' },
       ],
     },
   ]

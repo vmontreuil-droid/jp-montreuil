@@ -3,12 +3,56 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { ChevronDown, type LucideIcon } from 'lucide-react'
+import {
+  ChevronDown,
+  LayoutGrid,
+  FolderTree,
+  Image as ImageIcon,
+  Share2,
+  Inbox,
+  Send,
+  Camera,
+  BookOpen,
+  Activity,
+  PenTool,
+  User as UserIcon,
+  CalendarDays,
+  Brush,
+  Tags,
+  Sparkles,
+  Users,
+  Globe,
+  type LucideIcon,
+} from 'lucide-react'
+
+// Server component → client component props moeten serialiseerbaar zijn,
+// dus geven we icon-NAMEN door (strings) en resolven ze hier.
+const ICONS: Record<string, LucideIcon> = {
+  LayoutGrid,
+  FolderTree,
+  ImageIcon,
+  Share2,
+  Inbox,
+  Send,
+  Camera,
+  BookOpen,
+  Activity,
+  PenTool,
+  UserIcon,
+  CalendarDays,
+  Brush,
+  Tags,
+  Sparkles,
+  Users,
+  Globe,
+}
+
+export type IconName = keyof typeof ICONS
 
 export type SidebarItem = {
   href: string
   label: string
-  icon: LucideIcon
+  icon: IconName
   badge?: number | null
   badgeStyle?: 'subtle' | 'accent'
 }
@@ -16,7 +60,7 @@ export type SidebarItem = {
 export type SidebarGroup = {
   id: string
   title: string
-  icon: LucideIcon
+  icon: IconName
   items: SidebarItem[]
   /** Default open-state als er nog geen voorkeur in localStorage staat */
   defaultOpen?: boolean
@@ -36,7 +80,7 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 function NavLink({ item, pathname }: { item: SidebarItem; pathname: string }) {
-  const Icon = item.icon
+  const Icon = ICONS[item.icon] ?? LayoutGrid
   const showBadge = item.badge && item.badge > 0
   const isAccent = item.badgeStyle === 'accent'
   const active = isActive(pathname, item.href)
@@ -129,7 +173,7 @@ export default function SidebarNav({ pinned, groups }: Props) {
 
       {/* Inklapbare groepen */}
       {groups.map((group) => {
-        const Icon = group.icon
+        const Icon = ICONS[group.icon] ?? LayoutGrid
         const open = openMap[group.id]
         const totalBadges = group.items.reduce(
           (sum, i) => sum + (i.badge && i.badgeStyle === 'accent' ? i.badge : 0),
