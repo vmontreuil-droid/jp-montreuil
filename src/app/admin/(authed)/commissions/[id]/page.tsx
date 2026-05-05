@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { after } from 'next/server'
 import {
   ArrowLeft,
   Mail,
@@ -106,6 +107,10 @@ import CommissionTimeline from './CommissionTimeline'
 import ProgressUploadForm from './ProgressUploadForm'
 
 export const dynamic = 'force-dynamic'
+// Cold start + veel signed-URL calls (referentiefoto's + progress-foto's
+// + EPC-QR generatie) kan voorbij de default 15s timeout gaan op Vercel
+// → 'this page couldn't load'. Geef de pagina meer adem.
+export const maxDuration = 60
 
 const STORAGE_BUCKET = 'commission-references'
 const SIGNED_URL_TTL = 60 * 60
@@ -263,8 +268,16 @@ export default async function CommissionDetailPage({ params, searchParams }: Pro
 
   if (error || !req) notFound()
 
+  // markRead niet meer blokkerend — draaien NA de response zodat de eerste
+  // render van de pagina niet hapert door een extra DB-update + auth check.
   if (!req.read_at) {
-    await markRead(id)
+    after(async () => {
+      try {
+        await markRead(id)
+      } catch (err) {
+        console.error('markRead background failed', err)
+      }
+    })
   }
 
   const admin = createAdminClient()
