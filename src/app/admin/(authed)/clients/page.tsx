@@ -10,7 +10,9 @@ import {
   Wallet,
   ChevronRight,
 } from 'lucide-react'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -89,20 +91,58 @@ export default async function AdminClientsPage({ searchParams }: Props) {
   const sp = await searchParams
   const query = (sp.q ?? '').trim().toLowerCase()
 
+  // Auth check — alleen admins
   const supabase = await createClient()
-  const [{ data: commissionsRaw }, { data: albumsRaw }, { data: messagesRaw }] = await Promise.all([
-    supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/admin/login')
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (profile?.role !== 'admin') redirect('/admin/login')
+
+  // Service-role client zodat RLS geen aggregatie blokkeert
+  const admin = createAdminClient()
+
+  // Probeer eerst met balance_received_at (post-migratie 0018). Als die
+  // kolom niet bestaat, val terug op een minimale set zodat de pagina
+  // toch klanten toont en we de gebruiker waarschuwen.
+  let commissionsRaw: CommissionLite[] | null = null
+  let missingMigration = false
+  {
+    const { data, error } = await admin
       .from('commission_requests')
       .select(
         'id, name, email, phone, status, devis_total_eur, devis_acompte_eur, acompte_received_at, balance_received_at, signed_at, completed_at, created_at'
       )
       .order('created_at', { ascending: false })
-      .returns<CommissionLite[]>(),
-    supabase
-      .from('event_albums')
-      .select('id, client_email, client_name')
-      .returns<AlbumLite[]>(),
-    supabase
+      .returns<CommissionLite[]>()
+
+    if (error && /balance_received_at|column.*does not exist/i.test(error.message)) {
+      missingMigration = true
+      const fallback = await admin
+        .from('commission_requests')
+        .select(
+          'id, name, email, phone, status, devis_total_eur, devis_acompte_eur, acompte_received_at, signed_at, completed_at, created_at'
+        )
+        .order('created_at', { ascending: false })
+      commissionsRaw = (fallback.data ?? []).map((c) => ({
+        ...(c as Omit<CommissionLite, 'balance_received_at'>),
+        balance_received_at: null,
+      }))
+    } else if (error) {
+      console.error('[admin/clients] commissions query failed:', error.message)
+    } else {
+      commissionsRaw = data
+    }
+  }
+
+  const [{ data: albumsRaw }, { data: messagesRaw }] = await Promise.all([
+    admin.from('event_albums').select('id, client_email, client_name').returns<AlbumLite[]>(),
+    admin
       .from('contact_messages')
       .select('id, email, read_at')
       .is('deleted_at', null)
@@ -225,6 +265,14 @@ export default async function AdminClientsPage({ searchParams }: Props) {
           {clients.length} client{clients.length > 1 ? 's' : ''} — agrégés par adresse e-mail
         </p>
       </header>
+
+      {missingMigration && (
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 text-sm text-red-700">
+          <strong>Migration en attente :</strong> Exécutez{' '}
+          <code className="font-mono text-xs">0018_delivery_flow.sql</code> dans Supabase
+          pour activer le suivi complet (solde, livraisons). Affichage actuellement en mode dégradé.
+        </div>
+      )}
 
       <section className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         <div className="p-5 bg-(--color-paper) border border-(--color-frame)">

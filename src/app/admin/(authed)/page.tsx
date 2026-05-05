@@ -217,14 +217,41 @@ export default async function AdminDashboardPage() {
       .gte('created_at', start30d.toISOString())
       .order('created_at', { ascending: false })
       .returns<AnalyticsRow[]>(),
-    supabase
-      .from('commission_requests')
-      .select(
-        'id, name, email, status, devis_subject, devis_total_eur, devis_acompte_eur, acompte_received_at, balance_received_at, signed_at, devis_sent_at, in_progress_at, ready_at, delivered_at, completed_at, read_at, created_at'
-      )
-      .order('created_at', { ascending: false })
-      .limit(500)
-      .returns<CommissionRow[]>(),
+    // Probeer met alle nieuwe kolommen — als 0018 nog niet gedraaid is val
+    // terug op de oude set zodat de pagina niet hard crasht.
+    (async () => {
+      const full = await supabase
+        .from('commission_requests')
+        .select(
+          'id, name, email, status, devis_subject, devis_total_eur, devis_acompte_eur, acompte_received_at, balance_received_at, signed_at, devis_sent_at, in_progress_at, ready_at, delivered_at, completed_at, read_at, created_at'
+        )
+        .order('created_at', { ascending: false })
+        .limit(500)
+        .returns<CommissionRow[]>()
+      if (
+        full.error &&
+        /balance_received_at|ready_at|column.*does not exist/i.test(full.error.message)
+      ) {
+        const fallback = await supabase
+          .from('commission_requests')
+          .select(
+            'id, name, email, status, devis_subject, devis_total_eur, devis_acompte_eur, acompte_received_at, signed_at, devis_sent_at, in_progress_at, delivered_at, completed_at, read_at, created_at'
+          )
+          .order('created_at', { ascending: false })
+          .limit(500)
+        return {
+          data: ((fallback.data ?? []) as Omit<CommissionRow, 'balance_received_at' | 'ready_at'>[]).map(
+            (c) => ({
+              ...c,
+              balance_received_at: null,
+              ready_at: null,
+            })
+          ) as CommissionRow[],
+        }
+      }
+      if (full.error) console.error('[admin] commissions query failed:', full.error.message)
+      return { data: full.data }
+    })(),
   ])
 
   // Commission-aggregaten
