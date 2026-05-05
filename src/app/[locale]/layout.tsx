@@ -32,8 +32,8 @@ export default async function LocaleLayout({ children, params }: Props) {
         badge={isFR ? 'Nouveau' : 'Nieuw'}
         message={
           isFR
-            ? 'Commandez un tableau sur mesure — devis personnalisé en ligne.'
-            : 'Bestel een schilderij op maat — offerte op maat online.'
+            ? 'Œuvres originales réalisées à la main — portraits et scènes sur mesure.'
+            : 'Originele werken, met de hand gemaakt — portretten en taferelen op maat.'
         }
         cta={isFR ? 'Découvrir' : 'Ontdek'}
       />

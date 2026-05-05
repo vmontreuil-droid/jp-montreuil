@@ -10,7 +10,7 @@ const dict: Dictionary = {
     about: 'Over mij',
     social: 'Sociale media',
     contact: 'Contact',
-    devis: 'Offerte op maat',
+    devis: 'Een werk bestellen',
   },
 
   home: {
@@ -173,8 +173,9 @@ const dict: Dictionary = {
   },
 
   devis: {
-    eyebrow: 'Atelier Montreuil',
-    title: 'Offerte op maat',
+    eyebrow: 'Originele werken, met de hand gemaakt',
+    title: 'Een werk bestellen',
+    titleSub: 'Portretten en taferelen op maat',
     lead: 'Een uniek werk, voor u gemaakt. Kies techniek en formaat, deel uw referentiefoto’s en ontvang een offerte op maat.',
     introTitle: 'Dragers & technieken',
     introBody: [

@@ -8,7 +8,7 @@ const dict = {
     about: 'À propos',
     social: 'Réseaux sociaux',
     contact: 'Contact',
-    devis: 'Devis sur mesure',
+    devis: 'Commander une œuvre',
   },
 
   home: {
@@ -171,8 +171,9 @@ const dict = {
   },
 
   devis: {
-    eyebrow: 'Atelier Montreuil',
-    title: 'Devis sur mesure',
+    eyebrow: 'Œuvres originales réalisées à la main',
+    title: 'Commander une œuvre',
+    titleSub: 'Portraits et scènes sur mesure',
     lead: "Une œuvre unique, faite pour vous. Choisissez la technique et le format, partagez vos photos de référence et recevez un devis personnalisé.",
     introTitle: 'Supports & techniques',
     introBody: [

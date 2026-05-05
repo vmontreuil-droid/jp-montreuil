@@ -51,8 +51,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     locale: locale as Locale,
     title: t.devis.title,
     description: isFR
-      ? "Demandez un devis sur mesure pour une œuvre unique : crayon noir & blanc, aquarelle ou acrylique sur toile."
-      : 'Vraag een offerte op maat aan voor een uniek werk: zwart-wit potlood, aquarel of acryl op linnen.',
+      ? "Commandez une œuvre originale réalisée à la main : portraits et scènes sur mesure au crayon, à l'aquarelle ou à l'acrylique."
+      : 'Bestel een origineel werk, met de hand gemaakt: portretten en taferelen op maat in potlood, aquarel of acryl.',
   })
 }
 
@@ -111,10 +111,13 @@ export default async function DevisPage({ params }: Props) {
           <p className="text-xs uppercase tracking-[0.3em] text-(--color-bronze) mb-4">
             {tt.eyebrow}
           </p>
-          <h1 className="text-4xl md:text-6xl font-[family-name:var(--font-display)] text-(--color-ink) mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-[family-name:var(--font-display)] text-(--color-ink) mb-3 leading-tight">
             {tt.title}
           </h1>
-          <p className="max-w-2xl text-lg md:text-xl text-(--color-charcoal) leading-relaxed mb-8">
+          <p className="text-lg md:text-2xl text-(--color-charcoal) font-[family-name:var(--font-display)] italic mb-6">
+            {tt.titleSub}
+          </p>
+          <p className="max-w-2xl text-base md:text-lg text-(--color-charcoal) leading-relaxed mb-8">
             {tt.lead}
           </p>
           <a
