@@ -36,12 +36,14 @@ export default async function Header({ locale, t, portailMode = false }: Props) 
 
   // Icon-component wordt client-side gekozen via iconName-string —
   // veilig over server→client grens (geen forwardRef-serialization).
+  // Réseaux sociaux niet meer in hoofdnav — leefde de balk te overvol op
+  // door 'Commander une œuvre'. Pagina blijft bereikbaar via /social en
+  // de footer-iconen.
   const navItems = [
     { href: localePath(locale, '/'), label: t.nav.home, iconName: 'home' as const },
     { href: localePath(locale, '/galerie'), label: t.nav.collection, iconName: 'collection' as const },
     { href: localePath(locale, '/a-propos'), label: t.nav.about, iconName: 'about' as const },
     { href: localePath(locale, '/devis'), label: t.nav.devis, iconName: 'devis' as const },
-    { href: localePath(locale, '/social'), label: t.nav.social, iconName: 'social' as const },
     { href: localePath(locale, '/contact'), label: t.nav.contact, iconName: 'contact' as const },
   ]
 
