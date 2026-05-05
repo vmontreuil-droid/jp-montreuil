@@ -347,7 +347,50 @@ export default async function PortailDevisDetailPage({ params }: Props) {
             )}
           </div>
         </div>
-        <div className="relative">
+        {/* Mobile (< md) — verticale tijdlijn, leesbaar zonder overlap */}
+        <ol className="md:hidden relative space-y-3 pl-2">
+          <div
+            aria-hidden
+            className="absolute left-[14px] top-3 bottom-3 w-px bg-(--color-frame)"
+          />
+          {steps.map((step, idx) => {
+            const done = !!step.at
+            const isLastDone = idx === lastDoneIdx
+            return (
+              <li key={step.key} className="relative flex items-start gap-3">
+                <span
+                  className={`relative z-10 mt-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 shrink-0 ${
+                    done
+                      ? 'border-(--color-bronze) bg-(--color-bronze) text-white'
+                      : 'border-(--color-frame) bg-(--color-paper) text-(--color-stone)'
+                  } ${isLastDone ? 'ring-4 ring-(--color-bronze)/20' : ''}`}
+                >
+                  {done && <CheckCircle2 className="w-3 h-3" />}
+                </span>
+                <div className="flex-1 min-w-0 pt-1">
+                  <p
+                    className={`text-[11px] uppercase tracking-[0.15em] leading-tight ${
+                      done ? 'text-(--color-ink) font-semibold' : 'text-(--color-stone)'
+                    }`}
+                  >
+                    {step.label}
+                  </p>
+                  {step.at && (
+                    <p className="text-[10px] text-(--color-stone) mt-0.5">
+                      {new Date(step.at).toLocaleDateString(dateLocale, {
+                        day: '2-digit',
+                        month: 'long',
+                      })}
+                    </p>
+                  )}
+                </div>
+              </li>
+            )
+          })}
+        </ol>
+
+        {/* Desktop (md+) — horizontale tijdlijn met geroteerde labels */}
+        <div className="hidden md:block relative pb-12">
           <div
             aria-hidden
             className="absolute left-0 right-0 top-3 h-0.5 bg-(--color-frame)"
@@ -364,7 +407,7 @@ export default async function PortailDevisDetailPage({ params }: Props) {
               return (
                 <li
                   key={step.key}
-                  className="flex flex-col items-center gap-1.5 text-center"
+                  className="flex flex-col items-center text-center relative"
                   style={{ width: `${100 / steps.length}%` }}
                 >
                   <span
@@ -376,21 +419,23 @@ export default async function PortailDevisDetailPage({ params }: Props) {
                   >
                     {done && <CheckCircle2 className="w-3 h-3" />}
                   </span>
-                  <span
-                    className={`text-[10px] uppercase tracking-[0.1em] leading-tight ${
-                      done ? 'text-(--color-ink) font-semibold' : 'text-(--color-stone)'
-                    }`}
-                  >
-                    {step.label}
-                  </span>
-                  {step.at && (
-                    <span className="text-[9px] text-(--color-stone)">
-                      {new Date(step.at).toLocaleDateString(dateLocale, {
-                        day: '2-digit',
-                        month: 'short',
-                      })}
+                  <div className="absolute top-9 left-1/2 -translate-x-1/2 origin-top -rotate-45 whitespace-nowrap">
+                    <span
+                      className={`block text-[10px] uppercase tracking-[0.1em] ${
+                        done ? 'text-(--color-ink) font-semibold' : 'text-(--color-stone)'
+                      }`}
+                    >
+                      {step.label}
                     </span>
-                  )}
+                    {step.at && (
+                      <span className="block text-[9px] text-(--color-stone) mt-0.5">
+                        {new Date(step.at).toLocaleDateString(dateLocale, {
+                          day: '2-digit',
+                          month: 'short',
+                        })}
+                      </span>
+                    )}
+                  </div>
                 </li>
               )
             })}
