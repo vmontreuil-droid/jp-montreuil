@@ -1,11 +1,31 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LayoutGrid, FolderTree, Image as ImageIcon, Share2, Inbox, Home, Send, Camera, BookOpen, Activity, PenTool, User as UserIcon, CalendarDays, Brush, Tags, Sparkles } from 'lucide-react'
+import {
+  LayoutGrid,
+  FolderTree,
+  Image as ImageIcon,
+  Share2,
+  Inbox,
+  Home,
+  Send,
+  Camera,
+  BookOpen,
+  Activity,
+  PenTool,
+  User as UserIcon,
+  CalendarDays,
+  Brush,
+  Tags,
+  Sparkles,
+  Users,
+  Globe,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './SignOutButton'
 import ThemeToggle from '@/components/site/ThemeToggle'
 import AdminShell from './AdminShell'
+import SidebarNav, { type SidebarGroup, type SidebarItem } from './SidebarNav'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,79 +81,102 @@ export default async function AuthedAdminLayout({
       .is('archived_at', null),
   ])
 
-  const navItems = [
+  const pinned: SidebarItem[] = [
     { href: '/admin', label: 'Dashboard', icon: LayoutGrid },
+  ]
+
+  const groups: SidebarGroup[] = [
     {
-      href: '/admin/categories',
-      label: 'Catégories',
-      icon: FolderTree,
-      badge: categoriesCount ?? null,
-      badgeStyle: 'subtle' as const,
-    },
-    {
-      href: '/admin/works',
-      label: 'Œuvres',
-      icon: ImageIcon,
-      badge: worksCount ?? null,
-      badgeStyle: 'subtle' as const,
-    },
-    { href: '/admin/about', label: 'À propos', icon: UserIcon },
-    {
-      href: '/admin/messages',
-      label: 'Messages',
-      icon: Inbox,
-      badge: unreadCount ?? null,
-      badgeStyle: 'accent' as const,
-    },
-    {
-      href: '/admin/commissions',
-      label: 'Demandes de devis',
+      id: 'commandes',
+      title: 'Commandes & clients',
       icon: Brush,
-      badge: unreadCommissions ?? null,
-      badgeStyle: 'accent' as const,
+      defaultOpen: true,
+      items: [
+        {
+          href: '/admin/commissions',
+          label: 'Toutes les commandes',
+          icon: Brush,
+          badge: unreadCommissions ?? null,
+          badgeStyle: 'accent',
+        },
+        { href: '/admin/clients', label: 'Liste clients', icon: Users },
+        {
+          href: '/admin/messages',
+          label: 'Messages',
+          icon: Inbox,
+          badge: unreadCount ?? null,
+          badgeStyle: 'accent',
+        },
+        { href: '/admin/commissions/pricing', label: 'Tarifs commission', icon: Tags },
+        {
+          href: '/admin/commissions/devis-examples',
+          label: 'Exemples /devis',
+          icon: Sparkles,
+        },
+      ],
     },
     {
-      href: '/admin/commissions/pricing',
-      label: 'Tarifs des commandes',
-      icon: Tags,
+      id: 'oeuvres',
+      title: 'Œuvres & catalogue',
+      icon: ImageIcon,
+      items: [
+        {
+          href: '/admin/works',
+          label: 'Œuvres',
+          icon: ImageIcon,
+          badge: worksCount ?? null,
+          badgeStyle: 'subtle',
+        },
+        {
+          href: '/admin/categories',
+          label: 'Catégories',
+          icon: FolderTree,
+          badge: categoriesCount ?? null,
+          badgeStyle: 'subtle',
+        },
+      ],
     },
     {
-      href: '/admin/commissions/devis-examples',
-      label: 'Exemples /devis',
-      icon: Sparkles,
-    },
-    {
-      href: '/admin/events',
-      label: 'Albums clients',
+      id: 'albums',
+      title: 'Albums & partage',
       icon: Camera,
-      badge: albumsCount ?? null,
-      badgeStyle: 'subtle' as const,
+      items: [
+        {
+          href: '/admin/events',
+          label: 'Albums clients',
+          icon: Camera,
+          badge: albumsCount ?? null,
+          badgeStyle: 'subtle',
+        },
+        { href: '/admin/compose', label: 'Composer & partager', icon: Send },
+        {
+          href: '/admin/ibook',
+          label: 'Ibook',
+          icon: BookOpen,
+          badge: ibooksCount ?? null,
+          badgeStyle: 'subtle',
+        },
+      ],
     },
     {
-      href: '/admin/exhibitions',
-      label: 'Expositions',
-      icon: CalendarDays,
-      badge: exhibitionsCount ?? null,
-      badgeStyle: 'subtle' as const,
+      id: 'site',
+      title: 'Site & contenus',
+      icon: Globe,
+      items: [
+        { href: '/admin/about', label: 'À propos', icon: UserIcon },
+        {
+          href: '/admin/exhibitions',
+          label: 'Expositions',
+          icon: CalendarDays,
+          badge: exhibitionsCount ?? null,
+          badgeStyle: 'subtle',
+        },
+        { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2 },
+        { href: '/admin/analytics', label: 'Activité web', icon: Activity },
+        { href: '/admin/signature', label: 'Signature mail', icon: PenTool },
+      ],
     },
-    { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2 },
-    { href: '/admin/compose', label: 'Composer & Partager', icon: Send },
-    {
-      href: '/admin/ibook',
-      label: 'Ibook',
-      icon: BookOpen,
-      badge: ibooksCount ?? null,
-      badgeStyle: 'subtle' as const,
-    },
-    { href: '/admin/analytics', label: 'Activité web', icon: Activity },
-    { href: '/admin/signature', label: 'Signature mail', icon: PenTool },
-  ] as Array<{
-    href: string
-    label: string
-    icon: typeof LayoutGrid
-    badge?: number | null
-    badgeStyle?: 'subtle' | 'accent'
-  }>
+  ]
 
   const sidebar = (
     <>
@@ -152,33 +195,7 @@ export default async function AuthedAdminLayout({
         </p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const showBadge = item.badge && item.badge > 0
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 px-3 py-2 text-sm text-(--color-charcoal) hover:bg-(--color-frame)/50 hover:text-(--color-ink) transition-colors"
-            >
-              <Icon className="w-4 h-4" />
-              <span className="flex-1">{item.label}</span>
-              {showBadge && (
-                <span
-                  className={
-                    item.badgeStyle === 'accent'
-                      ? 'inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-semibold bg-(--color-bronze) text-white rounded-full'
-                      : 'inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] text-(--color-stone) bg-(--color-frame)/40 rounded-full'
-                  }
-                >
-                  {item.badge}
-                </span>
-              )}
-            </Link>
-          )
-        })}
-      </nav>
+      <SidebarNav pinned={pinned} groups={groups} />
 
       <div className="p-4 border-t border-(--color-frame) space-y-1">
         <Link
