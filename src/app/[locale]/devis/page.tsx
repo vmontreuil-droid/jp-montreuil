@@ -22,6 +22,10 @@ import { createClient } from '@/lib/supabase/server'
 import CommissionForm from './CommissionForm'
 
 export const dynamic = 'force-dynamic'
+// Server-action voor formulier-submit kan tot ~25s duren op trage 4G:
+// upload naar Supabase storage + 2 react-email renders + 2 Resend POSTs.
+// Default 10s/15s is te krap → Safari 'this page couldn't load'.
+export const maxDuration = 60
 
 type Props = {
   params: Promise<{ locale: string }>

@@ -1,6 +1,7 @@
 'use server'
 
 import { headers } from 'next/headers'
+import { after } from 'next/server'
 import { render } from '@react-email/render'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isLocale, type Locale } from '@/i18n/config'
@@ -233,131 +234,126 @@ export async function submitCommission(
           pricing,
         })
 
-  // Notify JP
-  try {
-    const techniqueLabel = (t.techniqueOptions as Record<string, string>)[technique] || technique
-    const supportLabel = support
-      ? ((t.supportOptions as Record<string, string>)[support] || support)
-      : null
-    const frameTypeLabel = frameType
-      ? ((t.frameTypeOptions as Record<string, string>)[frameType] || frameType)
-      : null
-    const supplementLabels = supplements.map(
-      (s) => (t.supplementOptions as Record<string, string>)[s] || s
-    )
+  // Mail-rendering + verzending gebeurt NA de response zodat de klant
+  // (vooral op trage mobiele verbinding) niet wacht op 2× react-email +
+  // 2× Resend-POST. Door 'after' blijft de Vercel-functie even draaien
+  // voor de mails terwijl Safari al een succes te zien krijgt.
+  const techniqueLabel = (t.techniqueOptions as Record<string, string>)[technique] || technique
+  const supportLabel = support
+    ? ((t.supportOptions as Record<string, string>)[support] || support)
+    : null
+  const frameTypeLabel = frameType
+    ? ((t.frameTypeOptions as Record<string, string>)[frameType] || frameType)
+    : null
+  const supplementLabels = supplements.map(
+    (s) => (t.supplementOptions as Record<string, string>)[s] || s
+  )
+  const isFR = locale === 'fr'
+  const submittedAt = new Date()
 
-    const isFR = locale === 'fr'
-    const subject = isFR
-      ? `Nouvelle demande de devis — ${name}`
-      : `Nieuwe offerteaanvraag — ${name}`
+  after(async () => {
+    // Notify JP
+    try {
+      const subject = isFR
+        ? `Nouvelle demande de devis — ${name}`
+        : `Nieuwe offerteaanvraag — ${name}`
 
-    const html = await render(
-      NewCommissionRequest({
-        id: req.id,
-        name,
-        email,
-        phone,
-        locale,
-        technique,
-        techniqueLabel,
-        support,
-        supportLabel,
-        width: widthCm,
-        height: heightCm,
-        frameType,
-        frameTypeLabel,
-        portraitCount,
-        supplements: supplementLabels,
-        priceEstimate,
+      const html = await render(
+        NewCommissionRequest({
+          id: req.id,
+          name,
+          email,
+          phone,
+          locale,
+          technique,
+          techniqueLabel,
+          support,
+          supportLabel,
+          width: widthCm,
+          height: heightCm,
+          frameType,
+          frameTypeLabel,
+          portraitCount,
+          supplements: supplementLabels,
+          priceEstimate,
+          message,
+          attachments: attachmentInfo,
+          submittedAt,
+        })
+      )
+
+      const fallbackText = [
+        `${isFR ? 'Nom' : 'Naam'}: ${name}`,
+        `Email: ${email}`,
+        phone ? `${isFR ? 'Téléphone' : 'Telefoon'}: ${phone}` : '',
+        `${isFR ? 'Technique' : 'Techniek'}: ${techniqueLabel}`,
+        supportLabel ? `${isFR ? 'Support' : 'Drager'}: ${supportLabel}` : '',
+        widthCm && heightCm ? `${isFR ? 'Format' : 'Formaat'}: ${widthCm} × ${heightCm} cm` : '',
+        frameTypeLabel ? `${isFR ? 'Encadrement' : 'Inkadering'}: ${frameTypeLabel}` : '',
+        `${isFR ? 'Portraits' : 'Portretten'}: ${portraitCount}`,
+        supplementLabels.length > 0
+          ? `${isFR ? 'Suppléments' : 'Supplementen'}: ${supplementLabels.join(', ')}`
+          : '',
+        priceEstimate != null
+          ? `${isFR ? 'Estimation' : 'Schatting'}: ${priceEstimate} €`
+          : `${isFR ? 'Estimation' : 'Schatting'}: sur devis`,
+        '',
         message,
-        attachments: attachmentInfo,
-        submittedAt: new Date(),
+      ]
+        .filter(Boolean)
+        .join('\n')
+
+      await sendEmail({
+        to: ADMIN_EMAIL,
+        subject,
+        html,
+        text: fallbackText,
+        replyTo: email,
       })
-    )
+    } catch (err) {
+      console.error('Commission notification email failed', err)
+    }
 
-    const fallbackText = [
-      `${isFR ? 'Nom' : 'Naam'}: ${name}`,
-      `Email: ${email}`,
-      phone ? `${isFR ? 'Téléphone' : 'Telefoon'}: ${phone}` : '',
-      `${isFR ? 'Technique' : 'Techniek'}: ${techniqueLabel}`,
-      supportLabel ? `${isFR ? 'Support' : 'Drager'}: ${supportLabel}` : '',
-      widthCm && heightCm ? `${isFR ? 'Format' : 'Formaat'}: ${widthCm} × ${heightCm} cm` : '',
-      frameTypeLabel ? `${isFR ? 'Encadrement' : 'Inkadering'}: ${frameTypeLabel}` : '',
-      `${isFR ? 'Portraits' : 'Portretten'}: ${portraitCount}`,
-      supplementLabels.length > 0
-        ? `${isFR ? 'Suppléments' : 'Supplementen'}: ${supplementLabels.join(', ')}`
-        : '',
-      priceEstimate != null
-        ? `${isFR ? 'Estimation' : 'Schatting'}: ${priceEstimate} €`
-        : `${isFR ? 'Estimation' : 'Schatting'}: sur devis`,
-      '',
-      message,
-    ]
-      .filter(Boolean)
-      .join('\n')
+    // Bevestigingsmail naar de klant
+    try {
+      const customerSubject = isFR
+        ? 'Votre demande est bien arrivée — Atelier Montreuil'
+        : 'Uw aanvraag is goed aangekomen — Atelier Montreuil'
 
-    await sendEmail({
-      to: ADMIN_EMAIL,
-      subject,
-      html,
-      text: fallbackText,
-      replyTo: email,
-    })
-  } catch (err) {
-    console.error('Commission notification email failed', err)
-  }
+      const customerHtml = await render(
+        CommissionRequestReceived({
+          recipientName: name,
+          email,
+          locale,
+          techniqueLabel,
+          supportLabel,
+          width: widthCm,
+          height: heightCm,
+          frameTypeLabel,
+          portraitCount,
+          supplements: supplementLabels,
+          message,
+          attachmentCount: attachmentInfo.length,
+          priceEstimate,
+          submittedAt,
+        })
+      )
 
-  // Bevestigingsmail naar de klant — bedankt + samenvatting + sequentie
-  try {
-    const isFR = locale === 'fr'
-    const techniqueLabel = (t.techniqueOptions as Record<string, string>)[technique] || technique
-    const supportLabel = support
-      ? ((t.supportOptions as Record<string, string>)[support] || support)
-      : null
-    const frameTypeLabel = frameType
-      ? ((t.frameTypeOptions as Record<string, string>)[frameType] || frameType)
-      : null
-    const supplementLabels = supplements.map(
-      (s) => (t.supplementOptions as Record<string, string>)[s] || s
-    )
+      const customerText = isFR
+        ? `Bonjour ${name},\n\nVotre demande de devis est bien arrivée. Jean-Pierre vous reviendra avec une proposition détaillée — habituellement sous 48 heures ouvrables.\n\nÀ très bientôt,\nJean-Pierre Montreuil`
+        : `Beste ${name},\n\nUw offerteaanvraag is goed bij ons aangekomen. Jean-Pierre stuurt u een gedetailleerd voorstel — meestal binnen 48 werkuren.\n\nTot binnenkort,\nJean-Pierre Montreuil`
 
-    const customerSubject = isFR
-      ? 'Votre demande est bien arrivée — Atelier Montreuil'
-      : 'Uw aanvraag is goed aangekomen — Atelier Montreuil'
-
-    const customerHtml = await render(
-      CommissionRequestReceived({
-        recipientName: name,
-        email,
-        locale,
-        techniqueLabel,
-        supportLabel,
-        width: widthCm,
-        height: heightCm,
-        frameTypeLabel,
-        portraitCount,
-        supplements: supplementLabels,
-        message,
-        attachmentCount: attachmentInfo.length,
-        priceEstimate,
-        submittedAt: new Date(),
+      await sendEmail({
+        to: email,
+        subject: customerSubject,
+        html: customerHtml,
+        text: customerText,
+        replyTo: ADMIN_EMAIL,
       })
-    )
-
-    const customerText = isFR
-      ? `Bonjour ${name},\n\nVotre demande de devis est bien arrivée. Jean-Pierre vous reviendra avec une proposition détaillée — habituellement sous 48 heures ouvrables.\n\nÀ très bientôt,\nJean-Pierre Montreuil`
-      : `Beste ${name},\n\nUw offerteaanvraag is goed bij ons aangekomen. Jean-Pierre stuurt u een gedetailleerd voorstel — meestal binnen 48 werkuren.\n\nTot binnenkort,\nJean-Pierre Montreuil`
-
-    await sendEmail({
-      to: email,
-      subject: customerSubject,
-      html: customerHtml,
-      text: customerText,
-      replyTo: ADMIN_EMAIL,
-    })
-  } catch (err) {
-    console.error('Commission customer confirmation email failed', err)
-  }
+    } catch (err) {
+      console.error('Commission customer confirmation email failed', err)
+    }
+  })
 
   return { status: 'success' }
 }
