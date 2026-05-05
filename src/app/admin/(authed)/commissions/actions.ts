@@ -14,6 +14,7 @@ import { PaymentReminder } from '@/lib/email/templates/PaymentReminder'
 import { BalanceRequest } from '@/lib/email/templates/BalanceRequest'
 import { DeliveryDateRequest } from '@/lib/email/templates/DeliveryDateRequest'
 import { DeliveryConfirmed } from '@/lib/email/templates/DeliveryConfirmed'
+import { ProgressUpdate } from '@/lib/email/templates/ProgressUpdate'
 import { generateEpcQrDataUrl } from '@/lib/epc-qr'
 import { PUBLIC_BASE_URL } from '@/lib/public-url'
 import {
@@ -967,4 +968,204 @@ export async function sendAcompteReminder(formData: FormData) {
 export async function sendBalanceReminder(formData: FormData) {
   const id = String(formData.get('id') || '')
   await sendPaymentReminderInternal(id, 'balance')
+}
+
+// ─── Progress photos (foto's tijdens uitvoering) ────────────────────
+
+const MAX_PROGRESS_FILES = 8
+const MAX_PROGRESS_SIZE = 10 * 1024 * 1024 // 10MB
+const PREVIEW_MAX_BYTES = 500 * 1024 // inline preview cap voor mail
+
+function safeProgressFilename(name: string): string {
+  return name
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .slice(0, 200)
+}
+
+export type AddProgressState =
+  | { status: 'idle' }
+  | { status: 'success' }
+  | { status: 'error'; message: string }
+
+/**
+ * Upload één of meer voortgangsfoto's voor een commission, sla op en
+ * stuur een vriendelijke notificatiemail naar de klant met een teaser.
+ */
+export async function addProgressUpdate(
+  _prev: AddProgressState,
+  formData: FormData
+): Promise<AddProgressState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { status: 'error', message: 'Non authentifié' }
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (profile?.role !== 'admin') return { status: 'error', message: 'Accès refusé' }
+
+  const id = String(formData.get('id') || '')
+  const caption = String(formData.get('caption') || '').trim() || null
+  if (!id) return { status: 'error', message: 'ID manquant' }
+
+  const files = formData
+    .getAll('files')
+    .filter((f): f is File => f instanceof File && f.size > 0)
+  if (files.length === 0) {
+    return { status: 'error', message: 'Sélectionnez au moins une photo.' }
+  }
+  if (files.length > MAX_PROGRESS_FILES) {
+    return { status: 'error', message: `Maximum ${MAX_PROGRESS_FILES} photos par envoi.` }
+  }
+  for (const f of files) {
+    if (f.size > MAX_PROGRESS_SIZE) {
+      return { status: 'error', message: `« ${f.name} » dépasse 10 MB.` }
+    }
+    if (!f.type.toLowerCase().startsWith('image/')) {
+      return { status: 'error', message: `« ${f.name} » n’est pas une image.` }
+    }
+  }
+
+  const admin = createAdminClient()
+
+  // Commission ophalen voor klant-info
+  const { data: req } = await admin
+    .from('commission_requests')
+    .select('id, name, email, locale')
+    .eq('id', id)
+    .single<{ id: string; name: string; email: string; locale: 'fr' | 'nl' }>()
+  if (!req) return { status: 'error', message: 'Commission introuvable' }
+
+  // Update-rij maken
+  const { data: updateRow, error: updateErr } = await admin
+    .from('commission_progress_updates')
+    .insert({ commission_id: id, caption, created_by: user.id })
+    .select('id')
+    .single<{ id: string }>()
+  if (updateErr || !updateRow) {
+    console.error('progress update insert failed', updateErr)
+    return { status: 'error', message: 'Erreur serveur' }
+  }
+
+  // Upload foto's + insert photo-rijen + bewaar 1 buffer voor preview
+  let previewDataUrl: string | null = null
+  let uploadedCount = 0
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    try {
+      const safe = safeProgressFilename(file.name)
+      const storagePath = `${id}/progress/${updateRow.id}/${Date.now()}_${i}_${safe}`
+      const buf = Buffer.from(await file.arrayBuffer())
+
+      const { error: upErr } = await admin.storage
+        .from(STORAGE_BUCKET)
+        .upload(storagePath, buf, {
+          contentType: file.type,
+          upsert: false,
+        })
+      if (upErr) {
+        console.error('progress upload failed', upErr)
+        continue
+      }
+
+      await admin.from('commission_progress_photos').insert({
+        update_id: updateRow.id,
+        storage_path: storagePath,
+        filename: file.name,
+        content_type: file.type,
+        size_bytes: file.size,
+        sort_order: i,
+      })
+      uploadedCount++
+
+      // Bewaar 1e foto onder preview-cap als inline preview voor de mail
+      if (
+        previewDataUrl == null &&
+        buf.length <= PREVIEW_MAX_BYTES &&
+        file.type.startsWith('image/')
+      ) {
+        previewDataUrl = `data:${file.type};base64,${buf.toString('base64')}`
+      }
+    } catch (err) {
+      console.error('progress photo processing failed', err)
+    }
+  }
+
+  if (uploadedCount === 0) {
+    // Cleanup: lege update-rij verwijderen
+    await admin.from('commission_progress_updates').delete().eq('id', updateRow.id)
+    return { status: 'error', message: 'Aucune photo n’a pu être enregistrée.' }
+  }
+
+  // Notificatiemail naar klant
+  try {
+    const isFR = req.locale === 'fr'
+    const portalUrl = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/portail/devis/${req.id}`
+    const subject = isFR
+      ? 'De nouvelles photos de votre œuvre — Atelier Montreuil'
+      : 'Nieuwe foto’s van uw werk — Atelier Montreuil'
+
+    const html = await render(
+      ProgressUpdate({
+        recipientName: req.name,
+        locale: req.locale,
+        caption,
+        photoCount: uploadedCount,
+        previewDataUrl,
+        portalUrl,
+      })
+    )
+
+    const fallbackText = isFR
+      ? `Bonjour ${req.name},\n\nJean-Pierre vient d’ajouter ${uploadedCount} nouvelle${uploadedCount > 1 ? 's' : ''} photo${uploadedCount > 1 ? 's' : ''} de votre œuvre. Connectez-vous pour les découvrir :\n${portalUrl}\n\n${caption ? `Mot de Jean-Pierre : ${caption}\n\n` : ''}Vous pouvez répondre directement à cet e-mail.\n\nBien à vous,\nJean-Pierre Montreuil`
+      : `Beste ${req.name},\n\nJean-Pierre heeft ${uploadedCount} nieuwe foto${uploadedCount > 1 ? '’s' : ''} toegevoegd van uw werk. Log in om ze te bekijken:\n${portalUrl}\n\n${caption ? `Woordje van Jean-Pierre: ${caption}\n\n` : ''}U kunt rechtstreeks op deze mail antwoorden.\n\nMet vriendelijke groet,\nJean-Pierre Montreuil`
+
+    const result = await sendEmail({
+      to: req.email,
+      subject,
+      html,
+      text: fallbackText,
+      replyTo: ATELIER.email,
+    })
+
+    if (result.ok) {
+      await admin
+        .from('commission_progress_updates')
+        .update({ notification_sent_at: new Date().toISOString() })
+        .eq('id', updateRow.id)
+    }
+  } catch (err) {
+    console.error('progress notification failed', err)
+  }
+
+  revalidatePath(`/admin/commissions/${id}`)
+  revalidatePath(`/portail/devis/${id}`)
+  return { status: 'success' }
+}
+
+/** Verwijder een progress-update (incl. foto's in storage). */
+export async function deleteProgressUpdate(formData: FormData) {
+  await requireAdmin()
+  const updateId = String(formData.get('update_id') || '')
+  const commissionId = String(formData.get('commission_id') || '')
+  if (!updateId || !commissionId) return
+
+  const admin = createAdminClient()
+  const { data: photos } = await admin
+    .from('commission_progress_photos')
+    .select('storage_path')
+    .eq('update_id', updateId)
+
+  const paths = (photos ?? []).map((p) => p.storage_path).filter(Boolean)
+  if (paths.length > 0) {
+    await admin.storage.from(STORAGE_BUCKET).remove(paths)
+  }
+  await admin.from('commission_progress_updates').delete().eq('id', updateId)
+
+  revalidatePath(`/admin/commissions/${commissionId}`)
+  revalidatePath(`/portail/devis/${commissionId}`)
 }

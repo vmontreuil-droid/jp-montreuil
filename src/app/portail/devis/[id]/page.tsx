@@ -171,6 +171,37 @@ export default async function PortailDevisDetailPage({ params }: Props) {
   )
   const heroPhotoUrl = attachments[0]?.url ?? null
 
+  // Progress updates (foto's tijdens uitvoering)
+  const { data: progressRaw } = await admin
+    .from('commission_progress_updates')
+    .select(
+      `id, caption, created_at,
+       photos:commission_progress_photos(id, storage_path, filename, sort_order)`
+    )
+    .eq('commission_id', req.id)
+    .order('created_at', { ascending: false })
+
+  type ProgressRow = {
+    id: string
+    caption: string | null
+    created_at: string
+    photos: { id: string; storage_path: string; filename: string; sort_order: number }[] | null
+  }
+  const progressUpdates = await Promise.all(
+    ((progressRaw ?? []) as ProgressRow[]).map(async (u) => {
+      const photos = (u.photos ?? []).slice().sort((a, b) => a.sort_order - b.sort_order)
+      const withUrls = await Promise.all(
+        photos.map(async (p) => {
+          const { data } = await admin.storage
+            .from(STORAGE_BUCKET)
+            .createSignedUrl(p.storage_path, SIGNED_URL_TTL)
+          return { ...p, url: data?.signedUrl ?? null }
+        })
+      )
+      return { ...u, photos: withUrls }
+    })
+  )
+
   // Pricing breakdown (op huidige tarieven, voor info — definitief is wat in devis_lines staat)
   const pricing = await loadPricing()
   const formatId = detectFormatId(req.width_cm, req.height_cm)
@@ -393,6 +424,55 @@ export default async function PortailDevisDetailPage({ params }: Props) {
           reference={reference}
           dateLocale={dateLocale}
         />
+      )}
+
+      {/* Voortgangsfoto's van JP */}
+      {progressUpdates.length > 0 && (
+        <section className="bg-(--color-paper) border border-(--color-bronze)/40 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) inline-flex items-center gap-2">
+              <Brush className="w-3.5 h-3.5 text-(--color-bronze)" />
+              {isFR ? 'Avancement de votre œuvre' : 'Voortgang van uw werk'} ({progressUpdates.length})
+            </h2>
+          </div>
+          <div className="space-y-6">
+            {progressUpdates.map((u) => (
+              <article key={u.id} className="space-y-3">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-bronze)">
+                  {new Date(u.created_at).toLocaleString(dateLocale, {
+                    dateStyle: 'long',
+                    timeStyle: 'short',
+                  })}
+                </p>
+                {u.caption && (
+                  <p className="text-sm text-(--color-charcoal) italic whitespace-pre-wrap border-l-2 border-(--color-bronze)/40 pl-3">
+                    {u.caption}
+                  </p>
+                )}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {u.photos.map((p) => (
+                    <a
+                      key={p.id}
+                      href={p.url ?? '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block aspect-[4/3] overflow-hidden border border-(--color-frame) bg-(--color-canvas)"
+                    >
+                      {p.url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.url}
+                          alt={p.filename}
+                          className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                        />
+                      )}
+                    </a>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Devis details */}

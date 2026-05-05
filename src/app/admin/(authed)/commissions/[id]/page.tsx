@@ -22,6 +22,8 @@ import {
   MapPin,
   ImageIcon,
   Download,
+  Camera,
+  Trash,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -85,6 +87,7 @@ import {
   updateCommissionStatus,
   saveCommissionNotes,
   deleteCommission,
+  deleteProgressUpdate,
   markAcompteReceived,
   markInProgress,
   markReady,
@@ -100,6 +103,7 @@ import {
 import DevisComposeForm from './DevisComposeForm'
 import MessageWithTranslate from './MessageWithTranslate'
 import CommissionTimeline from './CommissionTimeline'
+import ProgressUploadForm from './ProgressUploadForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -271,6 +275,39 @@ export default async function CommissionDetailPage({ params, searchParams }: Pro
         .from(STORAGE_BUCKET)
         .createSignedUrl(a.storage_path, SIGNED_URL_TTL)
       return { ...a, url: data?.signedUrl ?? null }
+    })
+  )
+
+  // Progress updates met foto's
+  const { data: progressUpdates } = await admin
+    .from('commission_progress_updates')
+    .select(
+      `id, caption, notification_sent_at, created_at,
+       photos:commission_progress_photos(id, storage_path, filename, sort_order)`
+    )
+    .eq('commission_id', id)
+    .order('created_at', { ascending: false })
+
+  type ProgressUpdateRow = {
+    id: string
+    caption: string | null
+    notification_sent_at: string | null
+    created_at: string
+    photos: { id: string; storage_path: string; filename: string; sort_order: number }[] | null
+  }
+  const progress = (progressUpdates ?? []) as ProgressUpdateRow[]
+  const progressSigned = await Promise.all(
+    progress.map(async (u) => {
+      const photos = (u.photos ?? []).slice().sort((a, b) => a.sort_order - b.sort_order)
+      const withUrls = await Promise.all(
+        photos.map(async (p) => {
+          const { data } = await admin.storage
+            .from(STORAGE_BUCKET)
+            .createSignedUrl(p.storage_path, SIGNED_URL_TTL)
+          return { ...p, url: data?.signedUrl ?? null }
+        })
+      )
+      return { ...u, photos: withUrls }
     })
   )
 
@@ -538,6 +575,90 @@ export default async function CommissionDetailPage({ params, searchParams }: Pro
               </p>
             </section>
           )}
+
+          {/* Photos d'avancement (envoyer + historique) */}
+          <section className="border border-(--color-frame) bg-(--color-paper) p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) inline-flex items-center gap-2">
+                <Camera className="w-3.5 h-3.5 text-(--color-bronze)" />
+                Photos d’avancement{progressSigned.length > 0 && ` (${progressSigned.length})`}
+              </h2>
+            </div>
+            <p className="text-xs text-(--color-charcoal) mb-5 leading-relaxed">
+              Envoyez quelques photos de la progression — le client recevra
+              un mail avec aperçu et lien vers son dossier. Idéal pour
+              entretenir l’enthousiasme entre l’acompte et la livraison.
+            </p>
+            <ProgressUploadForm commissionId={req.id} />
+
+            {progressSigned.length > 0 && (
+              <div className="mt-8 space-y-5 border-t border-(--color-frame)/50 pt-6">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
+                  Historique
+                </p>
+                {progressSigned.map((u) => (
+                  <article
+                    key={u.id}
+                    className="border border-(--color-frame) bg-(--color-canvas)/40 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="min-w-0">
+                        <p className="text-xs text-(--color-charcoal)">
+                          {new Date(u.created_at).toLocaleString('fr-BE', {
+                            dateStyle: 'long',
+                            timeStyle: 'short',
+                          })}
+                        </p>
+                        {u.notification_sent_at && (
+                          <p className="text-[10px] text-(--color-bronze) inline-flex items-center gap-1 mt-0.5">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Notification envoyée
+                          </p>
+                        )}
+                      </div>
+                      <form action={deleteProgressUpdate}>
+                        <input type="hidden" name="update_id" value={u.id} />
+                        <input type="hidden" name="commission_id" value={req.id} />
+                        <button
+                          type="submit"
+                          title="Supprimer cet envoi"
+                          className="text-[10px] text-(--color-stone) hover:text-red-600 inline-flex items-center gap-1"
+                        >
+                          <Trash className="w-3 h-3" />
+                          Supprimer
+                        </button>
+                      </form>
+                    </div>
+                    {u.caption && (
+                      <p className="text-sm text-(--color-charcoal) italic whitespace-pre-wrap mb-3 border-l-2 border-(--color-bronze)/40 pl-3">
+                        {u.caption}
+                      </p>
+                    )}
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      {u.photos.map((p) => (
+                        <a
+                          key={p.id}
+                          href={p.url ?? '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block aspect-square overflow-hidden border border-(--color-frame) bg-(--color-paper)"
+                        >
+                          {p.url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={p.url}
+                              alt={p.filename}
+                              className="w-full h-full object-cover hover:opacity-80 transition-opacity"
+                            />
+                          )}
+                        </a>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
 
           {/* References */}
           {signed.length > 0 && (
