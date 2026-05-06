@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Mail, Phone, MapPin, BookOpen } from 'lucide-react'
+import { Mail, Phone, MapPin, BookOpen, KeyRound } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
 import { localePath, whatsappHref } from '@/lib/links'
@@ -170,9 +170,11 @@ export default function Footer({ locale, t }: Props) {
           <span aria-hidden="true">·</span>
           <Link
             href="/admin"
-            className="hover:text-(--color-ink) transition-colors"
+            aria-label="Admin"
+            title="Admin"
+            className="inline-flex items-center text-(--color-stone) hover:text-(--color-bronze) transition-colors"
           >
-            Admin
+            <KeyRound className="w-3.5 h-3.5" />
           </Link>
         </div>
         <div className="hidden md:block">© {year} Jean-Pierre Montreuil — {t.footer.rights}</div>
