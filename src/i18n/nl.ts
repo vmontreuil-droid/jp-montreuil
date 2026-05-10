@@ -178,7 +178,6 @@ const dict: Dictionary = {
       payNow: 'Nu betalen',
       viewDetail: 'Bekijk bestelling',
       viewInvoice: 'Bekijk factuur',
-      itemsCount: (n: number) => (n === 1 ? '1 artikel' : `${n} artikels`),
     },
     shopProfile: {
       sectionTitle: 'Mijn leveringsgegevens',

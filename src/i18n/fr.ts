@@ -176,7 +176,6 @@ const dict = {
       payNow: 'Payer maintenant',
       viewDetail: 'Voir la commande',
       viewInvoice: 'Voir la facture',
-      itemsCount: (n: number) => (n === 1 ? '1 article' : `${n} articles`),
     },
     shopProfile: {
       sectionTitle: 'Mes coordonnées de livraison',
