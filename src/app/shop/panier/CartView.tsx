@@ -50,7 +50,7 @@ export function CartView() {
             {it.storagePath ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={shopPhotoUrl(it.storagePath)}
+                src={shopPhotoUrl(it.storagePath, it.storageBucket)}
                 alt=""
                 className="w-20 h-20 object-cover rounded border border-stone-200 shrink-0"
               />

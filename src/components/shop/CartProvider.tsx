@@ -26,6 +26,7 @@ type AddInput =
       variantLabel: string | null
       unitPriceCents: number
       storagePath: string | null
+      storageBucket?: string
     }
   | {
       kind: 'photo_print'
@@ -38,6 +39,7 @@ type AddInput =
       variantLabel: string
       unitPriceCents: number
       storagePath: string | null
+      storageBucket?: string
     }
 
 type CartContextShape = {
@@ -103,6 +105,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               unitPriceCents: input.unitPriceCents,
               quantity: qty,
               storagePath: input.storagePath,
+              storageBucket: input.storageBucket,
               kind: 'photo_print',
               photoId: input.photoId,
               photoSlug: input.photoSlug,
@@ -119,6 +122,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               unitPriceCents: input.unitPriceCents,
               quantity: qty,
               storagePath: input.storagePath,
+              storageBucket: input.storageBucket,
               kind: input.kind,
             }
       return [...prev, newItem]

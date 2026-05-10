@@ -16,6 +16,9 @@ export type CartItem = {
   unitPriceCents: number
   quantity: number
   storagePath: string | null
+  /** Welke storage-bucket de storagePath inzit. 'shop-photos' (default,
+   *  oudere uploads), 'works' (geïmporteerde portfolio-werken). */
+  storageBucket?: string
   kind: 'calendar' | 'print' | 'download' | 'commission' | 'photo_print'
   /* Enkel voor `photo_print` (configurator) */
   photoId?: string

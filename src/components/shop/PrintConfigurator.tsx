@@ -33,6 +33,7 @@ export function PrintConfigurator({
   photoSlug,
   photoTitle,
   photoStoragePath,
+  photoBucket,
   defaultOrientation,
   media,
   sizes,
@@ -42,6 +43,7 @@ export function PrintConfigurator({
   photoSlug: string
   photoTitle: string
   photoStoragePath: string
+  photoBucket?: string
   defaultOrientation?: Orientation | 'square'
   media: Medium[]
   sizes: Size[]
@@ -86,6 +88,7 @@ export function PrintConfigurator({
       variantLabel: `${m.name} — ${sizeLabel} (${orientLabel})`,
       unitPriceCents: selected.priceCents,
       storagePath: photoStoragePath,
+      storageBucket: photoBucket,
     })
     setDone(true)
     setTimeout(() => setDone(false), 1500)

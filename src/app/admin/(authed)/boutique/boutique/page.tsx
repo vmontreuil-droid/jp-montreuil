@@ -8,6 +8,7 @@ import {
   createSize, deleteSize,
   setPriceCell,
 } from './actions'
+import FillMatrixButton from './FillMatrixButton'
 
 /**
  * /admin/boutique/boutique — beheer van de configurator: print-media (4
@@ -161,11 +162,16 @@ export default async function ShopBoutiqueAdminPage() {
 
       {media.length > 0 && sizes.length > 0 && (
         <section className="bg-(--color-paper) border border-(--color-frame) rounded p-5 overflow-x-auto">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">
-            Prijs-matrix (€)
-          </h2>
+          <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+            <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone)">
+              Prijs-matrix (€)
+            </h2>
+            <FillMatrixButton />
+          </div>
           <p className="text-xs text-(--color-stone) mb-4">
             Klik op een cel om de prijs aan te passen. Lege cel = combinatie niet beschikbaar.
+            Gebruik <strong>« Compléter »</strong> om alle ontbrekende cellen automatisch te vullen
+            (basis × multiplier 1.0/2.4/4.0/6.5/10.0).
           </p>
           <table className="text-sm border-collapse min-w-full">
             <thead>

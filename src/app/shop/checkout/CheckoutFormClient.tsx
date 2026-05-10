@@ -336,7 +336,7 @@ export function CheckoutFormClient({
         <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500">Coordonnées</h2>
         <Field label="Nom complet *" name="full_name" value={fullName} onChange={setFullName} required autoComplete="name" />
         <Field label="Email *" name="email" type="email" value={email} onChange={setEmail} required autoComplete="email" />
-        <Field label="Téléphone (optionnel)" name="phone" type="tel" value={phone} onChange={setPhone} autoComplete="tel" />
+        <Field label="Téléphone *" name="phone" type="tel" value={phone} onChange={setPhone} required autoComplete="tel" />
 
         <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 pt-3">Adresse de livraison</h2>
         <Field label="Rue + numéro *" name="street" value={street} onChange={setStreet} required autoComplete="address-line1" />
@@ -347,7 +347,7 @@ export function CheckoutFormClient({
           </div>
         </div>
         <label className="block">
-          <span className="text-sm text-stone-700 mb-1 block">Pays</span>
+          <span className="text-sm text-stone-700 mb-1 block">Pays *</span>
           <select
             value={country}
             onChange={(e) => setCountry(e.target.value)}
