@@ -242,7 +242,7 @@ export default async function DevisPage({ params }: Props) {
 
           <div className="grid lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] gap-8">
             {/* Voorwaarden / supports & techniques (links) */}
-            <aside className="lg:sticky lg:top-6 lg:self-start">
+            <aside className="lg:sticky lg:top-24 lg:self-start">
               <div className="bg-(--color-paper) border border-(--color-frame) p-6">
                 <div className="flex items-center gap-2 mb-4 text-(--color-bronze)">
                   <Brush className="w-4 h-4" />

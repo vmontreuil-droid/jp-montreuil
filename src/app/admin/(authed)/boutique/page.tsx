@@ -178,19 +178,19 @@ export default async function ShopAdminPage() {
         <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 space-y-2">
           <p className="inline-flex items-center gap-2 font-medium">
             <AlertCircle size={16} />
-            Setup niet compleet
+            Configuration incomplète
           </p>
           <p className="text-sm">{health.message}</p>
           <ol className="text-sm list-decimal pl-5 space-y-1">
             <li>
-              Run <code className="bg-amber-100 px-1 rounded">supabase/migrations/0011_create_shop_schema.sql</code> in
-              de Supabase SQL Editor.
+              Exécutez <code className="bg-amber-100 px-1 rounded">supabase/migrations/0011_create_shop_schema.sql</code>
+              {' '}dans l&apos;éditeur SQL de Supabase.
             </li>
             <li>
-              Ga naar <strong>Project Settings → API → Data API Settings → Exposed schemas</strong> en
-              vink <code className="bg-amber-100 px-1 rounded">shop</code> aan.
+              Allez dans <strong>Project Settings → API → Data API Settings → Exposed schemas</strong> et
+              cochez <code className="bg-amber-100 px-1 rounded">shop</code>.
             </li>
-            <li>Klik <strong>Save</strong> → wacht ~30s tot PostgREST de schema reload.</li>
+            <li>Cliquez sur <strong>Save</strong> → attendez ~30 s que PostgREST recharge le schéma.</li>
           </ol>
         </div>
       )}
@@ -205,49 +205,44 @@ export default async function ShopAdminPage() {
             label="Photos"
             count={health.counts.photos}
             href="/admin/boutique/photos"
-            description="Foto's voor de print-on-demand configurator"
+            description="Photos pour le configurateur d'impression"
           />
           <ModuleCard
             icon={Package}
-            label="Producten"
+            label="Produits"
             count={health.counts.products}
             href="/admin/boutique/products"
-            description="Klassieke producten + variants"
+            description="Produits classiques + variantes"
           />
           <ModuleCard
             icon={Layers}
             label="Configurateur"
             count={null}
             href="/admin/boutique/boutique"
-            description="Materialen, formaten en prijs-matrix"
+            description="Matériaux, formats et matrice de prix"
           />
           <ModuleCard
             icon={ShoppingCart}
-            label="Bestellingen"
+            label="Commandes"
             count={health.counts.orders}
             href="/admin/boutique/orders"
-            description="Klant-orders met status-flow"
+            description="Commandes clients avec workflow de statut"
           />
           <ModuleCard
             icon={Truck}
             label="Frais de port"
             count={null}
             href="/admin/boutique/shipping"
-            description="Verzendzones + tarieven + gratis-drempels"
+            description="Zones de livraison + tarifs + seuils gratuits"
           />
           <ModuleCard
             icon={Users}
-            label="Klanten"
+            label="Clients"
             count={health.counts.customers}
             href="/admin/boutique/customers"
-            description="Klantenfiches (komt eraan)"
-            disabled
+            description="Liste agrégée des acheteurs"
           />
         </div>
-        <p className="text-xs text-(--color-stone)/70 mt-3">
-          De modules zijn nog niet geïmplementeerd in deze scaffolding-commit.
-          Volgende stap: producten + configurator porten uit allardphilippe.
-        </p>
       </section>
     </main>
   )

@@ -10,7 +10,7 @@ import type { ProductKind } from '@/lib/shop/products'
 async function requireAdmin() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Niet geauthenticeerd')
+  if (!user) throw new Error('Non authentifié')
 }
 
 function str(form: FormData, key: string): string {

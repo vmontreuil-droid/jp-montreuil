@@ -8,7 +8,7 @@ import type { OrderStatus } from '@/lib/shop/orders'
 async function requireAdmin() {
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
-  if (!user) throw new Error('Niet geauthenticeerd')
+  if (!user) throw new Error('Non authentifié')
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {

@@ -23,15 +23,15 @@ export default async function ShopOrdersAdminPage() {
           <ArrowLeft size={12} /> Admin
         </Link>
         <span className="text-(--color-stone)/60">/</span>
-        <span className="text-(--color-ink)">Bestellingen</span>
+        <span className="text-(--color-ink)">Commandes</span>
       </div>
 
       <header className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-[family-name:var(--font-display)] text-3xl text-(--color-ink) inline-flex items-center gap-2">
-            <ShoppingCart size={24} /> Bestellingen
+            <ShoppingCart size={24} /> Commandes
           </h1>
-          <p className="text-sm text-(--color-charcoal)">{orders.length} bestelling{orders.length === 1 ? '' : 'en'}</p>
+          <p className="text-sm text-(--color-charcoal)">{orders.length} commande{orders.length === 1 ? '' : 's'}</p>
         </div>
         {orders.length > 0 && (
           <a
@@ -46,7 +46,7 @@ export default async function ShopOrdersAdminPage() {
       </header>
 
       {orders.length === 0 ? (
-        <p className="text-center text-(--color-stone) py-10">Geen bestellingen.</p>
+        <p className="text-center text-(--color-stone) py-10">Aucune commande.</p>
       ) : (
         <div className="bg-(--color-paper) border border-(--color-frame) rounded overflow-hidden">
           <table className="w-full text-sm">

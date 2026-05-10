@@ -33,7 +33,7 @@ export default async function ShopShippingAdminPage() {
       </header>
 
       {zones.length === 0 ? (
-        <p className="text-(--color-stone)">Geen zones — voeg er minstens 1 toe.</p>
+        <p className="text-(--color-stone)">Aucune zone — ajoutez-en au moins une.</p>
       ) : (
         <div className="bg-(--color-paper) border border-(--color-frame) rounded overflow-x-auto">
           <table className="w-full text-sm">

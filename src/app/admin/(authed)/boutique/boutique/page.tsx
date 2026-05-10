@@ -54,11 +54,11 @@ export default async function ShopBoutiqueAdminPage() {
       {/* MEDIA */}
       <section className="bg-(--color-paper) border border-(--color-frame) rounded p-5">
         <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">
-          Materialen ({media.length})
+          Matériaux ({media.length})
         </h2>
         {media.length === 0 ? (
           <p className="text-sm text-(--color-stone) mb-4">
-            Geen materialen. Voeg er minstens één toe (bv. fine_art, canvas, alu, plexi).
+            Aucun matériau. Ajoutez-en au moins un (ex. fine_art, canvas, aluminum, plexi).
           </p>
         ) : (
           <ul className="divide-y divide-stone-200 mb-4">
@@ -92,7 +92,7 @@ export default async function ShopBoutiqueAdminPage() {
           </label>
           <div className="sm:col-span-3">
             <button type="submit" className="inline-flex items-center gap-2 px-3 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm rounded">
-              <Plus size={14} /> Ajouter materiaal
+              <Plus size={14} /> Ajouter matériau
             </button>
           </div>
         </form>
@@ -101,11 +101,11 @@ export default async function ShopBoutiqueAdminPage() {
       {/* SIZES */}
       <section className="bg-(--color-paper) border border-(--color-frame) rounded p-5">
         <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">
-          Formaten ({sizes.length})
+          Formats ({sizes.length})
         </h2>
         {sizes.length === 0 ? (
           <p className="text-sm text-(--color-stone) mb-4">
-            Geen formaten. Voeg er een paar toe (bv. S 30×45, M 50×75, L 70×100, …).
+            Aucun format. Ajoutez-en quelques-uns (ex. S 30×45, M 50×75, L 70×100, …).
           </p>
         ) : (
           <ul className="divide-y divide-stone-200 mb-4">
@@ -134,27 +134,26 @@ export default async function ShopBoutiqueAdminPage() {
             <span className="text-sm">Actif</span>
           </label>
           <button type="submit" className="inline-flex items-center gap-2 px-3 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm rounded">
-            <Plus size={14} /> Ajouter formaat
+            <Plus size={14} /> Ajouter format
           </button>
         </form>
       </section>
 
-      {/* PRICE MATRIX — verschijnt pas zodra er minstens 1 materiaal én
-          1 formaat zijn. Anders een duidelijke uitleg waarom. */}
+      {/* PRICE MATRIX — apparaît dès qu'il y a au moins 1 matériau et
+          1 format. Sinon, message d'explication clair. */}
       {(media.length === 0 || sizes.length === 0) && (
         <section className="bg-amber-50 border border-amber-200 text-amber-900 rounded p-5">
-          <p className="font-medium mb-2">Prijs-matrix nog niet beschikbaar</p>
+          <p className="font-medium mb-2">Matrice de prix non disponible</p>
           <p className="text-sm">
-            De matrix waar je de prijzen invult (bv. €60) verschijnt zodra er
-            minstens <strong>1 materiaal</strong> én <strong>1 formaat</strong>
-            {' '}aangemaakt zijn.
+            La matrice où vous saisissez les prix (ex. €60) apparaît dès qu&apos;il
+            y a au moins <strong>1 matériau</strong> et <strong>1 format</strong>.
           </p>
           <ul className="text-sm mt-2 list-disc pl-5 space-y-0.5">
             {media.length === 0 && (
-              <li>Voeg een materiaal toe (vul <strong>Slug</strong> + <strong>Nom FR</strong> in en klik &quot;Ajouter materiaal&quot;).</li>
+              <li>Ajoutez un matériau (remplissez <strong>Slug</strong> + <strong>Nom FR</strong> et cliquez sur &quot;Ajouter matériau&quot;).</li>
             )}
             {sizes.length === 0 && (
-              <li>Voeg een formaat toe (Slug + Label).</li>
+              <li>Ajoutez un format (Slug + Label).</li>
             )}
           </ul>
         </section>
@@ -164,14 +163,14 @@ export default async function ShopBoutiqueAdminPage() {
         <section className="bg-(--color-paper) border border-(--color-frame) rounded p-5 overflow-x-auto">
           <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
             <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone)">
-              Prijs-matrix (€)
+              Matrice de prix (€)
             </h2>
             <FillMatrixButton />
           </div>
           <p className="text-xs text-(--color-stone) mb-4">
-            Klik op een cel om de prijs aan te passen. Lege cel = combinatie niet beschikbaar.
-            Gebruik <strong>« Compléter »</strong> om alle ontbrekende cellen automatisch te vullen
-            (basis × multiplier 1.0/2.4/4.0/6.5/10.0).
+            Cliquez sur une cellule pour modifier le prix. Cellule vide = combinaison non disponible.
+            Utilisez <strong>« Compléter la matrice »</strong> pour remplir automatiquement
+            toutes les cellules vides (base × multiplicateur 1.0 / 2.4 / 4.0 / 6.5 / 10.0).
           </p>
           <table className="text-sm border-collapse min-w-full">
             <thead>
@@ -218,7 +217,7 @@ export default async function ShopBoutiqueAdminPage() {
             </tbody>
           </table>
           <p className="text-[11px] text-(--color-stone)/70 mt-3">
-            Tip: laat het prijsveld leeg en druk Enter om een cel te verwijderen.
+            Astuce : laissez le champ prix vide et appuyez sur Entrée pour supprimer une cellule.
             Vink het check-vakje uit om de combo tijdelijk te deactiveren zonder de prijs te verliezen.
           </p>
         </section>

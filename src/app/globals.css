@@ -34,6 +34,9 @@
 @layer base {
   html {
     color-scheme: dark;
+    /* Sticky header is ~80px hoog. Anchor-links + sticky-asides moeten
+       eronder beginnen, anders verbergt de header de bovenste lijn. */
+    scroll-padding-top: 88px;
   }
 
   /* Optionele licht-modus — `html.light` swapt de palette tokens.
