@@ -12,6 +12,7 @@ type QuickViewPhoto = {
   title: string | null
   alt: string
   storage_path: string
+  bucket: string
   species: string | null
   taken_at_location: string | null
   taken_at: string | null
@@ -100,7 +101,7 @@ export default function QuickViewModal({
         <div className="bg-black flex items-center justify-center relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={shopPhotoUrl(photo.storage_path)}
+            src={shopPhotoUrl(photo.storage_path, photo.bucket)}
             alt={photo.alt}
             className="max-h-[60vh] md:max-h-[90vh] w-auto h-auto object-contain"
           />

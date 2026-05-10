@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react'
 import { createShopAdminClient } from '@/lib/shop/supabase'
-import { shopPhotoUrl, photoAlt, type Photo } from '@/lib/shop/photos'
+import { shopPhotoUrl, photoUrl, photoAlt, type Photo } from '@/lib/shop/photos'
 import {
   listActiveMedia,
   listActiveSizes,
@@ -43,15 +43,17 @@ export default async function PhotoConfiguratorPage({
     (async () => {
       const all = await sb
         .from('photos')
-        .select('id, slug, title, alt_text, storage_path, species')
+        .select('id, slug, title, alt_text, storage_path, bucket, species, category_slug')
         .eq('is_published', true)
         .neq('id', photo.id)
         .limit(20)
-      const list = (all.data ?? []) as Pick<Photo, 'id' | 'slug' | 'title' | 'alt_text' | 'storage_path' | 'species'>[]
-      // Zelfde species voorrang
-      const sameSpecies = photo.species ? list.filter((p) => p.species === photo.species) : []
-      const others = list.filter((p) => !sameSpecies.includes(p))
-      return [...sameSpecies, ...others].slice(0, 4)
+      const list = (all.data ?? []) as Pick<Photo, 'id' | 'slug' | 'title' | 'alt_text' | 'storage_path' | 'bucket' | 'species' | 'category_slug'>[]
+      // Zelfde categorie voorrang
+      const sameCat = photo.category_slug
+        ? list.filter((p) => p.category_slug === photo.category_slug)
+        : []
+      const others = list.filter((p) => !sameCat.includes(p))
+      return [...sameCat, ...others].slice(0, 4)
     })(),
   ])
 
@@ -94,7 +96,7 @@ export default async function PhotoConfiguratorPage({
         <div className="aspect-square bg-(--color-frame)/40 border border-(--color-frame) overflow-hidden relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={shopPhotoUrl(photo.storage_path)}
+            src={photoUrl(photo)}
             alt={photoAlt(photo)}
             className="w-full h-full object-cover"
           />
@@ -138,6 +140,7 @@ export default async function PhotoConfiguratorPage({
               photoSlug={photo.slug}
               photoTitle={photo.title ?? photo.slug}
               photoStoragePath={photo.storage_path}
+              defaultOrientation={photo.orientation ?? 'portrait'}
               media={mediaProps}
               sizes={sizeProps}
               prices={prices}
@@ -165,7 +168,7 @@ export default async function PhotoConfiguratorPage({
                   <div className="aspect-square bg-(--color-canvas) relative overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={shopPhotoUrl(r.storage_path)}
+                      src={shopPhotoUrl(r.storage_path, r.bucket)}
                       alt={r.alt_text ?? r.title ?? r.slug}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                       loading="lazy"

@@ -412,15 +412,15 @@ const dict = {
 
   boutique: {
     eyebrow: 'Boutique',
-    title: "Tirages d'art",
-    lead: 'Choisissez une photographie et personnalisez son tirage — matériau, format, prix en direct.',
+    title: "Reproductions d'œuvres",
+    lead: 'Choisissez une œuvre du portfolio et personnalisez sa reproduction — matériau, format, orientation, prix en direct.',
     fromPrice: 'À partir de',
     inMedium: 'sur',
-    photoCountSingular: 'photo disponible',
-    photoCountPlural: 'photos disponibles',
+    photoCountSingular: 'œuvre disponible',
+    photoCountPlural: 'œuvres disponibles',
     customizeCta: 'Personnaliser',
     seeHow: 'Voir comment ça marche',
-    emptyTitle: 'Pas encore de tirages',
+    emptyTitle: 'Pas encore d\'œuvres',
     emptyBody: 'Jean-Pierre est en train de préparer la sélection. Revenez bientôt.',
   },
 

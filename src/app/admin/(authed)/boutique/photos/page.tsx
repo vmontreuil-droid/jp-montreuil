@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { listShopPhotos } from '@/lib/shop/photos'
 import { uploadShopPhoto } from './actions'
 import PhotosGrid from './PhotosGrid'
+import ImportWorksButton from './ImportWorksButton'
 
 /**
  * /admin/boutique/photos — overzicht + upload-form. Klikken op een
@@ -37,13 +38,16 @@ export default async function ShopPhotosPage() {
             {photos.length} foto{photos.length === 1 ? '' : "'s"} · {published} gepubliceerd
           </p>
         </div>
-        <Link
-          href="/admin/boutique/photos/bulk-upload"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-xs uppercase tracking-[0.2em]"
-        >
-          <Upload className="w-4 h-4" />
-          Import en lot
-        </Link>
+        <div className="flex flex-wrap items-start gap-3">
+          <ImportWorksButton />
+          <Link
+            href="/admin/boutique/photos/bulk-upload"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-xs uppercase tracking-[0.2em]"
+          >
+            <Upload className="w-4 h-4" />
+            Import en lot
+          </Link>
+        </div>
       </header>
 
       {/* Upload form */}

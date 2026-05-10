@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight, HelpCircle, ShoppingBag, Sparkles } from 'lucide-react'
-import { listShopPhotos, listFeaturedShopPhotos, shopPhotoUrl, photoAlt } from '@/lib/shop/photos'
+import { listShopPhotos, listFeaturedShopPhotos, photoAlt } from '@/lib/shop/photos'
+import { photoUrl } from '@/lib/shop/photo-url'
 import { formatPrice } from '@/lib/shop/products'
 import {
   listActiveMedia,
@@ -8,6 +9,7 @@ import {
   listAvailablePrices,
   mediumName,
 } from '@/lib/shop/print-shop'
+import { listShopCategories } from '@/lib/shop/import-works'
 import { getDictionary } from '@/i18n/dictionaries'
 import BoutiqueGrid from './BoutiqueGrid'
 
@@ -21,12 +23,13 @@ export const dynamic = 'force-dynamic'
 export default async function ShopBoutiquePage() {
   const t = getDictionary('fr').boutique
 
-  const [photos, media, sizes, prices, featured] = await Promise.all([
+  const [photos, media, sizes, prices, featured, categories] = await Promise.all([
     listShopPhotos({ publishedOnly: true }),
     listActiveMedia(),
     listActiveSizes(),
     listAvailablePrices(),
     listFeaturedShopPhotos(6).catch(() => []),
+    listShopCategories().catch(() => []),
   ])
 
   const minCents = prices.length > 0 ? Math.min(...prices.map((p) => p.price_cents)) : null
@@ -92,7 +95,7 @@ export default async function ShopBoutiquePage() {
                   <div className="aspect-square bg-(--color-canvas) relative overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={shopPhotoUrl(p.storage_path)}
+                      src={photoUrl(p)}
                       alt={photoAlt(p)}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                       loading="lazy"
@@ -123,12 +126,16 @@ export default async function ShopBoutiquePage() {
               title: p.title,
               alt: p.alt_text ?? p.title ?? p.slug,
               storage_path: p.storage_path,
+              bucket: p.bucket ?? 'shop-photos',
               species: p.species,
               taken_at_location: p.taken_at_location,
               taken_at: p.taken_at,
               description: p.description,
+              category_slug: p.category_slug,
+              orientation: p.orientation,
               created_at: p.created_at,
             }))}
+            categories={categories}
             labels={{
               singular: t.photoCountSingular,
               plural: t.photoCountPlural,

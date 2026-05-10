@@ -8,7 +8,7 @@ import type { Photo } from './photo-url'
  */
 
 // Re-exports voor backward compat — server-side code kan nog uit @/lib/shop/photos importeren
-export { shopPhotoUrl, photoAlt, slugify, SHOP_PHOTOS_BUCKET } from './photo-url'
+export { shopPhotoUrl, photoUrl, photoAlt, slugify, SHOP_PHOTOS_BUCKET, WORKS_BUCKET } from './photo-url'
 export type { Photo } from './photo-url'
 
 export async function listShopPhotos(opts: { publishedOnly?: boolean } = {}): Promise<Photo[]> {
@@ -31,7 +31,7 @@ export async function getShopPhotoById(id: string): Promise<Photo | null> {
 
 export type FeaturedPhoto = Pick<
   Photo,
-  'id' | 'slug' | 'title' | 'alt_text' | 'storage_path' | 'description'
+  'id' | 'slug' | 'title' | 'alt_text' | 'storage_path' | 'bucket' | 'description'
 >
 
 /**
@@ -43,7 +43,7 @@ export async function listFeaturedShopPhotos(limit = 6): Promise<FeaturedPhoto[]
   const sb = createShopAdminClient()
   const { data, error } = await sb
     .from('photos')
-    .select('id, slug, title, alt_text, storage_path, description')
+    .select('id, slug, title, alt_text, storage_path, bucket, description')
     .eq('is_published', true)
     .eq('is_featured', true)
     .order('featured_order', { ascending: true })

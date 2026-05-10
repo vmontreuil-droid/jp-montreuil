@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { ArrowRight, Search, ArrowDownUp, Heart, X, Eye } from 'lucide-react'
+import { ArrowRight, Search, ArrowDownUp, Heart, X, Eye, Tags } from 'lucide-react'
 import { WishlistButton } from '@/components/shop/WishlistButton'
 import { useWishlist } from '@/components/shop/WishlistProvider'
 import QuickViewModal from '@/components/shop/QuickViewModal'
@@ -14,10 +14,13 @@ type PhotoMini = {
   title: string | null
   alt: string
   storage_path: string
+  bucket: string
   species: string | null
   taken_at_location: string | null
   taken_at: string | null
   description: string | null
+  category_slug: string | null
+  orientation: 'portrait' | 'landscape' | 'square'
   created_at: string
 }
 
@@ -29,6 +32,12 @@ type Labels = {
   customize: string
 }
 
+type CategoryOption = {
+  slug: string
+  label: string
+  count: number
+}
+
 const SORT_LABELS: Record<SortKey, string> = {
   recent: 'Plus récentes',
   oldest: 'Plus anciennes',
@@ -38,24 +47,30 @@ const SORT_LABELS: Record<SortKey, string> = {
 
 /**
  * Interactieve foto-grid voor /shop/boutique met live search + sort +
- * favorites-toggle. Server-rendered photo-list wordt client-side
- * gefilterd zodat geen server round-trips nodig zijn per filter.
+ * favorites-toggle + category-filter (uitsluit bronze automatisch via
+ * server-side filter — categories-list bevat enkel toegelaten cats).
  */
 export default function BoutiqueGrid({
   photos,
+  categories,
   labels,
 }: {
   photos: PhotoMini[]
+  categories: CategoryOption[]
   labels: Labels
 }) {
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<SortKey>('recent')
   const [onlyFavs, setOnlyFavs] = useState(false)
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [quickViewIdx, setQuickViewIdx] = useState<number | null>(null)
   const { ids, hydrated } = useWishlist()
 
   const filtered = useMemo(() => {
     let list = photos.slice()
+    if (activeCategory) {
+      list = list.filter((p) => p.category_slug === activeCategory)
+    }
     if (onlyFavs && hydrated) {
       list = list.filter((p) => ids.has(p.id))
     }
@@ -67,6 +82,7 @@ export default function BoutiqueGrid({
           p.slug,
           p.species ?? '',
           p.taken_at_location ?? '',
+          p.category_slug ?? '',
         ]
           .join(' ')
           .toLowerCase()
@@ -90,18 +106,55 @@ export default function BoutiqueGrid({
         break
     }
     return list
-  }, [photos, query, sort, onlyFavs, ids, hydrated])
+  }, [photos, query, sort, onlyFavs, ids, hydrated, activeCategory])
 
   return (
     <>
-      {/* Toolbar */}
+      {/* Category pills — alle categorieën van papa's portfolio (excl bronze) */}
+      {categories.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-6 pb-5 border-b border-(--color-frame)/60">
+          <Tags className="w-3.5 h-3.5 text-(--color-stone)" />
+          <button
+            type="button"
+            onClick={() => setActiveCategory(null)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs uppercase tracking-[0.15em] border transition-colors ${
+              activeCategory === null
+                ? 'bg-(--color-bronze) text-white border-(--color-bronze)'
+                : 'bg-(--color-paper) border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-bronze)'
+            }`}
+          >
+            Toutes
+            <span className={`text-[10px] ${activeCategory === null ? 'opacity-90' : 'opacity-60'}`}>
+              ({photos.length})
+            </span>
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c.slug}
+              type="button"
+              onClick={() => setActiveCategory(c.slug)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs uppercase tracking-[0.15em] border transition-colors ${
+                activeCategory === c.slug
+                  ? 'bg-(--color-bronze) text-white border-(--color-bronze)'
+                  : 'bg-(--color-paper) border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-bronze)'
+              }`}
+            >
+              {c.label}
+              <span className={`text-[10px] ${activeCategory === c.slug ? 'opacity-90' : 'opacity-60'}`}>
+                ({c.count})
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Toolbar: search + sort + favs */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
           {filtered.length} {filtered.length === 1 ? labels.singular : labels.plural}
         </p>
 
         <div className="flex flex-wrap gap-2 items-center">
-          {/* Search */}
           <label className="relative inline-flex items-center">
             <Search className="absolute left-3 w-3.5 h-3.5 text-(--color-stone)" />
             <input
@@ -123,7 +176,6 @@ export default function BoutiqueGrid({
             )}
           </label>
 
-          {/* Sort */}
           <label className="relative inline-flex items-center">
             <ArrowDownUp className="absolute left-3 w-3.5 h-3.5 text-(--color-stone) pointer-events-none" />
             <select
@@ -137,7 +189,6 @@ export default function BoutiqueGrid({
             </select>
           </label>
 
-          {/* Favs toggle */}
           <button
             type="button"
             onClick={() => setOnlyFavs((v) => !v)}
@@ -159,11 +210,11 @@ export default function BoutiqueGrid({
         <div className="bg-(--color-paper) border border-(--color-frame) p-12 text-center">
           <Search className="w-8 h-8 mx-auto mb-3 text-(--color-stone)/50" />
           <p className="text-sm text-(--color-charcoal) mb-4">
-            Aucune photographie ne correspond à votre recherche.
+            Aucune œuvre ne correspond à votre recherche.
           </p>
           <button
             type="button"
-            onClick={() => { setQuery(''); setOnlyFavs(false) }}
+            onClick={() => { setQuery(''); setOnlyFavs(false); setActiveCategory(null) }}
             className="text-xs uppercase tracking-[0.2em] text-(--color-bronze) hover:text-(--color-bronze-dark)"
           >
             Effacer les filtres
@@ -180,7 +231,7 @@ export default function BoutiqueGrid({
                 <div className="aspect-square bg-(--color-canvas) relative overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={shopPhotoUrl(p.storage_path)}
+                    src={shopPhotoUrl(p.storage_path, p.bucket)}
                     alt={p.alt}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                     loading="lazy"
@@ -190,7 +241,6 @@ export default function BoutiqueGrid({
                     className="absolute top-2 right-2 z-10"
                     size={14}
                   />
-                  {/* Quick-view eye-knop linksboven — verschijnt op hover */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -209,9 +259,9 @@ export default function BoutiqueGrid({
                   <p className="text-sm text-(--color-ink) truncate font-medium">
                     {p.title ?? p.slug}
                   </p>
-                  {(p.species || p.taken_at_location) && (
-                    <p className="text-[10px] text-(--color-stone) truncate mt-0.5">
-                      {[p.species, p.taken_at_location].filter(Boolean).join(' · ')}
+                  {p.category_slug && (
+                    <p className="text-[10px] uppercase tracking-widest text-(--color-stone) mt-0.5">
+                      {p.category_slug}
                     </p>
                   )}
                   <p className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-(--color-bronze) group-hover:gap-2 transition-all">

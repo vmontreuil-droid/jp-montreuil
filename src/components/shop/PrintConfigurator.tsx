@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ShoppingBag, Check } from 'lucide-react'
+import { ShoppingBag, Check, RectangleHorizontal, RectangleVertical } from 'lucide-react'
 import { useCart } from './CartProvider'
 
 /**
@@ -21,11 +21,19 @@ type PriceCell = {
   isAvailable: boolean
 }
 
+type Orientation = 'portrait' | 'landscape'
+
+/** Swap "30×45 cm" → "45×30 cm" voor landscape; "S — 30×45 cm" → "S — 45×30 cm". */
+function flipSizeLabel(label: string): string {
+  return label.replace(/(\d+)\s*[×x]\s*(\d+)/, (_, a: string, b: string) => `${b}×${a}`)
+}
+
 export function PrintConfigurator({
   photoId,
   photoSlug,
   photoTitle,
   photoStoragePath,
+  defaultOrientation,
   media,
   sizes,
   prices,
@@ -34,6 +42,7 @@ export function PrintConfigurator({
   photoSlug: string
   photoTitle: string
   photoStoragePath: string
+  defaultOrientation?: Orientation | 'square'
   media: Medium[]
   sizes: Size[]
   prices: PriceCell[]
@@ -44,6 +53,10 @@ export function PrintConfigurator({
   const firstAvail = prices.find((p) => p.isAvailable)
   const [mediaSlug, setMediaSlug] = useState<string | null>(firstAvail?.mediaSlug ?? null)
   const [sizeSlug, setSizeSlug] = useState<string | null>(firstAvail?.sizeSlug ?? null)
+  // Klant kan nadien wisselen — voor square defaults op portrait.
+  const [orientation, setOrientation] = useState<Orientation>(
+    defaultOrientation === 'landscape' ? 'landscape' : 'portrait',
+  )
   const [done, setDone] = useState(false)
 
   const cellMap = useMemo(() => {
@@ -60,6 +73,8 @@ export function PrintConfigurator({
     const m = media.find((x) => x.slug === mediaSlug)
     const s = sizes.find((x) => x.slug === sizeSlug)
     if (!m || !s) return
+    const sizeLabel = orientation === 'landscape' ? flipSizeLabel(s.label) : s.label
+    const orientLabel = orientation === 'landscape' ? 'paysage' : 'portrait'
     add({
       kind: 'photo_print',
       photoId,
@@ -68,7 +83,7 @@ export function PrintConfigurator({
       sizeSlug,
       slug: photoSlug,
       title: photoTitle,
-      variantLabel: `${m.name} — ${s.label}`,
+      variantLabel: `${m.name} — ${sizeLabel} (${orientLabel})`,
       unitPriceCents: selected.priceCents,
       storagePath: photoStoragePath,
     })
@@ -100,6 +115,35 @@ export function PrintConfigurator({
         </div>
       </div>
 
+      {/* Orientation */}
+      <div>
+        <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Orientation</p>
+        <div className="grid grid-cols-2 gap-2">
+          {(['portrait', 'landscape'] as const).map((o) => {
+            const sel = o === orientation
+            const Icon = o === 'portrait' ? RectangleVertical : RectangleHorizontal
+            return (
+              <button
+                key={o}
+                type="button"
+                onClick={() => setOrientation(o)}
+                className={`px-3 py-2 text-sm border rounded transition-colors inline-flex items-center justify-center gap-2 ${
+                  sel ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 hover:border-stone-500'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {o === 'portrait' ? 'Portrait' : 'Paysage'}
+              </button>
+            )
+          })}
+        </div>
+        <p className="text-[11px] text-stone-500 mt-1.5">
+          {orientation === 'portrait'
+            ? 'Format vertical (hauteur > largeur).'
+            : 'Format horizontal (largeur > hauteur). Les dimensions s\'adaptent.'}
+        </p>
+      </div>
+
       {/* Formaat */}
       <div>
         <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Format</p>
@@ -108,6 +152,7 @@ export function PrintConfigurator({
             const sel = s.slug === sizeSlug
             const cell = mediaSlug ? cellMap.get(`${mediaSlug}|${s.slug}`) : null
             const disabled = !cell || !cell.isAvailable
+            const displayLabel = orientation === 'landscape' ? flipSizeLabel(s.label) : s.label
             return (
               <button
                 key={s.id}
@@ -122,7 +167,7 @@ export function PrintConfigurator({
                       : 'border-stone-300 hover:border-stone-500'
                 }`}
               >
-                <div className="font-medium">{s.label}</div>
+                <div className="font-medium">{displayLabel}</div>
                 <div className="text-xs opacity-75 mt-0.5">
                   {cell ? cell.priceFormatted : '—'}
                 </div>

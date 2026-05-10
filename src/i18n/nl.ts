@@ -414,15 +414,15 @@ const dict: Dictionary = {
 
   boutique: {
     eyebrow: 'Boutique',
-    title: 'Kunstprints',
-    lead: 'Kies een foto en stel uw print samen — materiaal, formaat, prijs in real-time.',
+    title: 'Reproducties van werken',
+    lead: 'Kies een werk uit de portfolio en stel uw reproductie samen — materiaal, formaat, oriëntatie, prijs live.',
     fromPrice: 'Vanaf',
     inMedium: 'op',
-    photoCountSingular: 'foto beschikbaar',
-    photoCountPlural: 'foto’s beschikbaar',
+    photoCountSingular: 'werk beschikbaar',
+    photoCountPlural: 'werken beschikbaar',
     customizeCta: 'Personaliseren',
     seeHow: 'Bekijk hoe het werkt',
-    emptyTitle: 'Nog geen prints',
+    emptyTitle: 'Nog geen werken',
     emptyBody: 'Jean-Pierre is de selectie aan het samenstellen. Kom binnenkort terug.',
   },
 

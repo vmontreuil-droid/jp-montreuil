@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createShopAdminClient } from '@/lib/shop/supabase'
 import { slugify, getShopPhotoById, SHOP_PHOTOS_BUCKET, shopPhotoUrl } from '@/lib/shop/photos'
 import { generateAltText } from '@/lib/ai-alt'
+import { importWorksAsShopPhotos, type ImportWorksReport } from '@/lib/shop/import-works'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -299,4 +300,17 @@ export async function uploadShopPhotoOne(form: FormData): Promise<BulkUploadFile
   } catch (e) {
     return { ok: false, slug: baseSlug, error: e instanceof Error ? e.message : 'Erreur upload' }
   }
+}
+
+/**
+ * Importeer alle public.works als shop.photos. Categorie 'bronze'
+ * uitgesloten. Idempotent: enkel nieuwe werken worden toegevoegd.
+ * Wordt aangeroepen door de "Importer œuvres" knop.
+ */
+export async function importWorksAction(): Promise<ImportWorksReport> {
+  await requireAdmin()
+  const report = await importWorksAsShopPhotos()
+  revalidatePath('/admin/boutique/photos')
+  revalidatePath('/shop/boutique')
+  return report
 }
