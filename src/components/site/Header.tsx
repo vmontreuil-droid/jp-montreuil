@@ -49,7 +49,7 @@ export default async function Header({ locale, t, portailMode = false }: Props) 
 
   return (
     <header className="sticky top-0 z-40 bg-(--color-canvas)/85 backdrop-blur-sm border-b border-(--color-frame)">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
+      <div className="w-full px-6 lg:px-10 xl:px-14 py-4 flex items-center justify-between gap-6">
         <Link href={localePath(locale, '/')} className="block leading-none">
           <Image
             src="/logo.png"

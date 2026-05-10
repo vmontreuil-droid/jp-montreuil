@@ -45,7 +45,7 @@ export default function DesktopNav({ items }: Props) {
             key={item.href}
             href={item.href}
             aria-current={active ? 'page' : undefined}
-            className={`group relative inline-flex items-center gap-1.5 px-3 py-2 transition-colors ${
+            className={`group relative inline-flex items-center gap-1.5 px-3 py-2 whitespace-nowrap transition-colors ${
               active
                 ? 'text-(--color-ink) font-semibold'
                 : 'text-(--color-charcoal) hover:text-(--color-bronze)'
