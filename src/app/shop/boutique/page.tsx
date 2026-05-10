@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, HelpCircle, ShoppingBag } from 'lucide-react'
-import { listShopPhotos, shopPhotoUrl, photoAlt } from '@/lib/shop/photos'
+import { listShopPhotos } from '@/lib/shop/photos'
 import { formatPrice } from '@/lib/shop/products'
 import {
   listActiveMedia,
@@ -9,14 +9,14 @@ import {
   mediumName,
 } from '@/lib/shop/print-shop'
 import { getDictionary } from '@/i18n/dictionaries'
+import BoutiqueGrid from './BoutiqueGrid'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * /shop/boutique — publieke landing in site-stijl van jp-montreuil.
- * Toont alle gepubliceerde foto's + link naar Comment ça marche.
- * Niet locale-gerouteerd; gebruikt FR-dict (komt overeen met de rest
- * van de webshop content).
+ * /shop/boutique — publieke landing in jp-montreuil-stijl.
+ * Server fetcht alle gepubliceerde foto's; sorting/zoek/wishlist gebeurt
+ * client-side in BoutiqueGrid.
  */
 export default async function ShopBoutiquePage() {
   const t = getDictionary('fr').boutique
@@ -72,7 +72,7 @@ export default async function ShopBoutiquePage() {
         </div>
       </section>
 
-      {/* Photo grid */}
+      {/* Photo grid + sort/search filter */}
       <section className="max-w-6xl mx-auto px-6 py-12">
         {photos.length === 0 ? (
           <div className="bg-(--color-paper) border border-(--color-frame) p-12 text-center">
@@ -83,48 +83,23 @@ export default async function ShopBoutiquePage() {
             <p className="text-sm text-(--color-charcoal)">{t.emptyBody}</p>
           </div>
         ) : (
-          <>
-            <div className="flex items-baseline justify-between mb-6">
-              <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
-                {photos.length}{' '}
-                {photos.length === 1 ? t.photoCountSingular : t.photoCountPlural}
-              </p>
-            </div>
-
-            <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-              {photos.map((p) => (
-                <li key={p.id}>
-                  <Link
-                    href={`/shop/boutique/photo/${p.slug}`}
-                    className="group block bg-(--color-paper) border border-(--color-frame) hover:border-(--color-bronze) overflow-hidden transition-colors"
-                  >
-                    <div className="aspect-square bg-(--color-canvas) relative overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={shopPhotoUrl(p.storage_path)}
-                        alt={photoAlt(p)}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                        loading="lazy"
-                      />
-                      <div
-                        aria-hidden
-                        className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/55 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <p className="text-sm text-(--color-ink) truncate font-medium">
-                        {p.title ?? p.slug}
-                      </p>
-                      <p className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-(--color-bronze) group-hover:gap-2 transition-all">
-                        {t.customizeCta}
-                        <ArrowRight className="w-3 h-3" />
-                      </p>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </>
+          <BoutiqueGrid
+            photos={photos.map((p) => ({
+              id: p.id,
+              slug: p.slug,
+              title: p.title,
+              alt: p.alt_text ?? p.title ?? p.slug,
+              storage_path: p.storage_path,
+              species: p.species,
+              taken_at_location: p.taken_at_location,
+              created_at: p.created_at,
+            }))}
+            labels={{
+              singular: t.photoCountSingular,
+              plural: t.photoCountPlural,
+              customize: t.customizeCta,
+            }}
+          />
         )}
       </section>
     </div>

@@ -1,5 +1,7 @@
 import { CartProvider } from '@/components/shop/CartProvider'
 import { CartIcon } from '@/components/shop/CartIcon'
+import { WishlistProvider } from '@/components/shop/WishlistProvider'
+import { WishlistIcon } from '@/components/shop/WishlistIcon'
 import Header from '@/components/site/Header'
 import Footer from '@/components/site/Footer'
 import { getDictionary } from '@/i18n/dictionaries'
@@ -21,17 +23,20 @@ export default function ShopLayout({
   const t = getDictionary(locale)
 
   return (
-    <CartProvider>
-      <div className="min-h-screen flex flex-col">
-        <Header locale={locale} t={t} />
-        <main className="flex-1">{children}</main>
-        <Footer locale={locale} t={t} />
+    <WishlistProvider>
+      <CartProvider>
+        <div className="min-h-screen flex flex-col">
+          <Header locale={locale} t={t} />
+          <main className="flex-1">{children}</main>
+          <Footer locale={locale} t={t} />
 
-        {/* Floating cart-knop — rechtsonder, sticky, altijd bereikbaar */}
-        <div className="fixed bottom-5 right-5 z-30">
-          <CartIcon />
+          {/* Floating action knoppen rechtsonder — wishlist + cart */}
+          <div className="fixed bottom-5 right-5 z-30 flex flex-col gap-3 items-end">
+            <WishlistIcon />
+            <CartIcon />
+          </div>
         </div>
-      </div>
-    </CartProvider>
+      </CartProvider>
+    </WishlistProvider>
   )
 }
