@@ -45,5 +45,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!admin|portail|api|auth|_next/static|_next/image|opengraph-image|twitter-image|favicon.ico|robots.txt|sitemap.xml|.*\\..*).*)'],
+  // shop toegevoegd zodat /shop en /shop/* NIET door de proxy worden gerewrite
+  // naar /[locale]/shop (de webshop-module heeft eigen routes buiten locale).
+  matcher: ['/((?!admin|portail|shop|api|auth|_next/static|_next/image|opengraph-image|twitter-image|favicon.ico|robots.txt|sitemap.xml|.*\\..*).*)'],
 }
