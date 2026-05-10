@@ -80,8 +80,8 @@ export default async function ShopBoutiqueAdminPage() {
         )}
 
         <form action={createMedium} className="grid sm:grid-cols-3 gap-2 items-end">
-          <Field label="Slug" name="slug" placeholder="fine_art" />
-          <Field label="Nom FR" name="name_fr" placeholder="Fine-Art papier" />
+          <Field label="Slug *" name="slug" placeholder="fine_art" required />
+          <Field label="Nom FR *" name="name_fr" placeholder="Fine-Art papier" required />
           <Field label="Ordre" name="sort_order" type="number" defaultValue="0" />
           <Field label="Nom NL" name="name_nl" />
           <Field label="Nom EN" name="name_en" />
@@ -125,8 +125,8 @@ export default async function ShopBoutiqueAdminPage() {
         )}
 
         <form action={createSize} className="grid sm:grid-cols-3 gap-2 items-end">
-          <Field label="Slug" name="slug" placeholder="m" />
-          <Field label="Label" name="label" placeholder="M — 50×75 cm" />
+          <Field label="Slug *" name="slug" placeholder="m" required />
+          <Field label="Label *" name="label" placeholder="M — 50×75 cm" required />
           <Field label="Ordre" name="sort_order" type="number" defaultValue="0" />
           <label className="flex items-center gap-2 sm:col-span-2">
             <input type="checkbox" name="is_active" defaultChecked className="w-4 h-4" />
@@ -138,7 +138,27 @@ export default async function ShopBoutiqueAdminPage() {
         </form>
       </section>
 
-      {/* PRICE MATRIX */}
+      {/* PRICE MATRIX — verschijnt pas zodra er minstens 1 materiaal én
+          1 formaat zijn. Anders een duidelijke uitleg waarom. */}
+      {(media.length === 0 || sizes.length === 0) && (
+        <section className="bg-amber-50 border border-amber-200 text-amber-900 rounded p-5">
+          <p className="font-medium mb-2">Prijs-matrix nog niet beschikbaar</p>
+          <p className="text-sm">
+            De matrix waar je de prijzen invult (bv. €60) verschijnt zodra er
+            minstens <strong>1 materiaal</strong> én <strong>1 formaat</strong>
+            {' '}aangemaakt zijn.
+          </p>
+          <ul className="text-sm mt-2 list-disc pl-5 space-y-0.5">
+            {media.length === 0 && (
+              <li>Voeg een materiaal toe (vul <strong>Slug</strong> + <strong>Nom FR</strong> in en klik &quot;Ajouter materiaal&quot;).</li>
+            )}
+            {sizes.length === 0 && (
+              <li>Voeg een formaat toe (Slug + Label).</li>
+            )}
+          </ul>
+        </section>
+      )}
+
       {media.length > 0 && sizes.length > 0 && (
         <section className="bg-white border border-stone-200 rounded p-5 overflow-x-auto">
           <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-3">
@@ -202,9 +222,10 @@ export default async function ShopBoutiqueAdminPage() {
 }
 
 function Field({
-  label, name, type = 'text', placeholder, defaultValue,
+  label, name, type = 'text', placeholder, defaultValue, required,
 }: {
-  label: string; name: string; type?: string; placeholder?: string; defaultValue?: string
+  label: string; name: string; type?: string; placeholder?: string
+  defaultValue?: string; required?: boolean
 }) {
   return (
     <label className="block">
@@ -214,6 +235,7 @@ function Field({
         name={name}
         placeholder={placeholder}
         defaultValue={defaultValue}
+        required={required}
         className="w-full px-2 py-1.5 bg-white border border-stone-300 rounded text-sm"
       />
     </label>
