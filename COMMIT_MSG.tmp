@@ -1,36 +1,48 @@
-Newsletter: admin (dashboard/subscribers/composer/issues) + footer subscribe + unsubscribe page
+Drukkerijen-flow: imprimeurs CRUD + bons de production + auto-trigger paid
 
-Tabel newsletter_subscribers + newsletter_issues bestaan al uit
-migration 0009 — deze commit voegt het volledige UI-deel toe.
+Geport van allardphilippe (0023_suppliers + lib + admin pages),
+volledig in shop.* schema voor jp-montreuil.
 
-lib/newsletter.ts:
-- listSubscribers (active/inactive/locale filters)
-- countActiveSubscribers (FR/NL/total)
-- listIssues + getIssue
-- subscribeToNewsletter (idempotent: re-subscribe na unsub OK)
-- unsubscribeByToken (via email-link)
+DB (migration 0026):
+- shop.suppliers (name, email, phone, default_for_media[], notes,
+  is_active, sort_order)
+- shop.supplier_order_status enum (pending->sent->acked->in_production
+  ->received_by_studio, of cancelled)
+- shop.supplier_orders (1-op-1 per shop.order_items via UNIQUE
+  constraint), met sent_at/acked_at/received_at/cancelled_at,
+  external_ref, signed_url_expires_at, notes
+- RLS authed-all (admin via service-role)
 
-Admin /admin/newsletter:
-- Dashboard: 3 stat-cards (FR/NL/total) + lijst recent issues +
-  quick-action "Composer" / "Voir abonnés".
-- /subscribers: tabel met email, locale, inschrijfdatum, status +
-  CSV-export-knop + delete per rij.
-- /compose: vertaalbare composer (subject_fr/nl + body_fr/nl HTML),
-  live preview met FR/NL toggle, sticky send-bar onderaan met confirm-
-  dialog. Verzendt sequentieel via Resend, logt counts in
-  newsletter_issues.
-- /issues/[id]: detailpagina met side-by-side FR/NL render van een
-  verzonden newsletter.
-- API /api/admin/newsletter-csv: export subscribers met BOM + RFC 4180.
+Libs:
+- lib/shop/suppliers.ts: listSuppliers, getSupplierById,
+  getDefaultSupplierFor (per medium-slug)
+- lib/shop/supplier-orders.ts: listSupplierOrders, getById, getDetail,
+  createSupplierOrdersForOrder (idempotent), setSupplierOrderStatus,
+  reassignSupplier, updateSupplierOrderNotes, sendSupplierOrderEmail
+  (genereert 30-dagen signed URL voor hi-res Storage foto, rendert
+  bon-de-commande HTML in jp-montreuil bronze/paper stijl)
 
-Public:
-- NewsletterSubscribe component (footer-variant + inline-variant) met
-  validatie + "already subscribed"-feedback. Standalone server-action
-  met IP-rate-limit (5/min).
-- Footer krijgt nieuwe block "Newsletter / Nieuwsbrief" met email-input
-  + send-knop.
-- /newsletter/unsubscribe?token=... pagina: bevestiging + retour-link.
+Admin pages (in nieuwe sidebar links onder Boutique):
+- /admin/boutique/imprimeurs/ : lijst met active/inactive badges +
+  default-media tags + notes preview
+- /admin/boutique/imprimeurs/nouveau : create form
+- /admin/boutique/imprimeurs/[id] : edit + delete (SupplierForm met
+  4 media-checkboxes, sort_order, is_active, notes)
+- /admin/boutique/production/ : alle bons met filter pills (En cours
+  / pending / sent / ... / Toutes), kolommen status/commande/tirage/
+  imprimeur/datum
+- /admin/boutique/production/[id] : detail met foto-preview, specs,
+  status-actions per fase, imprimeur-assignment dropdown (in pending),
+  klant-info, external_ref + notes inputs, en complete timeline
+  (creee/envoyee/confirmee/en production/recue/annulee/lien expire)
 
-Sidebar: nieuwe groep "Communication" met Newsletter-link.
+Auto-trigger:
+- /admin/boutique/orders/actions.ts updateOrderStatus(status='paid')
+  roept createSupplierOrdersForOrder() aan -> per print-order_item
+  (photo_id + print_media_slug not null) wordt een bon aangemaakt met
+  default-imprimeur (op basis van print_media_slug). Niet fataal bij
+  fout.
+- /api/shop/mollie-webhook idem -> wanneer Mollie status->paid update,
+  triggert ook createSupplierOrdersForOrder().
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>

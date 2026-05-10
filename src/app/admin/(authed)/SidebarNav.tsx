@@ -35,6 +35,7 @@ import {
   Truck,
   Receipt,
   MessageSquare,
+  FileText,
   type LucideIcon,
 } from 'lucide-react'
 import { useSidebarCollapse } from './SidebarCollapseContext'
@@ -70,6 +71,7 @@ const ICONS: Record<string, LucideIcon> = {
   Truck,
   Receipt,
   MessageSquare,
+  FileText,
 }
 
 export type IconName = keyof typeof ICONS

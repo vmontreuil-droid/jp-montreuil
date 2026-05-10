@@ -57,6 +57,18 @@ export async function POST(req: NextRequest) {
       update.paid_at = new Date().toISOString()
     }
     await sb.from('orders').update(update).eq('id', order.id)
+
+    // Auto-trigger bons de production zodra de order officieel betaald is.
+    // Idempotent — UNIQUE op order_item_id voorkomt dubbele bons als de
+    // webhook 2x triggert.
+    if (next === 'paid') {
+      try {
+        const { createSupplierOrdersForOrder } = await import('@/lib/shop/supplier-orders')
+        await createSupplierOrdersForOrder(order.id)
+      } catch (e) {
+        console.error('[mollie-webhook] supplier_orders auto-create failed:', e)
+      }
+    }
   }
 
   return NextResponse.json({ ok: true, status: next ?? status })

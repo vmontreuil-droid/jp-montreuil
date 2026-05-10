@@ -18,6 +18,20 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
   if (status === 'paid') update.paid_at = new Date().toISOString()
   const { error } = await sb.from('orders').update(update).eq('id', id)
   if (error) throw new Error(error.message)
+
+  // Auto-trigger bons de production zodra een order op 'paid' gaat.
+  // Idempotent (UNIQUE op order_item_id) — herhaalde runs voegen niets toe.
+  if (status === 'paid') {
+    try {
+      const { createSupplierOrdersForOrder } = await import('@/lib/shop/supplier-orders')
+      await createSupplierOrdersForOrder(id)
+      revalidatePath('/admin/boutique/production')
+    } catch (e) {
+      console.error('[supplier_orders] auto-create failed:', e)
+      // Niet fataal — order staat al op paid, admin kan handmatig terugkomen
+    }
+  }
+
   revalidatePath('/admin/boutique/orders')
   revalidatePath(`/admin/boutique/orders/${id}`)
 }
