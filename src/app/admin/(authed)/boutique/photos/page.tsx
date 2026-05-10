@@ -108,8 +108,10 @@ export default async function ShopPhotosPage() {
             title: p.title,
             alt_text: p.alt_text,
             storage_path: p.storage_path,
+            bucket: p.bucket ?? 'shop-photos',
             is_published: p.is_published,
             is_featured: (p as { is_featured?: boolean }).is_featured ?? false,
+            category_slug: (p as { category_slug?: string | null }).category_slug ?? null,
           }))}
         />
       )}
