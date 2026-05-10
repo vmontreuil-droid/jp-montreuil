@@ -43,16 +43,16 @@ export default async function ShopOrderDetailPage({
     <main className="max-w-4xl mx-auto px-6 py-10 space-y-6">
       <Link
         href="/admin/boutique/orders"
-        className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900"
+        className="inline-flex items-center gap-2 text-sm text-(--color-stone) hover:text-(--color-ink)"
       >
         <ArrowLeft size={14} /> Bestellingen
       </Link>
 
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-xs text-stone-500 uppercase tracking-widest">Référence</p>
-          <h1 className="text-3xl font-mono">{order.reference}</h1>
-          <p className="text-sm text-stone-500 mt-2">
+          <p className="text-xs text-(--color-stone) uppercase tracking-widest">Référence</p>
+          <h1 className="text-3xl font-mono text-(--color-ink)">{order.reference}</h1>
+          <p className="text-sm text-(--color-stone) mt-2">
             {new Date(order.created_at).toLocaleString('fr-BE')}
           </p>
         </div>
@@ -63,8 +63,8 @@ export default async function ShopOrderDetailPage({
 
       {/* Status-acties */}
       {transitions.length > 0 && (
-        <section className="bg-white border border-stone-200 rounded p-5">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-3">
+        <section className="bg-(--color-paper) border border-(--color-frame) rounded p-5">
+          <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">
             Acties
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -72,7 +72,7 @@ export default async function ShopOrderDetailPage({
               <form key={s} action={updateOrderStatus.bind(null, order.id, s)}>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm rounded"
                 >
                   Marquer comme {ORDER_STATUS_LABELS[s].toLowerCase()}
                 </button>
@@ -84,22 +84,22 @@ export default async function ShopOrderDetailPage({
 
       {/* Klant + adres */}
       <section className="grid sm:grid-cols-2 gap-4">
-        <div className="bg-white border border-stone-200 rounded p-5">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-2">Client</h2>
+        <div className="bg-(--color-paper) border border-(--color-frame) rounded p-5">
+          <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-2">Client</h2>
           {order.is_b2b && (
-            <p className="inline-flex items-center gap-1.5 px-2 py-0.5 mb-2 bg-stone-900 text-white text-[10px] uppercase tracking-widest rounded-sm">
+            <p className="inline-flex items-center gap-1.5 px-2 py-0.5 mb-2 bg-(--color-bronze) text-white text-[10px] uppercase tracking-widest rounded-sm">
               <Building2 size={11} /> B2B
             </p>
           )}
           {order.company_name && (
-            <p className="font-semibold text-stone-900">{order.company_name}</p>
+            <p className="font-semibold text-(--color-ink)">{order.company_name}</p>
           )}
-          <p className={order.company_name ? 'text-sm text-stone-700' : 'font-medium'}>{order.full_name}</p>
-          <p className="text-sm text-stone-600">
-            <a href={`mailto:${order.email}`} className="hover:text-stone-900">{order.email}</a>
+          <p className={order.company_name ? 'text-sm text-(--color-charcoal)' : 'font-medium'}>{order.full_name}</p>
+          <p className="text-sm text-(--color-charcoal)">
+            <a href={`mailto:${order.email}`} className="hover:text-(--color-ink)">{order.email}</a>
           </p>
           {order.vat_number && (
-            <p className="mt-2 text-xs font-mono text-stone-700 inline-flex items-center gap-1.5">
+            <p className="mt-2 text-xs font-mono text-(--color-charcoal) inline-flex items-center gap-1.5">
               TVA : {order.vat_number}
               {order.vat_validated_at ? (
                 <span className="inline-flex items-center gap-0.5 text-emerald-700">
@@ -113,14 +113,14 @@ export default async function ShopOrderDetailPage({
             </p>
           )}
           {order.vat_company_name && order.vat_company_name !== order.company_name && (
-            <p className="text-xs text-stone-500 mt-1">
+            <p className="text-xs text-(--color-stone) mt-1">
               VIES retourne : <em>{order.vat_company_name}</em>
             </p>
           )}
         </div>
-        <div className="bg-white border border-stone-200 rounded p-5">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-2">Livraison</h2>
-          <address className="not-italic text-sm text-stone-700 leading-relaxed">
+        <div className="bg-(--color-paper) border border-(--color-frame) rounded p-5">
+          <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-2">Livraison</h2>
+          <address className="not-italic text-sm text-(--color-charcoal) leading-relaxed">
             {addr.street && <div>{addr.street}</div>}
             {(addr.postal_code || addr.city) && (
               <div>
@@ -133,60 +133,60 @@ export default async function ShopOrderDetailPage({
       </section>
 
       {/* Items */}
-      <section className="bg-white border border-stone-200 rounded p-5">
-        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-3">Articles</h2>
+      <section className="bg-(--color-paper) border border-(--color-frame) rounded p-5">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">Articles</h2>
         <ul className="divide-y divide-stone-200 text-sm">
           {items.map((it) => (
             <li key={it.id} className="py-2 flex justify-between gap-3">
               <span>
                 {it.title}
-                <span className="text-xs text-stone-500"> × {it.quantity}</span>
+                <span className="text-xs text-(--color-stone)"> × {it.quantity}</span>
               </span>
               <span className="font-medium tabular-nums">{formatPrice(it.unit_price_cents * it.quantity)}</span>
             </li>
           ))}
         </ul>
-        <div className="border-t border-stone-200 mt-3 pt-3 space-y-1 text-sm">
-          <div className="flex justify-between text-stone-500">
+        <div className="border-t border-(--color-frame) mt-3 pt-3 space-y-1 text-sm">
+          <div className="flex justify-between text-(--color-stone)">
             <span>Frais de port</span>
             <span className="tabular-nums">
               {order.shipping_cents > 0 ? formatPrice(order.shipping_cents) : 'gratuit'}
             </span>
           </div>
-          <div className="flex justify-between pt-2 border-t border-stone-200">
-            <span className="text-sm uppercase tracking-widest text-stone-500">Total</span>
+          <div className="flex justify-between pt-2 border-t border-(--color-frame)">
+            <span className="text-sm uppercase tracking-widest text-(--color-stone)">Total</span>
             <span className="text-2xl font-semibold tabular-nums">{formatPrice(order.amount_cents)}</span>
           </div>
         </div>
       </section>
 
       {/* Tracking */}
-      <section className="bg-white border border-stone-200 rounded p-5">
-        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-3 inline-flex items-center gap-2">
+      <section className="bg-(--color-paper) border border-(--color-frame) rounded p-5">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3 inline-flex items-center gap-2">
           <Truck size={14} /> Tracking
         </h2>
         <form action={setTracking.bind(null, order.id)} className="grid grid-cols-2 gap-3 items-end">
           <label className="block">
-            <span className="text-xs text-stone-700 mb-1 block">Transporteur</span>
+            <span className="text-xs text-(--color-charcoal) mb-1 block">Transporteur</span>
             <input
               type="text"
               name="carrier"
               defaultValue={order.tracking_carrier ?? ''}
               placeholder="bpost, DPD, …"
-              className="w-full px-2 py-1.5 bg-white border border-stone-300 rounded text-sm"
+              className="w-full px-2 py-1.5 bg-(--color-paper) border border-(--color-frame) rounded text-sm"
             />
           </label>
           <label className="block">
-            <span className="text-xs text-stone-700 mb-1 block">Numéro</span>
+            <span className="text-xs text-(--color-charcoal) mb-1 block">Numéro</span>
             <input
               type="text"
               name="number"
               defaultValue={order.tracking_number ?? ''}
-              className="w-full px-2 py-1.5 bg-white border border-stone-300 rounded text-sm font-mono"
+              className="w-full px-2 py-1.5 bg-(--color-paper) border border-(--color-frame) rounded text-sm font-mono"
             />
           </label>
           <div className="col-span-2">
-            <button type="submit" className="inline-flex items-center gap-2 px-3 py-2 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded">
+            <button type="submit" className="inline-flex items-center gap-2 px-3 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm rounded">
               <Save size={14} /> Enregistrer
             </button>
           </div>

@@ -14,24 +14,24 @@ export default async function NewShopProductPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-6 py-10 space-y-6">
-      <Link href="/admin/boutique/products" className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900">
+      <Link href="/admin/boutique/products" className="inline-flex items-center gap-2 text-sm text-(--color-stone) hover:text-(--color-ink)">
         <ArrowLeft size={14} /> Produits
       </Link>
 
-      <h1 className="text-3xl font-semibold inline-flex items-center gap-2">
+      <h1 className="font-[family-name:var(--font-display)] text-3xl text-(--color-ink) inline-flex items-center gap-2">
         <Plus size={24} /> Nouveau produit
       </h1>
 
-      <form action={createShopProduct} className="bg-white border border-stone-200 rounded p-6 space-y-4">
+      <form action={createShopProduct} className="bg-(--color-paper) border border-(--color-frame) rounded p-6 space-y-4">
         <div className="grid sm:grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-sm text-stone-700 mb-1 block">Type *</span>
-            <select name="kind" required className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm">
+            <span className="text-sm text-(--color-charcoal) mb-1 block">Type *</span>
+            <select name="kind" required className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) rounded text-sm">
               <option value="print">Tirage classique (avec variants)</option>
               <option value="download">Téléchargement digital</option>
               <option value="commission">Sur commande / commission</option>
             </select>
-            <span className="text-xs text-stone-500 mt-1 block">
+            <span className="text-xs text-(--color-stone) mt-1 block">
               Voor printbare foto&apos;s gebruik je Photos + Configurateur
               (geen klassiek product nodig).
             </span>
@@ -57,8 +57,8 @@ export default async function NewShopProductPage() {
         </div>
 
         <label className="block">
-          <span className="text-sm text-stone-700 mb-1 block">Photo de couverture</span>
-          <select name="cover_photo_id" className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm">
+          <span className="text-sm text-(--color-charcoal) mb-1 block">Photo de couverture</span>
+          <select name="cover_photo_id" className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) rounded text-sm">
             <option value="">— aucune —</option>
             {photos.map((p) => (
               <option key={p.id} value={p.id}>
@@ -73,8 +73,8 @@ export default async function NewShopProductPage() {
           <span className="text-sm">Publier directement</span>
         </label>
 
-        <div className="pt-3 border-t border-stone-200">
-          <button type="submit" className="inline-flex items-center gap-2 px-4 py-2 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded">
+        <div className="pt-3 border-t border-(--color-frame)">
+          <button type="submit" className="inline-flex items-center gap-2 px-4 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm rounded">
             <Save size={16} /> Créer
           </button>
         </div>
@@ -91,7 +91,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-sm text-stone-700 mb-1 block">{label}</span>
+      <span className="text-sm text-(--color-charcoal) mb-1 block">{label}</span>
       <input
         type={type}
         name={name}
@@ -99,7 +99,7 @@ function Field({
         defaultValue={defaultValue}
         required={required}
         step={step}
-        className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm"
+        className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) rounded text-sm"
       />
     </label>
   )
@@ -112,12 +112,12 @@ function TextArea({
 }) {
   return (
     <label className="block">
-      <span className="text-sm text-stone-700 mb-1 block">{label}</span>
+      <span className="text-sm text-(--color-charcoal) mb-1 block">{label}</span>
       <textarea
         name={name}
         defaultValue={defaultValue}
         rows={2}
-        className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm"
+        className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) rounded text-sm"
       />
     </label>
   )

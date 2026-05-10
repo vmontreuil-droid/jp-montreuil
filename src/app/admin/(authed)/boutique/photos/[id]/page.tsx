@@ -30,7 +30,7 @@ export default async function EditShopPhotoPage({
     <main className="max-w-5xl mx-auto px-6 py-10 space-y-6">
       <Link
         href="/admin/boutique/photos"
-        className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900"
+        className="inline-flex items-center gap-2 text-sm text-(--color-stone) hover:text-(--color-ink)"
       >
         <ArrowLeft size={14} /> Retour aux photos
       </Link>
@@ -38,7 +38,7 @@ export default async function EditShopPhotoPage({
       <div className="grid md:grid-cols-2 gap-8">
         {/* Preview */}
         <div>
-          <div className="bg-white border border-stone-200 rounded overflow-hidden">
+          <div className="bg-(--color-paper) border border-(--color-frame) rounded overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={shopPhotoUrl(photo.storage_path)}
@@ -46,17 +46,17 @@ export default async function EditShopPhotoPage({
               className="w-full h-auto"
             />
           </div>
-          <dl className="mt-3 text-xs text-stone-500 space-y-1">
-            <div><dt className="inline text-stone-700">Slug :</dt> <dd className="inline">{photo.slug}</dd></div>
-            <div><dt className="inline text-stone-700">Chemin :</dt> <dd className="inline">{photo.storage_path}</dd></div>
+          <dl className="mt-3 text-xs text-(--color-stone) space-y-1">
+            <div><dt className="inline text-(--color-charcoal)">Slug :</dt> <dd className="inline">{photo.slug}</dd></div>
+            <div><dt className="inline text-(--color-charcoal)">Chemin :</dt> <dd className="inline">{photo.storage_path}</dd></div>
             {photo.width && photo.height && (
-              <div><dt className="inline text-stone-700">Dimensions :</dt> <dd className="inline">{photo.width} × {photo.height}</dd></div>
+              <div><dt className="inline text-(--color-charcoal)">Dimensions :</dt> <dd className="inline">{photo.width} × {photo.height}</dd></div>
             )}
           </dl>
         </div>
 
         {/* Edit form */}
-        <form action={updateBound} className="bg-white border border-stone-200 rounded p-6 space-y-4">
+        <form action={updateBound} className="bg-(--color-paper) border border-(--color-frame) rounded p-6 space-y-4">
           <Field label="Titre" name="title" defaultValue={photo.title ?? ''} />
           <Field label="Espèce" name="species" defaultValue={photo.species ?? ''} />
           <Field label="Lieu" name="taken_at_location" defaultValue={photo.taken_at_location ?? ''} />
@@ -69,10 +69,10 @@ export default async function EditShopPhotoPage({
             <span className="text-sm">Visible publiquement</span>
           </label>
 
-          <div className="flex flex-wrap gap-2 pt-3 border-t border-stone-200">
+          <div className="flex flex-wrap gap-2 pt-3 border-t border-(--color-frame)">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm rounded"
             >
               <Save size={16} /> Enregistrer
             </button>
@@ -84,7 +84,7 @@ export default async function EditShopPhotoPage({
         <form action={toggleBound}>
           <button
             type="submit"
-            className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-stone-300 hover:border-stone-500 text-sm rounded"
+            className="inline-flex items-center gap-2 px-3 py-2 bg-(--color-paper) border border-(--color-frame) hover:border-(--color-bronze) text-sm rounded"
           >
             {photo.is_published ? <EyeOff size={16} /> : <Eye size={16} />}
             {photo.is_published ? 'Repasser en brouillon' : 'Publier'}
@@ -93,7 +93,7 @@ export default async function EditShopPhotoPage({
         <form action={deleteBound}>
           <button
             type="submit"
-            className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-amber-300 text-amber-700 hover:bg-amber-50 text-sm rounded"
+            className="inline-flex items-center gap-2 px-3 py-2 bg-(--color-paper) border border-amber-300 text-amber-700 hover:bg-amber-50 text-sm rounded"
           >
             <Trash2 size={16} /> Supprimer
           </button>
@@ -110,12 +110,12 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-sm text-stone-700 mb-1 block">{label}</span>
+      <span className="text-sm text-(--color-charcoal) mb-1 block">{label}</span>
       <input
         type={type}
         name={name}
         defaultValue={defaultValue}
-        className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm"
+        className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) rounded text-sm"
       />
     </label>
   )
@@ -128,12 +128,12 @@ function TextArea({
 }) {
   return (
     <label className="block">
-      <span className="text-sm text-stone-700 mb-1 block">{label}</span>
+      <span className="text-sm text-(--color-charcoal) mb-1 block">{label}</span>
       <textarea
         name={name}
         defaultValue={defaultValue}
         rows={3}
-        className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm"
+        className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) rounded text-sm"
       />
     </label>
   )

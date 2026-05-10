@@ -19,27 +19,27 @@ export default async function ShopOrdersAdminPage() {
   return (
     <main className="max-w-6xl mx-auto px-6 py-10 space-y-6">
       <div className="flex items-center gap-2 text-sm">
-        <Link href="/admin/boutique" className="text-stone-500 hover:text-stone-900 inline-flex items-center gap-1">
+        <Link href="/admin/boutique" className="text-(--color-stone) hover:text-(--color-ink) inline-flex items-center gap-1">
           <ArrowLeft size={12} /> Admin
         </Link>
-        <span className="text-stone-300">/</span>
-        <span className="text-stone-900">Bestellingen</span>
+        <span className="text-(--color-stone)/60">/</span>
+        <span className="text-(--color-ink)">Bestellingen</span>
       </div>
 
       <header>
-        <h1 className="text-3xl font-semibold inline-flex items-center gap-2">
+        <h1 className="font-[family-name:var(--font-display)] text-3xl text-(--color-ink) inline-flex items-center gap-2">
           <ShoppingCart size={24} /> Bestellingen
         </h1>
-        <p className="text-sm text-stone-600">{orders.length} bestelling{orders.length === 1 ? '' : 'en'}</p>
+        <p className="text-sm text-(--color-charcoal)">{orders.length} bestelling{orders.length === 1 ? '' : 'en'}</p>
       </header>
 
       {orders.length === 0 ? (
-        <p className="text-center text-stone-500 py-10">Geen bestellingen.</p>
+        <p className="text-center text-(--color-stone) py-10">Geen bestellingen.</p>
       ) : (
-        <div className="bg-white border border-stone-200 rounded overflow-hidden">
+        <div className="bg-(--color-paper) border border-(--color-frame) rounded overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="border-b border-stone-200 bg-stone-50">
-              <tr className="text-left text-xs text-stone-500 uppercase tracking-wider">
+            <thead className="border-b border-(--color-frame) bg-(--color-canvas)">
+              <tr className="text-left text-xs text-(--color-stone) uppercase tracking-wider">
                 <th className="p-3">Référence</th>
                 <th className="p-3">Client</th>
                 <th className="p-3">Statut</th>
@@ -49,15 +49,15 @@ export default async function ShopOrdersAdminPage() {
             </thead>
             <tbody>
               {orders.map((o) => (
-                <tr key={o.id} className="border-b border-stone-100 hover:bg-stone-50">
+                <tr key={o.id} className="border-b border-(--color-frame)/60 hover:bg-(--color-canvas)">
                   <td className="p-3">
-                    <Link href={`/admin/boutique/orders/${o.id}`} className="font-mono text-stone-900 hover:underline">
+                    <Link href={`/admin/boutique/orders/${o.id}`} className="font-mono text-(--color-ink) hover:underline">
                       {o.reference}
                     </Link>
                   </td>
                   <td className="p-3">
                     {o.full_name}
-                    <p className="text-xs text-stone-500">{o.email}</p>
+                    <p className="text-xs text-(--color-stone)">{o.email}</p>
                   </td>
                   <td className="p-3">
                     <span className={`inline-block px-2 py-0.5 text-xs ${ORDER_STATUS_COLORS[o.status]}`}>
@@ -65,7 +65,7 @@ export default async function ShopOrdersAdminPage() {
                     </span>
                   </td>
                   <td className="p-3 text-right font-medium tabular-nums">{formatPrice(o.amount_cents)}</td>
-                  <td className="p-3 text-xs text-stone-500">
+                  <td className="p-3 text-xs text-(--color-stone)">
                     {new Date(o.created_at).toLocaleDateString('fr-BE')}
                   </td>
                 </tr>

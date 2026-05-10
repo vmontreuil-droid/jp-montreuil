@@ -30,11 +30,11 @@ export default async function ShopAdminPage() {
   return (
     <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
       <header>
-        <h1 className="text-3xl font-semibold mb-1 inline-flex items-center gap-2">
+        <h1 className="font-[family-name:var(--font-display)] text-3xl text-(--color-ink) mb-1 inline-flex items-center gap-2">
           <Settings size={24} />
           Webshop · Administration
         </h1>
-        <p className="text-sm text-stone-600">
+        <p className="text-sm text-(--color-charcoal)">
           Beheer producten, bestellingen, klanten en drukkerijen.
         </p>
       </header>
@@ -61,7 +61,7 @@ export default async function ShopAdminPage() {
       )}
 
       <section>
-        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-3">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">
           Modules
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -109,7 +109,7 @@ export default async function ShopAdminPage() {
             disabled
           />
         </div>
-        <p className="text-xs text-stone-400 mt-3">
+        <p className="text-xs text-(--color-stone)/70 mt-3">
           De modules zijn nog niet geïmplementeerd in deze scaffolding-commit.
           Volgende stap: producten + configurator porten uit allardphilippe.
         </p>
@@ -135,20 +135,20 @@ function ModuleCard({
 }) {
   const inner = (
     <div
-      className={`bg-white border border-stone-200 rounded-lg p-5 ${
-        disabled ? 'opacity-60' : 'hover:border-stone-400 transition-colors'
+      className={`bg-(--color-paper) border border-(--color-frame) rounded-lg p-5 ${
+        disabled ? 'opacity-60' : 'hover:border-(--color-bronze) transition-colors'
       }`}
     >
       <div className="flex items-center justify-between mb-2">
-        <Icon size={18} className="text-stone-600" />
+        <Icon size={18} className="text-(--color-charcoal)" />
         {count !== null && (
           <span className="text-2xl font-semibold tabular-nums">{count}</span>
         )}
       </div>
       <p className="font-medium">{label}</p>
-      <p className="text-xs text-stone-500 mt-1">{description}</p>
+      <p className="text-xs text-(--color-stone) mt-1">{description}</p>
       {disabled && (
-        <p className="text-[10px] text-stone-400 uppercase tracking-wider mt-3">
+        <p className="text-[10px] text-(--color-stone)/70 uppercase tracking-wider mt-3">
           Komt eraan
         </p>
       )}

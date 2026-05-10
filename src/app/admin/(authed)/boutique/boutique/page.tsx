@@ -33,30 +33,30 @@ export default async function ShopBoutiqueAdminPage() {
   return (
     <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
       <div className="flex items-center gap-2 text-sm">
-        <Link href="/admin/boutique" className="text-stone-500 hover:text-stone-900 inline-flex items-center gap-1">
+        <Link href="/admin/boutique" className="text-(--color-stone) hover:text-(--color-ink) inline-flex items-center gap-1">
           <ArrowLeft size={12} /> Admin
         </Link>
-        <span className="text-stone-300">/</span>
-        <span className="text-stone-900">Boutique (configurator)</span>
+        <span className="text-(--color-stone)/60">/</span>
+        <span className="text-(--color-ink)">Boutique (configurator)</span>
       </div>
 
       <header>
-        <h1 className="text-3xl font-semibold mb-1 inline-flex items-center gap-2">
+        <h1 className="font-[family-name:var(--font-display)] text-3xl text-(--color-ink) mb-1 inline-flex items-center gap-2">
           <ShoppingBag size={24} /> Boutique — configurator
         </h1>
-        <p className="text-sm text-stone-600">
+        <p className="text-sm text-(--color-charcoal)">
           Beheer de matrix van <strong>materialen × formaten × prijzen</strong> voor
           de print-on-demand configurator.
         </p>
       </header>
 
       {/* MEDIA */}
-      <section className="bg-white border border-stone-200 rounded p-5">
-        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-3">
+      <section className="bg-(--color-paper) border border-(--color-frame) rounded p-5">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">
           Materialen ({media.length})
         </h2>
         {media.length === 0 ? (
-          <p className="text-sm text-stone-500 mb-4">
+          <p className="text-sm text-(--color-stone) mb-4">
             Geen materialen. Voeg er minstens één toe (bv. fine_art, canvas, alu, plexi).
           </p>
         ) : (
@@ -64,13 +64,13 @@ export default async function ShopBoutiqueAdminPage() {
             {media.map((m) => (
               <li key={m.id} className={`py-2 flex items-center justify-between gap-3 ${m.is_active ? '' : 'opacity-60'}`}>
                 <div className="text-sm">
-                  <span className="font-mono text-xs text-stone-500">{m.slug}</span>
+                  <span className="font-mono text-xs text-(--color-stone)">{m.slug}</span>
                   {' · '}
                   <span>{m.name_fr}</span>
-                  {!m.is_active && <span className="text-xs text-stone-400 ml-2">(inactif)</span>}
+                  {!m.is_active && <span className="text-xs text-(--color-stone)/70 ml-2">(inactif)</span>}
                 </div>
                 <form action={deleteMedium.bind(null, m.id)}>
-                  <button type="submit" className="p-1.5 text-stone-400 hover:text-amber-700" aria-label="Supprimer">
+                  <button type="submit" className="p-1.5 text-(--color-stone)/70 hover:text-amber-700" aria-label="Supprimer">
                     <Trash2 size={14} />
                   </button>
                 </form>
@@ -90,7 +90,7 @@ export default async function ShopBoutiqueAdminPage() {
             <span className="text-sm">Actif</span>
           </label>
           <div className="sm:col-span-3">
-            <button type="submit" className="inline-flex items-center gap-2 px-3 py-2 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded">
+            <button type="submit" className="inline-flex items-center gap-2 px-3 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm rounded">
               <Plus size={14} /> Ajouter materiaal
             </button>
           </div>
@@ -98,12 +98,12 @@ export default async function ShopBoutiqueAdminPage() {
       </section>
 
       {/* SIZES */}
-      <section className="bg-white border border-stone-200 rounded p-5">
-        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-3">
+      <section className="bg-(--color-paper) border border-(--color-frame) rounded p-5">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">
           Formaten ({sizes.length})
         </h2>
         {sizes.length === 0 ? (
-          <p className="text-sm text-stone-500 mb-4">
+          <p className="text-sm text-(--color-stone) mb-4">
             Geen formaten. Voeg er een paar toe (bv. S 30×45, M 50×75, L 70×100, …).
           </p>
         ) : (
@@ -111,11 +111,11 @@ export default async function ShopBoutiqueAdminPage() {
             {sizes.map((s) => (
               <li key={s.id} className={`py-2 flex items-center justify-between gap-3 ${s.is_active ? '' : 'opacity-60'}`}>
                 <div className="text-sm">
-                  <span className="font-mono text-xs text-stone-500">{s.slug}</span>{' · '}<span>{s.label}</span>
-                  {!s.is_active && <span className="text-xs text-stone-400 ml-2">(inactif)</span>}
+                  <span className="font-mono text-xs text-(--color-stone)">{s.slug}</span>{' · '}<span>{s.label}</span>
+                  {!s.is_active && <span className="text-xs text-(--color-stone)/70 ml-2">(inactif)</span>}
                 </div>
                 <form action={deleteSize.bind(null, s.id)}>
-                  <button type="submit" className="p-1.5 text-stone-400 hover:text-amber-700" aria-label="Supprimer">
+                  <button type="submit" className="p-1.5 text-(--color-stone)/70 hover:text-amber-700" aria-label="Supprimer">
                     <Trash2 size={14} />
                   </button>
                 </form>
@@ -132,7 +132,7 @@ export default async function ShopBoutiqueAdminPage() {
             <input type="checkbox" name="is_active" defaultChecked className="w-4 h-4" />
             <span className="text-sm">Actif</span>
           </label>
-          <button type="submit" className="inline-flex items-center gap-2 px-3 py-2 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded">
+          <button type="submit" className="inline-flex items-center gap-2 px-3 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm rounded">
             <Plus size={14} /> Ajouter formaat
           </button>
         </form>
@@ -160,17 +160,17 @@ export default async function ShopBoutiqueAdminPage() {
       )}
 
       {media.length > 0 && sizes.length > 0 && (
-        <section className="bg-white border border-stone-200 rounded p-5 overflow-x-auto">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-3">
+        <section className="bg-(--color-paper) border border-(--color-frame) rounded p-5 overflow-x-auto">
+          <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">
             Prijs-matrix (€)
           </h2>
-          <p className="text-xs text-stone-500 mb-4">
+          <p className="text-xs text-(--color-stone) mb-4">
             Klik op een cel om de prijs aan te passen. Lege cel = combinatie niet beschikbaar.
           </p>
           <table className="text-sm border-collapse min-w-full">
             <thead>
-              <tr className="border-b border-stone-200">
-                <th className="text-left p-2 font-medium text-stone-500">Materiaal \\ Formaat</th>
+              <tr className="border-b border-(--color-frame)">
+                <th className="text-left p-2 font-medium text-(--color-stone)">Materiaal \\ Formaat</th>
                 {sizes.map((s) => (
                   <th key={s.id} className="p-2 text-center font-medium">{s.label}</th>
                 ))}
@@ -178,7 +178,7 @@ export default async function ShopBoutiqueAdminPage() {
             </thead>
             <tbody>
               {media.map((m) => (
-                <tr key={m.id} className="border-b border-stone-100">
+                <tr key={m.id} className="border-b border-(--color-frame)/60">
                   <td className="p-2 font-medium">{m.name_fr}</td>
                   {sizes.map((s) => {
                     const cell = cellByKey.get(`${m.id}|${s.id}`)
@@ -193,7 +193,7 @@ export default async function ShopBoutiqueAdminPage() {
                             name="price_eur"
                             defaultValue={cell ? (cell.price_cents / 100).toFixed(2) : ''}
                             placeholder="—"
-                            className="w-20 px-2 py-1 border border-stone-300 rounded text-sm text-right tabular-nums"
+                            className="w-20 px-2 py-1 border border-(--color-frame) rounded text-sm text-right tabular-nums"
                           />
                           <input
                             type="checkbox"
@@ -202,7 +202,7 @@ export default async function ShopBoutiqueAdminPage() {
                             className="w-3 h-3"
                             title="Disponible"
                           />
-                          <button type="submit" className="text-xs text-stone-400 hover:text-stone-900">↵</button>
+                          <button type="submit" className="text-xs text-(--color-stone)/70 hover:text-(--color-ink)">↵</button>
                         </form>
                       </td>
                     )
@@ -211,7 +211,7 @@ export default async function ShopBoutiqueAdminPage() {
               ))}
             </tbody>
           </table>
-          <p className="text-[11px] text-stone-400 mt-3">
+          <p className="text-[11px] text-(--color-stone)/70 mt-3">
             Tip: laat het prijsveld leeg en druk Enter om een cel te verwijderen.
             Vink het check-vakje uit om de combo tijdelijk te deactiveren zonder de prijs te verliezen.
           </p>
@@ -229,14 +229,14 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-xs text-stone-700 mb-1 block">{label}</span>
+      <span className="text-xs text-(--color-charcoal) mb-1 block">{label}</span>
       <input
         type={type}
         name={name}
         placeholder={placeholder}
         defaultValue={defaultValue}
         required={required}
-        className="w-full px-2 py-1.5 bg-white border border-stone-300 rounded text-sm"
+        className="w-full px-2 py-1.5 bg-(--color-paper) border border-(--color-frame) rounded text-sm"
       />
     </label>
   )
