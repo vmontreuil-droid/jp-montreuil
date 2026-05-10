@@ -27,11 +27,14 @@ export default async function NewShopProductPage() {
           <label className="block">
             <span className="text-sm text-stone-700 mb-1 block">Type *</span>
             <select name="kind" required className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm">
-              <option value="print">Tirage (avec variants)</option>
-              <option value="calendar">Calendrier</option>
+              <option value="print">Tirage classique (avec variants)</option>
               <option value="download">Téléchargement digital</option>
               <option value="commission">Sur commande / commission</option>
             </select>
+            <span className="text-xs text-stone-500 mt-1 block">
+              Voor printbare foto&apos;s gebruik je Photos + Configurateur
+              (geen klassiek product nodig).
+            </span>
           </label>
           <Field label="Slug (optionnel)" name="slug" placeholder="auto vanaf titel" />
         </div>
