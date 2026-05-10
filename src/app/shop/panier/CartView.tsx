@@ -117,15 +117,13 @@ export function CartView() {
           <span className="text-sm uppercase tracking-widest text-stone-500">Total</span>
           <span className="text-2xl font-semibold tabular-nums">{formatPrice(subtotal)}</span>
         </div>
-        <button
-          type="button"
-          disabled
-          className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-stone-900 text-white hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm rounded transition-colors"
-          title="Checkout komt in v3"
+        <Link
+          href="/shop/checkout"
+          className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded transition-colors"
         >
           <ShoppingBag size={16} />
-          Vers le checkout (v3)
-        </button>
+          Vers le checkout
+        </Link>
         <button
           type="button"
           onClick={clear}

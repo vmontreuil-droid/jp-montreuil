@@ -92,30 +92,20 @@ export default async function ShopAdminPage() {
             count={health.counts.orders}
             href="/shop/admin/orders"
             description="Klant-orders met status-flow"
-            disabled
+          />
+          <ModuleCard
+            icon={Truck}
+            label="Frais de port"
+            count={null}
+            href="/shop/admin/shipping"
+            description="Verzendzones + tarieven + gratis-drempels"
           />
           <ModuleCard
             icon={Users}
             label="Klanten"
             count={health.counts.customers}
             href="/shop/admin/customers"
-            description="Klantenfiches + B2B-gegevens"
-            disabled
-          />
-          <ModuleCard
-            icon={Truck}
-            label="Drukkerijen"
-            count={null}
-            href="/shop/admin/suppliers"
-            description="Suppliers + auto bons de production"
-            disabled
-          />
-          <ModuleCard
-            icon={Settings}
-            label="Instellingen"
-            count={null}
-            href="/shop/admin/settings"
-            description="Verzendzones, betalingen, branding"
+            description="Klantenfiches (komt eraan)"
             disabled
           />
         </div>
