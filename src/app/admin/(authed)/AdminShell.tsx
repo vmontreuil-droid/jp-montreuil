@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Menu, X } from 'lucide-react'
+import { SidebarCollapseProvider, useSidebarCollapse } from './SidebarCollapseContext'
 
 type Props = {
   sidebar: React.ReactNode
@@ -10,14 +11,25 @@ type Props = {
 
 /**
  * Responsive shell rond de admin-sidebar.
- *  - md+ : sidebar staat vast naast de main content (zoals voorheen)
+ *  - md+ : sidebar staat vast naast de main content. Optioneel inklapbaar
+ *          naar 56px (icons-only) via de toggle in SidebarNav.
  *  - <md : sidebar is een drawer die ingeklapt opent. Hamburger linksboven
  *          opent, klikken op een nav-link of de backdrop sluit weer.
  *
  * Beginsituatie op mobiel = ingeklapt (useState(false)).
+ * Collapse-state op desktop = uit context (gehydrateerd uit localStorage).
  */
 export default function AdminShell({ sidebar, children }: Props) {
+  return (
+    <SidebarCollapseProvider>
+      <ShellInner sidebar={sidebar}>{children}</ShellInner>
+    </SidebarCollapseProvider>
+  )
+}
+
+function ShellInner({ sidebar, children }: Props) {
   const [open, setOpen] = useState(false)
+  const { collapsed } = useSidebarCollapse()
 
   // Esc + body scroll-lock zolang drawer open is
   useEffect(() => {
@@ -66,10 +78,12 @@ export default function AdminShell({ sidebar, children }: Props) {
         }`}
       />
 
-      {/* Sidebar */}
+      {/* Sidebar — width animeert tussen 64 en 14 op md+ */}
       <aside
         onClick={handleSidebarClick}
-        className={`fixed md:sticky top-0 left-0 z-50 w-64 h-screen shrink-0 border-r border-(--color-frame) bg-(--color-paper) flex flex-col overflow-y-auto transition-transform duration-200 ease-out ${
+        className={`fixed md:sticky top-0 left-0 z-50 w-64 ${
+          collapsed ? 'md:w-14' : 'md:w-64'
+        } h-screen shrink-0 border-r border-(--color-frame) bg-(--color-paper) flex flex-col overflow-y-auto transition-[transform,width] duration-200 ease-out ${
           open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >

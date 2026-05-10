@@ -1,12 +1,9 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import Image from 'next/image'
-import { Home } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import SignOutButton from './SignOutButton'
-import ThemeToggle from '@/components/site/ThemeToggle'
 import AdminShell from './AdminShell'
 import SidebarNav, { type SidebarGroup, type SidebarItem } from './SidebarNav'
+import SidebarHeader from './SidebarHeader'
+import SidebarFooter from './SidebarFooter'
 
 export const dynamic = 'force-dynamic'
 
@@ -157,44 +154,22 @@ export default async function AuthedAdminLayout({
         { href: '/admin/signature', label: 'Signature mail', icon: 'PenTool' },
       ],
     },
+    {
+      id: 'compte',
+      title: 'Compte & configuration',
+      icon: 'Settings',
+      items: [
+        { href: '/admin/account', label: 'Mon compte', icon: 'UserCircle' },
+        { href: '/admin/settings', label: 'Paramètres du site', icon: 'Settings' },
+      ],
+    },
   ]
 
   const sidebar = (
     <>
-      <div className="p-6 border-b border-(--color-frame)">
-        <Link href="/admin" className="flex items-center gap-2">
-          <Image
-            src="/logo.png"
-            alt="Atelier Montreuil"
-            width={743}
-            height={258}
-            className="h-9 w-auto logo-invert"
-          />
-        </Link>
-        <p className="mt-2 text-xs uppercase tracking-[0.2em] text-(--color-stone)">
-          Administration
-        </p>
-      </div>
-
+      <SidebarHeader />
       <SidebarNav pinned={pinned} groups={groups} />
-
-      <div className="p-4 border-t border-(--color-frame) space-y-1">
-        <Link
-          href="/"
-          className="flex items-center gap-3 px-3 py-2 text-xs uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink) transition-colors"
-        >
-          <Home className="w-4 h-4" />
-          Retour au site
-        </Link>
-        <div className="px-3 py-2 flex items-center justify-between">
-          <span className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
-            Thème
-          </span>
-          <ThemeToggle labelLight="Mode clair" labelDark="Mode sombre" />
-        </div>
-        <p className="px-3 pt-3 text-xs text-(--color-stone) truncate">{profile.email}</p>
-        <SignOutButton />
-      </div>
+      <SidebarFooter email={profile.email ?? user.email ?? ''} />
     </>
   )
 

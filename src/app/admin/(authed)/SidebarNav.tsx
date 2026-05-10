@@ -22,8 +22,17 @@ import {
   Sparkles,
   Users,
   Globe,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings,
+  UserCircle,
+  Newspaper,
+  AlertTriangle,
+  Shield,
+  Sliders,
   type LucideIcon,
 } from 'lucide-react'
+import { useSidebarCollapse } from './SidebarCollapseContext'
 
 // Server component → client component props moeten serialiseerbaar zijn,
 // dus geven we icon-NAMEN door (strings) en resolven ze hier.
@@ -45,6 +54,12 @@ const ICONS: Record<string, LucideIcon> = {
   Sparkles,
   Users,
   Globe,
+  Settings,
+  UserCircle,
+  Newspaper,
+  AlertTriangle,
+  Shield,
+  Sliders,
 }
 
 export type IconName = keyof typeof ICONS
@@ -72,14 +87,22 @@ type Props = {
   groups: SidebarGroup[]
 }
 
-const STORAGE_KEY = 'admin.sidebar.groups.v1'
+const STORAGE_KEY_GROUPS = 'admin.sidebar.groups.v1'
 
 function isActive(pathname: string, href: string): boolean {
   if (href === '/admin') return pathname === '/admin'
   return pathname === href || pathname.startsWith(href + '/')
 }
 
-function NavLink({ item, pathname }: { item: SidebarItem; pathname: string }) {
+function NavLink({
+  item,
+  pathname,
+  collapsed,
+}: {
+  item: SidebarItem
+  pathname: string
+  collapsed: boolean
+}) {
   const Icon = ICONS[item.icon] ?? LayoutGrid
   const showBadge = item.badge && item.badge > 0
   const isAccent = item.badgeStyle === 'accent'
@@ -87,15 +110,16 @@ function NavLink({ item, pathname }: { item: SidebarItem; pathname: string }) {
   return (
     <Link
       href={item.href}
-      className={`flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
+      title={collapsed ? item.label : undefined}
+      className={`relative flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
         active
           ? 'bg-(--color-bronze)/15 text-(--color-ink) border-l-2 border-(--color-bronze)'
           : 'text-(--color-charcoal) hover:bg-(--color-frame)/50 hover:text-(--color-ink) border-l-2 border-transparent'
-      }`}
+      } ${collapsed ? 'md:justify-center md:px-2 md:gap-0' : ''}`}
     >
       <Icon className="w-4 h-4 shrink-0" />
-      <span className="flex-1 truncate">{item.label}</span>
-      {showBadge && (
+      <span className={`flex-1 truncate ${collapsed ? 'md:hidden' : ''}`}>{item.label}</span>
+      {showBadge && !collapsed && (
         <span
           className={
             isAccent
@@ -106,12 +130,21 @@ function NavLink({ item, pathname }: { item: SidebarItem; pathname: string }) {
           {item.badge}
         </span>
       )}
+      {/* Compact dot-badge in collapsed-mode */}
+      {showBadge && collapsed && (
+        <span
+          className={`hidden md:block absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full ${
+            isAccent ? 'bg-red-600' : 'bg-(--color-stone)/60'
+          }`}
+        />
+      )}
     </Link>
   )
 }
 
 export default function SidebarNav({ pinned, groups }: Props) {
   const pathname = usePathname() || ''
+  const { collapsed, toggle: toggleCollapsed } = useSidebarCollapse()
 
   // Open/dicht-state per groep — geïnitialiseerd uit defaultOpen, daarna uit
   // localStorage zodat papa zijn keuze onthouden wordt tussen sessies.
@@ -139,10 +172,11 @@ export default function SidebarNav({ pinned, groups }: Props) {
   // Hydrate uit localStorage (na mount, om SSR-mismatch te vermijden)
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY)
-      if (!raw) return
-      const stored = JSON.parse(raw) as Record<string, boolean>
-      setOpenMap((prev) => ({ ...prev, ...stored }))
+      const rawGroups = window.localStorage.getItem(STORAGE_KEY_GROUPS)
+      if (rawGroups) {
+        const stored = JSON.parse(rawGroups) as Record<string, boolean>
+        setOpenMap((prev) => ({ ...prev, ...stored }))
+      }
     } catch {
       // negeer
     }
@@ -152,7 +186,7 @@ export default function SidebarNav({ pinned, groups }: Props) {
     setOpenMap((prev) => {
       const next = { ...prev, [id]: !prev[id] }
       try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+        window.localStorage.setItem(STORAGE_KEY_GROUPS, JSON.stringify(next))
       } catch {
         // negeer
       }
@@ -161,17 +195,42 @@ export default function SidebarNav({ pinned, groups }: Props) {
   }
 
   return (
-    <nav className="flex-1 p-4 space-y-1">
+    <nav className={`flex-1 ${collapsed ? 'p-2' : 'p-4'} space-y-1`}>
+      {/* Collapse toggle — alleen op desktop. In collapsed-mode bovenaan en
+          gecentreerd zodat hij meteen zichtbaar is. */}
+      {collapsed ? (
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          className="hidden md:flex items-center justify-center w-full py-2.5 mb-2 bg-(--color-frame)/60 hover:bg-(--color-frame) text-(--color-charcoal) hover:text-(--color-ink) rounded transition-colors"
+          title="Étendre le menu"
+          aria-label="Étendre le menu"
+        >
+          <PanelLeftOpen className="w-4 h-4" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          className="hidden md:inline-flex items-center gap-2 w-full px-3 py-1.5 mb-2 text-[10px] uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink) hover:bg-(--color-frame)/50 rounded transition-colors"
+          title="Réduire le menu"
+          aria-label="Réduire le menu"
+        >
+          <PanelLeftClose className="w-3.5 h-3.5" />
+          <span>Réduire</span>
+        </button>
+      )}
+
       {/* Vaste items bovenaan */}
       {pinned.map((item) => (
-        <NavLink key={item.href} item={item} pathname={pathname} />
+        <NavLink key={item.href} item={item} pathname={pathname} collapsed={collapsed} />
       ))}
 
       {pinned.length > 0 && groups.length > 0 && (
-        <div className="my-3 border-t border-(--color-frame)/50" />
+        <div className={`my-3 border-t border-(--color-frame)/50 ${collapsed ? 'mx-1' : ''}`} />
       )}
 
-      {/* Inklapbare groepen */}
+      {/* Inklapbare groepen — in collapsed-mode tonen we alle items zonder header */}
       {groups.map((group) => {
         const Icon = ICONS[group.icon] ?? LayoutGrid
         const open = openMap[group.id]
@@ -180,6 +239,19 @@ export default function SidebarNav({ pinned, groups }: Props) {
           0
         )
         const hasActive = group.items.some((i) => isActive(pathname, i.href))
+
+        if (collapsed) {
+          // In compact-mode: hairline separator + alle items zichtbaar
+          return (
+            <div key={group.id} className="space-y-0.5">
+              <div className="hidden md:block h-px bg-(--color-frame)/60 mx-2 my-2" aria-hidden />
+              {group.items.map((item) => (
+                <NavLink key={item.href} item={item} pathname={pathname} collapsed />
+              ))}
+            </div>
+          )
+        }
+
         return (
           <div key={group.id} className="space-y-1">
             <button
@@ -208,7 +280,7 @@ export default function SidebarNav({ pinned, groups }: Props) {
             {open && (
               <div className="pl-1 pb-1 space-y-0.5">
                 {group.items.map((item) => (
-                  <NavLink key={item.href} item={item} pathname={pathname} />
+                  <NavLink key={item.href} item={item} pathname={pathname} collapsed={false} />
                 ))}
               </div>
             )}
