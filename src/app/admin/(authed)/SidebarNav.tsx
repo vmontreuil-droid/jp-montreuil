@@ -129,20 +129,20 @@ function NavLink({
     <Link
       href={item.href}
       title={collapsed ? item.label : undefined}
-      className={`relative flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
+      className={`relative flex items-center gap-2.5 px-3 py-1.5 text-[10px] font-medium transition-colors ${
         active
           ? 'bg-(--color-bronze)/15 text-(--color-ink) border-l-2 border-(--color-bronze)'
           : 'text-(--color-charcoal) hover:bg-(--color-frame)/50 hover:text-(--color-ink) border-l-2 border-transparent'
       } ${collapsed ? 'md:justify-center md:px-2 md:gap-0' : ''}`}
     >
-      <Icon className="w-4 h-4 shrink-0" />
+      <Icon className="w-3.5 h-3.5 shrink-0" />
       <span className={`flex-1 truncate ${collapsed ? 'md:hidden' : ''}`}>{item.label}</span>
       {showBadge && !collapsed && (
         <span
           className={
             isAccent
-              ? 'inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold text-white bg-red-600 rounded-full'
-              : 'inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] text-(--color-stone) bg-(--color-frame)/40 rounded-full'
+              ? 'inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[9px] font-bold text-white bg-red-600 rounded-full'
+              : 'inline-flex items-center justify-center min-w-[16px] h-4 px-1 text-[9px] text-(--color-stone) bg-(--color-frame)/40 rounded-full'
           }
         >
           {item.badge}
