@@ -30,6 +30,10 @@ import {
   AlertTriangle,
   Shield,
   Sliders,
+  ShoppingBag,
+  ShoppingCart,
+  Truck,
+  Receipt,
   type LucideIcon,
 } from 'lucide-react'
 import { useSidebarCollapse } from './SidebarCollapseContext'
@@ -60,6 +64,10 @@ const ICONS: Record<string, LucideIcon> = {
   AlertTriangle,
   Shield,
   Sliders,
+  ShoppingBag,
+  ShoppingCart,
+  Truck,
+  Receipt,
 }
 
 export type IconName = keyof typeof ICONS
@@ -89,8 +97,12 @@ type Props = {
 
 const STORAGE_KEY_GROUPS = 'admin.sidebar.groups.v1'
 
+// Hrefs die enkel exact mogen matchen — anders zou bv. "/shop/admin"
+// als active gemarkeerd worden zodra je op /shop/admin/orders staat.
+const EXACT_ONLY = new Set(['/admin', '/shop/admin'])
+
 function isActive(pathname: string, href: string): boolean {
-  if (href === '/admin') return pathname === '/admin'
+  if (EXACT_ONLY.has(href)) return pathname === href
   return pathname === href || pathname.startsWith(href + '/')
 }
 

@@ -4,6 +4,7 @@ import AdminShell from './AdminShell'
 import SidebarNav, { type SidebarGroup, type SidebarItem } from './SidebarNav'
 import SidebarHeader from './SidebarHeader'
 import SidebarFooter from './SidebarFooter'
+import { createShopAdminClient } from '@/lib/shop/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,6 +59,20 @@ export default async function AuthedAdminLayout({
       .is('read_at', null)
       .is('archived_at', null),
   ])
+
+  // Webshop pending-orders count (apart schema). Faalt stil als shop nog
+  // niet bereikbaar is — dan toont de badge gewoon niets.
+  let pendingShopOrders: number | null = null
+  try {
+    const shop = createShopAdminClient()
+    const { count } = await shop
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending')
+    pendingShopOrders = count ?? 0
+  } catch {
+    // negeer
+  }
 
   const pinned: SidebarItem[] = [
     { href: '/admin', label: 'Dashboard', icon: 'LayoutGrid' },
@@ -152,6 +167,25 @@ export default async function AuthedAdminLayout({
         { href: '/admin/social', label: 'Réseaux sociaux', icon: 'Share2' },
         { href: '/admin/analytics', label: 'Activité web', icon: 'Activity' },
         { href: '/admin/signature', label: 'Signature mail', icon: 'PenTool' },
+      ],
+    },
+    {
+      id: 'boutique',
+      title: 'Boutique',
+      icon: 'ShoppingBag',
+      items: [
+        { href: '/shop/admin', label: 'Tableau de bord', icon: 'ShoppingBag' },
+        {
+          href: '/shop/admin/orders',
+          label: 'Commandes',
+          icon: 'ShoppingCart',
+          badge: pendingShopOrders,
+          badgeStyle: 'accent',
+        },
+        { href: '/shop/admin/products', label: 'Produits', icon: 'Receipt' },
+        { href: '/shop/admin/boutique', label: 'Configurateur tirages', icon: 'Sliders' },
+        { href: '/shop/admin/photos', label: 'Photos boutique', icon: 'ImageIcon' },
+        { href: '/shop/admin/shipping', label: 'Frais de port', icon: 'Truck' },
       ],
     },
     {
