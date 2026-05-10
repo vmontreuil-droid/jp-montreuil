@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react'
 import { useCart } from '@/components/shop/CartProvider'
 import { cartSubtotal } from '@/lib/shop/cart'
-import { shopPhotoUrl } from '@/lib/shop/photos'
+import { shopPhotoUrl } from '@/lib/shop/photo-url'
 
 const fmt = new Intl.NumberFormat('fr-BE', {
   style: 'currency',
