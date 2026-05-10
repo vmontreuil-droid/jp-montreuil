@@ -212,7 +212,9 @@ export default async function AuthedAdminLayout({
         { href: '/admin/boutique/products', label: 'Produits', icon: 'Receipt' },
         { href: '/admin/boutique/boutique', label: 'Configurateur tirages', icon: 'Sliders' },
         { href: '/admin/boutique/photos', label: 'Photos boutique', icon: 'ImageIcon' },
+        { href: '/admin/boutique/customers', label: 'Clients boutique', icon: 'Users' },
         { href: '/admin/boutique/shipping', label: 'Frais de port', icon: 'Truck' },
+        { href: '/admin/boutique/mollie-setup', label: 'Paiements (Mollie)', icon: 'CreditCard' },
         { href: '/admin/boutique/discounts', label: 'Codes promo', icon: 'Tags' },
         {
           href: '/admin/boutique/reviews',

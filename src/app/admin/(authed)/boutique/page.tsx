@@ -32,6 +32,36 @@ export default async function ShopAdminPage() {
 
   const health = await checkShopHealth()
 
+  // KPI's laatste 30 dagen
+  const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString()
+  let kpiRevenue30d = 0
+  let kpiOrders30d = 0
+  let kpiAov30d = 0
+  let kpiPendingBons = 0
+  try {
+    const shopSb = createShopAdminClient()
+    const [{ data: paidOrders }, { count: bonsCount }] = await Promise.all([
+      shopSb.from('orders')
+        .select('amount_cents')
+        .in('status', ['paid', 'shipped', 'fulfilled'])
+        .gte('created_at', since),
+      shopSb.from('supplier_orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending'),
+    ])
+    kpiOrders30d = (paidOrders ?? []).length
+    kpiRevenue30d = ((paidOrders ?? []) as { amount_cents: number }[])
+      .reduce((sum, o) => sum + o.amount_cents, 0)
+    kpiAov30d = kpiOrders30d > 0 ? Math.round(kpiRevenue30d / kpiOrders30d) : 0
+    kpiPendingBons = bonsCount ?? 0
+  } catch {
+    // negeer
+  }
+
+  const fmtEur = new Intl.NumberFormat('fr-BE', {
+    style: 'currency', currency: 'EUR', minimumFractionDigits: 0,
+  })
+
   // Top photos — meest bekeken in de laatste 30 dagen, op basis van
   // shop_photo_view events. Stilte als analytics nog leeg is.
   let topPhotos: Array<{
@@ -84,6 +114,23 @@ export default async function ShopAdminPage() {
           Beheer producten, bestellingen, klanten en drukkerijen.
         </p>
       </header>
+
+      {/* KPI's — laatste 30 dagen */}
+      <section>
+        <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-3 inline-flex items-center gap-2">
+          <TrendingUp className="w-3.5 h-3.5 text-(--color-bronze)" />
+          30 derniers jours
+        </h2>
+        <ul className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Kpi label="Revenu" value={fmtEur.format(kpiRevenue30d / 100)} />
+          <Kpi label="Commandes" value={kpiOrders30d} />
+          <Kpi
+            label="Panier moyen"
+            value={kpiOrders30d > 0 ? fmtEur.format(kpiAov30d / 100) : '—'}
+          />
+          <Kpi label="Bons à envoyer" value={kpiPendingBons} accent={kpiPendingBons > 0} />
+        </ul>
+      </section>
 
       {/* Top photos — laatste 30 dagen */}
       {topPhotos.length > 0 && (
@@ -249,5 +296,22 @@ function ModuleCard({
     <Link href={href} className="block">
       {inner}
     </Link>
+  )
+}
+
+function Kpi({
+  label, value, accent,
+}: {
+  label: string
+  value: number | string
+  accent?: boolean
+}) {
+  return (
+    <li className={`bg-(--color-paper) border p-4 ${accent ? 'border-amber-300' : 'border-(--color-frame)'}`}>
+      <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-1.5">{label}</p>
+      <p className={`font-[family-name:var(--font-display)] text-2xl tabular-nums ${accent ? 'text-amber-700' : 'text-(--color-ink)'}`}>
+        {value}
+      </p>
+    </li>
   )
 }
