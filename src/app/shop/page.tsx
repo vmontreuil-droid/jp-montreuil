@@ -6,7 +6,7 @@ import { checkShopHealth } from '@/lib/shop/health'
  * /shop landing — voorlopige placeholder. Toont de status van de
  * webshop-module (schema bereikbaar, aantal items per tabel) en linkt
  * naar de admin-zone. Pas zinvol als publieke landing zodra producten
- * beheerd kunnen worden via /shop/admin.
+ * beheerd kunnen worden via /admin/boutique.
  */
 export default async function ShopHomePage() {
   const health = await checkShopHealth()
@@ -46,7 +46,7 @@ export default async function ShopHomePage() {
 
       <div className="flex justify-center">
         <Link
-          href="/shop/admin"
+          href="/admin/boutique"
           className="inline-flex items-center gap-2 px-5 py-3 bg-stone-900 text-white hover:bg-stone-800 transition-colors text-sm tracking-wide rounded"
         >
           <Settings size={16} />

@@ -21,14 +21,14 @@ const KIND_LABEL: Record<ProductKind, string> = {
 export default async function ShopProductsPage() {
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
-  if (!user) redirect('/admin/login?next=/shop/admin/products')
+  if (!user) redirect('/admin/login?next=/admin/boutique/products')
 
   const products = await listShopProducts()
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-10 space-y-6">
       <div className="flex items-center gap-2 text-sm">
-        <Link href="/shop/admin" className="text-stone-500 hover:text-stone-900 inline-flex items-center gap-1">
+        <Link href="/admin/boutique" className="text-stone-500 hover:text-stone-900 inline-flex items-center gap-1">
           <ArrowLeft size={12} /> Admin
         </Link>
         <span className="text-stone-300">/</span>
@@ -45,7 +45,7 @@ export default async function ShopProductsPage() {
           </p>
         </div>
         <Link
-          href="/shop/admin/products/nieuw"
+          href="/admin/boutique/products/nieuw"
           className="inline-flex items-center gap-2 px-4 py-2 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded"
         >
           <Plus size={16} /> Nouveau produit
@@ -63,7 +63,7 @@ export default async function ShopProductsPage() {
             return (
               <li key={p.id}>
                 <Link
-                  href={`/shop/admin/products/${p.id}`}
+                  href={`/admin/boutique/products/${p.id}`}
                   className={`flex items-center gap-4 p-4 hover:bg-stone-50 transition-colors ${
                     p.is_published ? '' : 'opacity-60'
                   }`}

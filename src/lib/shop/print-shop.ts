@@ -3,7 +3,7 @@ import type { Locale } from './products'
 
 /**
  * Print-shop config: media (papier/canvas/alu/plexi), sizes (S..XXL),
- * en de prijs-matrix per (medium, size). Beheerd via /shop/admin/boutique.
+ * en de prijs-matrix per (medium, size). Beheerd via /admin/boutique/boutique.
  */
 
 export type PrintMedium = {

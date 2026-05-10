@@ -97,9 +97,9 @@ type Props = {
 
 const STORAGE_KEY_GROUPS = 'admin.sidebar.groups.v1'
 
-// Hrefs die enkel exact mogen matchen — anders zou bv. "/shop/admin"
-// als active gemarkeerd worden zodra je op /shop/admin/orders staat.
-const EXACT_ONLY = new Set(['/admin', '/shop/admin'])
+// Hrefs die enkel exact mogen matchen — anders zou bv. "/admin/boutique"
+// als active gemarkeerd worden zodra je op /admin/boutique/orders staat.
+const EXACT_ONLY = new Set(['/admin', '/admin/boutique'])
 
 function isActive(pathname: string, href: string): boolean {
   if (EXACT_ONLY.has(href)) return pathname === href

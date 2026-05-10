@@ -65,8 +65,8 @@ export async function createShopProduct(form: FormData) {
     if (error.code === '23505') throw new Error(`Le slug "${slug}" existe déjà`)
     throw error
   }
-  revalidatePath('/shop/admin/products')
-  redirect(`/shop/admin/products/${data.id}`)
+  revalidatePath('/admin/boutique/products')
+  redirect(`/admin/boutique/products/${data.id}`)
 }
 
 export async function updateShopProduct(id: string, form: FormData) {
@@ -85,8 +85,8 @@ export async function updateShopProduct(id: string, form: FormData) {
     sort_order: intOr(form, 'sort_order', 0),
   }).eq('id', id)
   if (error) throw error
-  revalidatePath('/shop/admin/products')
-  revalidatePath(`/shop/admin/products/${id}`)
+  revalidatePath('/admin/boutique/products')
+  revalidatePath(`/admin/boutique/products/${id}`)
 }
 
 export async function deleteShopProduct(id: string) {
@@ -94,8 +94,8 @@ export async function deleteShopProduct(id: string) {
   const sb = createShopAdminClient()
   const { error } = await sb.from('products').delete().eq('id', id)
   if (error) throw error
-  revalidatePath('/shop/admin/products')
-  redirect('/shop/admin/products')
+  revalidatePath('/admin/boutique/products')
+  redirect('/admin/boutique/products')
 }
 
 /* Variants */
@@ -115,7 +115,7 @@ export async function createShopVariant(productId: string, form: FormData) {
     sort_order: intOr(form, 'sort_order', 0),
   })
   if (error) throw error
-  revalidatePath(`/shop/admin/products/${productId}`)
+  revalidatePath(`/admin/boutique/products/${productId}`)
 }
 
 export async function deleteShopVariant(productId: string, variantId: string) {
@@ -123,5 +123,5 @@ export async function deleteShopVariant(productId: string, variantId: string) {
   const sb = createShopAdminClient()
   const { error } = await sb.from('product_variants').delete().eq('id', variantId)
   if (error) throw error
-  revalidatePath(`/shop/admin/products/${productId}`)
+  revalidatePath(`/admin/boutique/products/${productId}`)
 }

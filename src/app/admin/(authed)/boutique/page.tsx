@@ -14,7 +14,7 @@ import { createClient } from '@/lib/supabase/server'
 import { checkShopHealth } from '@/lib/shop/health'
 
 /**
- * /shop/admin — voorlopig dashboard. Vereist een ingelogde user
+ * /admin/boutique — voorlopig dashboard. Vereist een ingelogde user
  * (gebruikt dezelfde Supabase auth als de rest van jp-montreuil).
  *
  * Toont enkel scaffolding: welke modules nog geïmplementeerd moeten
@@ -23,7 +23,7 @@ import { checkShopHealth } from '@/lib/shop/health'
 export default async function ShopAdminPage() {
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
-  if (!user) redirect('/admin/login?next=/shop/admin')
+  if (!user) redirect('/admin/login?next=/admin/boutique')
 
   const health = await checkShopHealth()
 
@@ -69,42 +69,42 @@ export default async function ShopAdminPage() {
             icon={ImageIcon}
             label="Photos"
             count={health.counts.photos}
-            href="/shop/admin/photos"
+            href="/admin/boutique/photos"
             description="Foto's voor de print-on-demand configurator"
           />
           <ModuleCard
             icon={Package}
             label="Producten"
             count={health.counts.products}
-            href="/shop/admin/products"
+            href="/admin/boutique/products"
             description="Klassieke producten + variants"
           />
           <ModuleCard
             icon={Layers}
             label="Configurateur"
             count={null}
-            href="/shop/admin/boutique"
+            href="/admin/boutique/boutique"
             description="Materialen, formaten en prijs-matrix"
           />
           <ModuleCard
             icon={ShoppingCart}
             label="Bestellingen"
             count={health.counts.orders}
-            href="/shop/admin/orders"
+            href="/admin/boutique/orders"
             description="Klant-orders met status-flow"
           />
           <ModuleCard
             icon={Truck}
             label="Frais de port"
             count={null}
-            href="/shop/admin/shipping"
+            href="/admin/boutique/shipping"
             description="Verzendzones + tarieven + gratis-drempels"
           />
           <ModuleCard
             icon={Users}
             label="Klanten"
             count={health.counts.customers}
-            href="/shop/admin/customers"
+            href="/admin/boutique/customers"
             description="Klantenfiches (komt eraan)"
             disabled
           />

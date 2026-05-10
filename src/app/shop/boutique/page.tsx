@@ -42,8 +42,8 @@ export default async function ShopBoutiquePage() {
       {photos.length === 0 ? (
         <p className="py-16 text-center text-stone-500">
           Pas encore de photos. Ajoutez-en via{' '}
-          <Link href="/shop/admin/photos" className="underline hover:text-stone-900">
-            /shop/admin/photos
+          <Link href="/admin/boutique/photos" className="underline hover:text-stone-900">
+            /admin/boutique/photos
           </Link>
           .
         </p>

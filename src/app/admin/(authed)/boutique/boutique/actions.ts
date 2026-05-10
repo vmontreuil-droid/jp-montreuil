@@ -47,7 +47,7 @@ export async function createMedium(form: FormData) {
     sort_order: intOr(form, 'sort_order', 0),
   })
   if (error) throw error
-  revalidatePath('/shop/admin/boutique')
+  revalidatePath('/admin/boutique/boutique')
 }
 
 export async function updateMedium(id: string, form: FormData) {
@@ -61,7 +61,7 @@ export async function updateMedium(id: string, form: FormData) {
     sort_order: intOr(form, 'sort_order', 0),
   }).eq('id', id)
   if (error) throw error
-  revalidatePath('/shop/admin/boutique')
+  revalidatePath('/admin/boutique/boutique')
 }
 
 export async function deleteMedium(id: string) {
@@ -69,7 +69,7 @@ export async function deleteMedium(id: string) {
   const sb = createShopAdminClient()
   const { error } = await sb.from('print_media').delete().eq('id', id)
   if (error) throw error
-  revalidatePath('/shop/admin/boutique')
+  revalidatePath('/admin/boutique/boutique')
 }
 
 /* ---------- Sizes ---------- */
@@ -85,7 +85,7 @@ export async function createSize(form: FormData) {
     sort_order: intOr(form, 'sort_order', 0),
   })
   if (error) throw error
-  revalidatePath('/shop/admin/boutique')
+  revalidatePath('/admin/boutique/boutique')
 }
 
 export async function updateSize(id: string, form: FormData) {
@@ -97,7 +97,7 @@ export async function updateSize(id: string, form: FormData) {
     sort_order: intOr(form, 'sort_order', 0),
   }).eq('id', id)
   if (error) throw error
-  revalidatePath('/shop/admin/boutique')
+  revalidatePath('/admin/boutique/boutique')
 }
 
 export async function deleteSize(id: string) {
@@ -105,7 +105,7 @@ export async function deleteSize(id: string) {
   const sb = createShopAdminClient()
   const { error } = await sb.from('print_sizes').delete().eq('id', id)
   if (error) throw error
-  revalidatePath('/shop/admin/boutique')
+  revalidatePath('/admin/boutique/boutique')
 }
 
 /* ---------- Prijs-matrix cell-update ---------- */
@@ -126,5 +126,5 @@ export async function setPriceCell(form: FormData) {
       media_id: mediaId, size_id: sizeId, price_cents: priceCents, is_available: isAvail,
     })
   }
-  revalidatePath('/shop/admin/boutique')
+  revalidatePath('/admin/boutique/boutique')
 }

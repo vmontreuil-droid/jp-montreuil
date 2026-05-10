@@ -87,8 +87,8 @@ export default async function PhotoConfiguratorPage({
             <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded p-4 text-sm">
               Configurator niet beschikbaar — voeg eerst materialen, formaten
               en prijzen toe via{' '}
-              <Link href="/shop/admin/boutique" className="underline">
-                /shop/admin/boutique
+              <Link href="/admin/boutique/boutique" className="underline">
+                /admin/boutique/boutique
               </Link>
               .
             </div>

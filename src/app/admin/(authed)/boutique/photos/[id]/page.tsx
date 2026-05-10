@@ -29,7 +29,7 @@ export default async function EditShopPhotoPage({
   return (
     <main className="max-w-5xl mx-auto px-6 py-10 space-y-6">
       <Link
-        href="/shop/admin/photos"
+        href="/admin/boutique/photos"
         className="inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-900"
       >
         <ArrowLeft size={14} /> Retour aux photos

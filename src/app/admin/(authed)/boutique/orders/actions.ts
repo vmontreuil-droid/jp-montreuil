@@ -18,8 +18,8 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
   if (status === 'paid') update.paid_at = new Date().toISOString()
   const { error } = await sb.from('orders').update(update).eq('id', id)
   if (error) throw new Error(error.message)
-  revalidatePath('/shop/admin/orders')
-  revalidatePath(`/shop/admin/orders/${id}`)
+  revalidatePath('/admin/boutique/orders')
+  revalidatePath(`/admin/boutique/orders/${id}`)
 }
 
 export async function setTracking(id: string, formData: FormData) {
@@ -32,5 +32,5 @@ export async function setTracking(id: string, formData: FormData) {
     tracking_number: number,
   }).eq('id', id)
   if (error) throw new Error(error.message)
-  revalidatePath(`/shop/admin/orders/${id}`)
+  revalidatePath(`/admin/boutique/orders/${id}`)
 }

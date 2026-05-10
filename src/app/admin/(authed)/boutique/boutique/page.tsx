@@ -10,7 +10,7 @@ import {
 } from './actions'
 
 /**
- * /shop/admin/boutique — beheer van de configurator: print-media (4
+ * /admin/boutique/boutique — beheer van de configurator: print-media (4
  * default), sizes (5 default) en de prijs-matrix per (media, size) cel.
  *
  * Layout: 3 secties — Media beheer (table), Sizes beheer (table),
@@ -19,7 +19,7 @@ import {
 export default async function ShopBoutiqueAdminPage() {
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
-  if (!user) redirect('/admin/login?next=/shop/admin/boutique')
+  if (!user) redirect('/admin/login?next=/admin/boutique/boutique')
 
   const [media, sizes, prices] = await Promise.all([
     listAllMedia(),
@@ -33,7 +33,7 @@ export default async function ShopBoutiqueAdminPage() {
   return (
     <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
       <div className="flex items-center gap-2 text-sm">
-        <Link href="/shop/admin" className="text-stone-500 hover:text-stone-900 inline-flex items-center gap-1">
+        <Link href="/admin/boutique" className="text-stone-500 hover:text-stone-900 inline-flex items-center gap-1">
           <ArrowLeft size={12} /> Admin
         </Link>
         <span className="text-stone-300">/</span>

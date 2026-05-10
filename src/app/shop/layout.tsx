@@ -27,7 +27,7 @@ export default function ShopLayout({
               <Link href="/shop/boutique" className="text-stone-700 hover:text-stone-900">
                 Boutique
               </Link>
-              <Link href="/shop/admin" className="text-stone-700 hover:text-stone-900">
+              <Link href="/admin/boutique" className="text-stone-700 hover:text-stone-900">
                 Admin
               </Link>
               <span className="text-stone-300">·</span>

@@ -46,7 +46,7 @@ export async function createZone(form: FormData) {
     sort_order: intOr(form, 'sort_order', 0),
   })
   if (error) throw new Error(error.message)
-  revalidatePath('/shop/admin/shipping')
+  revalidatePath('/admin/boutique/shipping')
 }
 
 export async function updateZone(id: string, form: FormData) {
@@ -64,7 +64,7 @@ export async function updateZone(id: string, form: FormData) {
     sort_order: intOr(form, 'sort_order', 0),
   }).eq('id', id)
   if (error) throw new Error(error.message)
-  revalidatePath('/shop/admin/shipping')
+  revalidatePath('/admin/boutique/shipping')
 }
 
 export async function deleteZone(id: string) {
@@ -72,5 +72,5 @@ export async function deleteZone(id: string) {
   const sb = createShopAdminClient()
   const { error } = await sb.from('shipping_zones').delete().eq('id', id)
   if (error) throw new Error(error.message)
-  revalidatePath('/shop/admin/shipping')
+  revalidatePath('/admin/boutique/shipping')
 }

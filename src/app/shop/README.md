@@ -27,7 +27,7 @@ PostgREST een nieuwe versie uitrolt.
 
 ### 3. Verifiëren
 
-Open `/shop` (publiek) of `/shop/admin` (na login). Bovenaan zie je een
+Open `/shop` (publiek) of `/admin/boutique` (na login). Bovenaan zie je een
 groene banner "Schema 'shop' is bereikbaar — webshop kan worden gebruikt."
 
 Als je een ambergele waarschuwing ziet, controleer of stap 1 én stap 2
@@ -38,7 +38,7 @@ correct zijn uitgevoerd.
 | URL | Wat |
 |---|---|
 | `/shop` | Publieke landing — toont health-status + module-counts |
-| `/shop/admin` | Admin-dashboard met module-cards (vereist login) |
+| `/admin/boutique` | Admin-dashboard met module-cards (vereist login) |
 
 ## Roadmap
 
@@ -67,7 +67,7 @@ eigen mini-header met link terug naar `/admin`. In een latere iteratie
 kan dit geïntegreerd worden met de gewone jp-montreuil shell.
 
 **Auth gedeeld**: dezelfde Supabase auth als de rest van jp-montreuil.
-`/shop/admin` redirects naar `/admin/login?next=/shop/admin` als geen
+`/admin/boutique` redirects naar `/admin/login?next=/admin/boutique` als geen
 sessie.
 
 ## Originele referentie

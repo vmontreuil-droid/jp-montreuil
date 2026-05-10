@@ -88,7 +88,7 @@ export async function uploadShopPhoto(form: FormData) {
     throw insErr
   }
 
-  revalidatePath('/shop/admin/photos')
+  revalidatePath('/admin/boutique/photos')
 }
 
 export async function updateShopPhoto(id: string, form: FormData) {
@@ -106,8 +106,8 @@ export async function updateShopPhoto(id: string, form: FormData) {
   }).eq('id', id)
   if (error) throw error
 
-  revalidatePath('/shop/admin/photos')
-  revalidatePath(`/shop/admin/photos/${id}`)
+  revalidatePath('/admin/boutique/photos')
+  revalidatePath(`/admin/boutique/photos/${id}`)
 }
 
 export async function togglePublishedShopPhoto(id: string, next: boolean) {
@@ -115,8 +115,8 @@ export async function togglePublishedShopPhoto(id: string, next: boolean) {
   const sb = createShopAdminClient()
   const { error } = await sb.from('photos').update({ is_published: next }).eq('id', id)
   if (error) throw error
-  revalidatePath('/shop/admin/photos')
-  revalidatePath(`/shop/admin/photos/${id}`)
+  revalidatePath('/admin/boutique/photos')
+  revalidatePath(`/admin/boutique/photos/${id}`)
 }
 
 export async function deleteShopPhoto(id: string) {
@@ -129,6 +129,6 @@ export async function deleteShopPhoto(id: string) {
   if (delErr) throw delErr
 
   await sb.storage.from(SHOP_PHOTOS_BUCKET).remove([photo.storage_path]).catch(() => {})
-  revalidatePath('/shop/admin/photos')
-  redirect('/shop/admin/photos')
+  revalidatePath('/admin/boutique/photos')
+  redirect('/admin/boutique/photos')
 }

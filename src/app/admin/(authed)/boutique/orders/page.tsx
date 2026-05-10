@@ -12,14 +12,14 @@ const formatPrice = (cents: number) => fmt.format(cents / 100)
 export default async function ShopOrdersAdminPage() {
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
-  if (!user) redirect('/admin/login?next=/shop/admin/orders')
+  if (!user) redirect('/admin/login?next=/admin/boutique/orders')
 
   const orders = await listShopOrders()
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-10 space-y-6">
       <div className="flex items-center gap-2 text-sm">
-        <Link href="/shop/admin" className="text-stone-500 hover:text-stone-900 inline-flex items-center gap-1">
+        <Link href="/admin/boutique" className="text-stone-500 hover:text-stone-900 inline-flex items-center gap-1">
           <ArrowLeft size={12} /> Admin
         </Link>
         <span className="text-stone-300">/</span>
@@ -51,7 +51,7 @@ export default async function ShopOrdersAdminPage() {
               {orders.map((o) => (
                 <tr key={o.id} className="border-b border-stone-100 hover:bg-stone-50">
                   <td className="p-3">
-                    <Link href={`/shop/admin/orders/${o.id}`} className="font-mono text-stone-900 hover:underline">
+                    <Link href={`/admin/boutique/orders/${o.id}`} className="font-mono text-stone-900 hover:underline">
                       {o.reference}
                     </Link>
                   </td>
