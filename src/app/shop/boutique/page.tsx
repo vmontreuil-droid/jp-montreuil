@@ -11,6 +11,8 @@ import {
 } from '@/lib/shop/print-shop'
 import { listShopCategories } from '@/lib/shop/import-works'
 import { getDictionary } from '@/i18n/dictionaries'
+import { getShopLocale } from '@/lib/shop/locale'
+import { localePath } from '@/lib/links'
 import BoutiqueGrid from './BoutiqueGrid'
 
 export const dynamic = 'force-dynamic'
@@ -21,7 +23,8 @@ export const dynamic = 'force-dynamic'
  * client-side in BoutiqueGrid.
  */
 export default async function ShopBoutiquePage() {
-  const t = getDictionary('fr').boutique
+  const locale = await getShopLocale()
+  const t = getDictionary(locale).boutique
 
   const [photos, media, sizes, prices, featured, categories] = await Promise.all([
     listShopPhotos({ publishedOnly: true }),
@@ -58,7 +61,7 @@ export default async function ShopBoutiquePage() {
 
           <div className="mt-8 flex flex-wrap items-center gap-3 text-sm">
             <Link
-              href="/comment-ca-marche"
+              href={localePath(locale, '/comment-ca-marche')}
               className="inline-flex items-center gap-2 px-4 py-2.5 border border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-bronze) transition-colors"
             >
               <HelpCircle className="w-4 h-4" />
@@ -69,7 +72,7 @@ export default async function ShopBoutiquePage() {
               <span className="text-xs text-(--color-stone)">
                 {t.fromPrice}{' '}
                 <strong className="text-(--color-ink)">{formatPrice(minCents)}</strong>{' '}
-                ({mediumName(cheapestMedium, 'fr')}, {sizes[0]?.label})
+                ({mediumName(cheapestMedium, locale)}, {sizes[0]?.label})
               </span>
             )}
           </div>
@@ -82,7 +85,7 @@ export default async function ShopBoutiquePage() {
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-[family-name:var(--font-display)] text-2xl text-(--color-ink) inline-flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-(--color-bronze)" />
-              Coups de cœur de Jean-Pierre
+              {t.favouritesTitle}
             </h2>
           </div>
           <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
@@ -140,6 +143,18 @@ export default async function ShopBoutiquePage() {
               singular: t.photoCountSingular,
               plural: t.photoCountPlural,
               customize: t.customizeCta,
+              search: t.searchPlaceholder,
+              favoritesToggle: t.favoritesToggle,
+              allCategories: t.allCategories,
+              noResults: t.noResults,
+              clearFilters: t.clearFilters,
+              quickView: t.quickView,
+              sort: {
+                recent: t.sortRecent,
+                oldest: t.sortOldest,
+                title: t.sortTitle,
+                favorites: t.sortFavorites,
+              },
             }}
           />
         )}

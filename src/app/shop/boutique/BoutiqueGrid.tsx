@@ -30,19 +30,19 @@ type Labels = {
   singular: string
   plural: string
   customize: string
+  search: string
+  favoritesToggle: string
+  allCategories: string
+  noResults: string
+  clearFilters: string
+  quickView: string
+  sort: Record<SortKey, string>
 }
 
 type CategoryOption = {
   slug: string
   label: string
   count: number
-}
-
-const SORT_LABELS: Record<SortKey, string> = {
-  recent: 'Plus récentes',
-  oldest: 'Plus anciennes',
-  title: 'Titre A → Z',
-  favorites: '♡ Favoris d’abord',
 }
 
 /**
@@ -123,7 +123,7 @@ export default function BoutiqueGrid({
                 : 'bg-(--color-paper) border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-bronze)'
             }`}
           >
-            Toutes
+            {labels.allCategories}
             <span className={`text-[10px] ${activeCategory === null ? 'opacity-90' : 'opacity-60'}`}>
               ({photos.length})
             </span>
@@ -161,7 +161,7 @@ export default function BoutiqueGrid({
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Rechercher…"
+              placeholder={labels.search}
               className="pl-9 pr-8 py-2 bg-(--color-paper) border border-(--color-frame) text-(--color-ink) text-xs uppercase tracking-[0.15em] focus:border-(--color-bronze) focus:outline-none w-44 sm:w-56"
             />
             {query && (
@@ -183,7 +183,7 @@ export default function BoutiqueGrid({
               onChange={(e) => setSort(e.target.value as SortKey)}
               className="pl-9 pr-8 py-2 bg-(--color-paper) border border-(--color-frame) text-(--color-ink) text-xs uppercase tracking-[0.15em] focus:border-(--color-bronze) focus:outline-none appearance-none"
             >
-              {Object.entries(SORT_LABELS).map(([k, v]) => (
+              {Object.entries(labels.sort).map(([k, v]) => (
                 <option key={k} value={k}>{v}</option>
               ))}
             </select>
@@ -200,7 +200,7 @@ export default function BoutiqueGrid({
             aria-pressed={onlyFavs}
           >
             <Heart className={`w-3.5 h-3.5 ${onlyFavs ? 'fill-white' : ''}`} />
-            <span className="hidden sm:inline">Favoris</span>
+            <span className="hidden sm:inline">{labels.favoritesToggle}</span>
           </button>
         </div>
       </div>
@@ -210,14 +210,14 @@ export default function BoutiqueGrid({
         <div className="bg-(--color-paper) border border-(--color-frame) p-12 text-center">
           <Search className="w-8 h-8 mx-auto mb-3 text-(--color-stone)/50" />
           <p className="text-sm text-(--color-charcoal) mb-4">
-            Aucune œuvre ne correspond à votre recherche.
+            {labels.noResults}
           </p>
           <button
             type="button"
             onClick={() => { setQuery(''); setOnlyFavs(false); setActiveCategory(null) }}
             className="text-xs uppercase tracking-[0.2em] text-(--color-bronze) hover:text-(--color-bronze-dark)"
           >
-            Effacer les filtres
+            {labels.clearFilters}
           </button>
         </div>
       ) : (
@@ -248,8 +248,8 @@ export default function BoutiqueGrid({
                       e.stopPropagation()
                       setQuickViewIdx(idx)
                     }}
-                    aria-label="Aperçu rapide"
-                    title="Aperçu rapide"
+                    aria-label={labels.quickView}
+                    title={labels.quickView}
                     className="absolute top-2 left-2 z-10 inline-flex items-center justify-center w-7 h-7 rounded-full bg-(--color-canvas)/80 backdrop-blur-sm text-(--color-charcoal) hover:bg-(--color-canvas) hover:text-(--color-bronze) opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Eye className="w-3.5 h-3.5" />

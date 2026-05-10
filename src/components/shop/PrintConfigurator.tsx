@@ -23,6 +23,36 @@ type PriceCell = {
 
 type Orientation = 'portrait' | 'landscape'
 
+export type PrintConfiguratorLabels = {
+  material: string
+  orientation: string
+  portrait: string
+  paysage: string
+  portraitHint: string
+  paysageHint: string
+  format: string
+  price: string
+  addToCart: string
+  added: string
+  unavailable: string
+  configMissing: string
+}
+
+const DEFAULT_LABELS: PrintConfiguratorLabels = {
+  material: 'Matériau',
+  orientation: 'Orientation',
+  portrait: 'Portrait',
+  paysage: 'Paysage',
+  portraitHint: 'Format vertical (hauteur > largeur).',
+  paysageHint: "Format horizontal (largeur > hauteur). Les dimensions s'adaptent.",
+  format: 'Format',
+  price: 'Prix',
+  addToCart: 'Ajouter au panier',
+  added: 'Ajouté',
+  unavailable: 'Combinaison non disponible',
+  configMissing: 'Configurateur non disponible.',
+}
+
 /** Swap "30×45 cm" → "45×30 cm" voor landscape; "S — 30×45 cm" → "S — 45×30 cm". */
 function flipSizeLabel(label: string): string {
   return label.replace(/(\d+)\s*[×x]\s*(\d+)/, (_, a: string, b: string) => `${b}×${a}`)
@@ -38,6 +68,7 @@ export function PrintConfigurator({
   media,
   sizes,
   prices,
+  labels = DEFAULT_LABELS,
 }: {
   photoId: string
   photoSlug: string
@@ -48,14 +79,13 @@ export function PrintConfigurator({
   media: Medium[]
   sizes: Size[]
   prices: PriceCell[]
+  labels?: PrintConfiguratorLabels
 }) {
   const { add } = useCart()
 
-  // Default selecties — eerste beschikbare combinatie
   const firstAvail = prices.find((p) => p.isAvailable)
   const [mediaSlug, setMediaSlug] = useState<string | null>(firstAvail?.mediaSlug ?? null)
   const [sizeSlug, setSizeSlug] = useState<string | null>(firstAvail?.sizeSlug ?? null)
-  // Klant kan nadien wisselen — voor square defaults op portrait.
   const [orientation, setOrientation] = useState<Orientation>(
     defaultOrientation === 'landscape' ? 'landscape' : 'portrait',
   )
@@ -76,7 +106,7 @@ export function PrintConfigurator({
     const s = sizes.find((x) => x.slug === sizeSlug)
     if (!m || !s) return
     const sizeLabel = orientation === 'landscape' ? flipSizeLabel(s.label) : s.label
-    const orientLabel = orientation === 'landscape' ? 'paysage' : 'portrait'
+    const orientLabel = orientation === 'landscape' ? labels.paysage : labels.portrait
     add({
       kind: 'photo_print',
       photoId,
@@ -98,7 +128,7 @@ export function PrintConfigurator({
     <div className="space-y-6">
       {/* Materiaal */}
       <div>
-        <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Matériau</p>
+        <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">{labels.material}</p>
         <div className="grid grid-cols-2 gap-2">
           {media.map((m) => {
             const sel = m.slug === mediaSlug
@@ -120,7 +150,7 @@ export function PrintConfigurator({
 
       {/* Orientation */}
       <div>
-        <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Orientation</p>
+        <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">{labels.orientation}</p>
         <div className="grid grid-cols-2 gap-2">
           {(['portrait', 'landscape'] as const).map((o) => {
             const sel = o === orientation
@@ -135,21 +165,19 @@ export function PrintConfigurator({
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                {o === 'portrait' ? 'Portrait' : 'Paysage'}
+                {o === 'portrait' ? labels.portrait : labels.paysage}
               </button>
             )
           })}
         </div>
         <p className="text-[11px] text-stone-500 mt-1.5">
-          {orientation === 'portrait'
-            ? 'Format vertical (hauteur > largeur).'
-            : 'Format horizontal (largeur > hauteur). Les dimensions s\'adaptent.'}
+          {orientation === 'portrait' ? labels.portraitHint : labels.paysageHint}
         </p>
       </div>
 
       {/* Formaat */}
       <div>
-        <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Format</p>
+        <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">{labels.format}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {sizes.map((s) => {
             const sel = s.slug === sizeSlug
@@ -183,7 +211,7 @@ export function PrintConfigurator({
       {/* Prijs + CTA */}
       <div className="border-t border-stone-200 pt-4">
         <div className="flex items-baseline justify-between mb-3">
-          <span className="text-sm text-stone-500">Prix</span>
+          <span className="text-sm text-stone-500">{labels.price}</span>
           <span className="text-2xl font-semibold tabular-nums">
             {selected ? selected.priceFormatted : '—'}
           </span>
@@ -195,7 +223,7 @@ export function PrintConfigurator({
           className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-stone-900 text-white hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed text-sm rounded transition-colors"
         >
           {done ? <Check size={16} /> : <ShoppingBag size={16} />}
-          {done ? 'Ajouté' : !canAdd ? 'Combinaison non disponible' : 'Ajouter au panier'}
+          {done ? labels.added : !canAdd ? labels.unavailable : labels.addToCart}
         </button>
       </div>
     </div>

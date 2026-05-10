@@ -14,6 +14,8 @@ import { PrintConfigurator } from '@/components/shop/PrintConfigurator'
 import { WishlistButton } from '@/components/shop/WishlistButton'
 import ReviewsSection from '@/components/shop/ReviewsSection'
 import PhotoViewTracker from '@/components/shop/PhotoViewTracker'
+import { getShopLocale } from '@/lib/shop/locale'
+import { getDictionary } from '@/i18n/dictionaries'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,6 +25,8 @@ export default async function PhotoConfiguratorPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
+  const locale = await getShopLocale()
+  const t = getDictionary(locale).boutique
   const sb = createShopAdminClient()
   const { data: photoRaw } = await sb
     .from('photos')
@@ -38,8 +42,6 @@ export default async function PhotoConfiguratorPage({
     listActiveSizes(),
     listAvailablePrices(),
     listApprovedReviewsForPhoto(photo.id),
-    // Related = 4 andere gepubliceerde foto's, eerst zelfde species,
-    // anders willekeurig. Eenvoudige query: filter zelfde species, of fallback.
     (async () => {
       const all = await sb
         .from('photos')
@@ -48,7 +50,6 @@ export default async function PhotoConfiguratorPage({
         .neq('id', photo.id)
         .limit(20)
       const list = (all.data ?? []) as Pick<Photo, 'id' | 'slug' | 'title' | 'alt_text' | 'storage_path' | 'bucket' | 'species' | 'category_slug'>[]
-      // Zelfde categorie voorrang
       const sameCat = photo.category_slug
         ? list.filter((p) => p.category_slug === photo.category_slug)
         : []
@@ -59,7 +60,6 @@ export default async function PhotoConfiguratorPage({
 
   const aggregate = aggregateReviews(reviews)
 
-  // Bouw lookup voor cell-rendering
   const mediaById = new Map(media.map((m) => [m.id, m]))
   const sizeById = new Map(sizes.map((s) => [s.id, s]))
   const prices = pricesRaw
@@ -77,7 +77,11 @@ export default async function PhotoConfiguratorPage({
     })
     .filter((x): x is NonNullable<typeof x> => x !== null)
 
-  const mediaProps = media.map((m) => ({ id: m.id, slug: m.slug, name: m.name_fr }))
+  const mediaProps = media.map((m) => ({
+    id: m.id,
+    slug: m.slug,
+    name: locale === 'nl' ? (m.name_nl ?? m.name_fr) : m.name_fr,
+  }))
   const sizeProps = sizes.map((s) => ({ id: s.id, slug: s.slug, label: s.label }))
 
   return (
@@ -88,7 +92,7 @@ export default async function PhotoConfiguratorPage({
         href="/shop/boutique"
         className="inline-flex items-center gap-2 text-sm text-(--color-stone) hover:text-(--color-ink) mb-6"
       >
-        <ArrowLeft size={14} /> Retour à la boutique
+        <ArrowLeft size={14} /> {t.backToBoutique}
       </Link>
 
       <div className="grid md:grid-cols-2 gap-10">
@@ -111,7 +115,7 @@ export default async function PhotoConfiguratorPage({
         <div>
           <p className="text-xs text-(--color-bronze) tracking-[0.3em] uppercase mb-2 inline-flex items-center gap-2">
             <Sparkles className="w-3 h-3" />
-            Personnaliser
+            {t.detailEyebrow}
           </p>
           <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl text-(--color-ink) mb-3">
             {photo.title ?? photo.slug}
@@ -127,8 +131,7 @@ export default async function PhotoConfiguratorPage({
 
           {media.length === 0 || sizes.length === 0 || prices.length === 0 ? (
             <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded p-4 text-sm">
-              Configurator niet beschikbaar — voeg eerst materialen, formaten
-              en prijzen toe via{' '}
+              {t.configurator.configMissing}{' '}
               <Link href="/admin/boutique/boutique" className="underline">
                 /admin/boutique/boutique
               </Link>
@@ -140,10 +143,12 @@ export default async function PhotoConfiguratorPage({
               photoSlug={photo.slug}
               photoTitle={photo.title ?? photo.slug}
               photoStoragePath={photo.storage_path}
+              photoBucket={photo.bucket}
               defaultOrientation={photo.orientation ?? 'portrait'}
               media={mediaProps}
               sizes={sizeProps}
               prices={prices}
+              labels={t.configurator}
             />
           )}
         </div>
@@ -156,7 +161,7 @@ export default async function PhotoConfiguratorPage({
       {relatedRaw.length > 0 && (
         <section className="border-t border-(--color-frame) pt-12 mt-12">
           <h2 className="font-[family-name:var(--font-display)] text-2xl text-(--color-ink) mb-6">
-            Vous aimerez aussi
+            {t.relatedTitle}
           </h2>
           <ul className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {relatedRaw.map((r) => (
@@ -179,7 +184,7 @@ export default async function PhotoConfiguratorPage({
                       {r.title ?? r.slug}
                     </p>
                     <p className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-(--color-bronze) group-hover:gap-2 transition-all">
-                      Voir
+                      {t.relatedSee}
                       <ArrowRight className="w-3 h-3" />
                     </p>
                   </div>
