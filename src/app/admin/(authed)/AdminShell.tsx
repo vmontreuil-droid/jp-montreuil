@@ -91,7 +91,7 @@ function ShellInner({ sidebar, children }: Props) {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          aria-label="Sluiten"
+          aria-label="Fermer"
           className="md:hidden absolute top-3 right-3 inline-flex items-center justify-center w-9 h-9 text-(--color-stone) hover:text-(--color-ink) z-10"
         >
           <X className="w-5 h-5" />

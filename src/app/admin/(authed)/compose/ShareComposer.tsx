@@ -520,7 +520,7 @@ id="caption-nl"
               value={captionNl}
               onChange={(e) => setCaptionNl(e.target.value)}
               rows={4}
-              placeholder="Tekst van de post in het Nederlands…"
+              placeholder="Texte de la publication, version néerlandaise…"
               className="w-full px-3 py-2 bg-(--color-canvas) border border-(--color-frame) text-(--color-ink) text-sm focus:border-(--color-bronze) focus:outline-none resize-y"
             />
           </div>

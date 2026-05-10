@@ -318,7 +318,7 @@ export default function AboutEdit({ section }: Props) {
               value={bodyNl}
               onChange={(e) => setBodyNl(e.target.value)}
               rows={10}
-              placeholder="Tekst van de sectie in het Nederlands…"
+              placeholder="Texte de la section, version néerlandaise…"
               className="w-full px-3 py-2 bg-(--color-paper) border border-(--color-frame) text-(--color-ink) text-sm focus:border-(--color-bronze) focus:outline-none resize-y"
             />
           </div>

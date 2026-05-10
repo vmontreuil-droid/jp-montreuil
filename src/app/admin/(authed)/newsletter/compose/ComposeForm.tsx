@@ -79,8 +79,13 @@ export default function ComposeForm({ counts }: Props) {
 
       <section className="bg-(--color-paper) border border-(--color-frame) p-5 space-y-4">
         <h2 className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">Version NL</h2>
-        <Field label="Onderwerp (NL) *" value={subjectNl} onChange={setSubjectNl} placeholder="Nieuwe werken dit voorjaar" />
-        <Body label="Inhoud (NL) *" value={bodyNl} onChange={setBodyNl} />
+        <Field
+          label="Sujet (NL) *"
+          value={subjectNl}
+          onChange={setSubjectNl}
+          placeholder="Onderwerp van de nieuwsbrief…"
+        />
+        <Body label="Contenu (NL) *" value={bodyNl} onChange={setBodyNl} />
       </section>
 
       {/* Preview */}
