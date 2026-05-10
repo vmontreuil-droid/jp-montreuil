@@ -1,13 +1,15 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { ArrowLeft, Eye, EyeOff, Save, Trash2 } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Save, Trash2, Star, BadgeCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getShopPhotoById, shopPhotoUrl } from '@/lib/shop/photos'
 import {
   updateShopPhoto,
   deleteShopPhoto,
   togglePublishedShopPhoto,
+  toggleFeaturedShopPhoto,
 } from '../actions'
+import GenerateAltButton from './GenerateAltButton'
 
 export default async function EditShopPhotoPage({
   params,
@@ -25,6 +27,9 @@ export default async function EditShopPhotoPage({
   const updateBound = updateShopPhoto.bind(null, id)
   const deleteBound = deleteShopPhoto.bind(null, id)
   const toggleBound = togglePublishedShopPhoto.bind(null, id, !photo.is_published)
+  const featuredBound = toggleFeaturedShopPhoto.bind(null, id, !((photo as { is_featured?: boolean }).is_featured))
+  const isFeatured = (photo as { is_featured?: boolean }).is_featured ?? false
+  const aiAltGeneratedAt = (photo as { ai_alt_generated_at?: string | null }).ai_alt_generated_at ?? null
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-10 space-y-6">
@@ -62,7 +67,22 @@ export default async function EditShopPhotoPage({
           <Field label="Lieu" name="taken_at_location" defaultValue={photo.taken_at_location ?? ''} />
           <Field label="Date" name="taken_at" type="date" defaultValue={photo.taken_at ?? ''} />
           <TextArea label="Description" name="description" defaultValue={photo.description ?? ''} />
-          <TextArea label="Texte alternatif (alt)" name="alt_text" defaultValue={photo.alt_text ?? ''} />
+          <div>
+            <TextArea label="Texte alternatif (alt)" name="alt_text" defaultValue={photo.alt_text ?? ''} />
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <p className="text-[11px] text-(--color-stone)">
+                {aiAltGeneratedAt ? (
+                  <span className="inline-flex items-center gap-1 text-emerald-700">
+                    <BadgeCheck className="w-3 h-3" />
+                    Généré par IA le {new Date(aiAltGeneratedAt).toLocaleDateString('fr-BE')}
+                  </span>
+                ) : (
+                  <span>Généré automatiquement par Claude vision</span>
+                )}
+              </p>
+              <GenerateAltButton id={id} />
+            </div>
+          </div>
           <Field label="Ordre d'affichage" name="sort_order" type="number" defaultValue={String(photo.sort_order)} />
           <label className="flex items-center gap-2">
             <input type="checkbox" name="is_published" defaultChecked={photo.is_published} className="w-4 h-4" />
@@ -88,6 +108,19 @@ export default async function EditShopPhotoPage({
           >
             {photo.is_published ? <EyeOff size={16} /> : <Eye size={16} />}
             {photo.is_published ? 'Repasser en brouillon' : 'Publier'}
+          </button>
+        </form>
+        <form action={featuredBound}>
+          <button
+            type="submit"
+            className={`inline-flex items-center gap-2 px-3 py-2 border text-sm rounded transition-colors ${
+              isFeatured
+                ? 'bg-(--color-bronze) text-white border-(--color-bronze) hover:bg-(--color-bronze-dark)'
+                : 'bg-(--color-paper) border-(--color-frame) hover:border-(--color-bronze)'
+            }`}
+          >
+            <Star size={16} className={isFeatured ? 'fill-white' : ''} />
+            {isFeatured ? 'Coup de cœur — retirer' : 'Marquer comme coup de cœur'}
           </button>
         </form>
         <form action={deleteBound}>

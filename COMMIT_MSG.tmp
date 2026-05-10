@@ -1,48 +1,34 @@
-Batch 2: reviews + discount codes + featured banner + related products
+Batch 3: foto-import - bulk-upload, EXIF, AI alt-text, featured-toggle
 
-Reviews (klantbeoordelingen):
-- Migration 0025: shop.reviews tabel met status enum (pending/approved/
-  rejected) + indexes + RLS (publieke read enkel approved, public insert
-  enkel pending, admin full).
-- lib/shop/reviews.ts: listApprovedReviewsForPhoto, aggregateReviews,
-  listAllReviews, setReviewStatus.
-- ReviewsSection.tsx: client component met aggregate (gemiddelde +
-  sterren), reviews-lijst met "Achat verifie" badge, en submit-form
-  met sterren-selector + naam/email/titel/comment + rate-limit
-  (5/uur per IP). Geport van Allard.
-- Server-action submitReview + verified-purchase auto-detect (matcht
-  email tegen paid orders met dezelfde photo_id).
-- Admin moderation page /admin/boutique/reviews: pending-eerst, kan
-  approuveren / rejeter / opnieuw pending zetten.
+Libs (geport van allardphilippe):
+- lib/exif.ts: minimale JPEG/EXIF-parser zonder dependencies. Leest
+  DateTimeOriginal (-> taken_at YYYY-MM-DD) en GPSLat/Lon (-> gpsLabel
+  "lat, lon"). Plus readImageDimensions() via Image-element voor alle
+  browser-supported types.
+- lib/ai-alt.ts: Claude Vision REST-call (model claude-haiku-4-5) voor
+  automatische alt-text in FR. Vereist ANTHROPIC_API_KEY env-var.
 
-Discount codes:
-- Migration 0025: shop.discount_codes (kind percent/fixed_amount, value,
-  min_subtotal, max_uses, expires_at, is_active) + shop.discount_redemptions
-  (log per gebruik).
-- lib/shop/discount-codes.ts: listDiscountCodes, getDiscountByCode,
-  evaluateDiscount, validateDiscount, recordRedemption.
-- Admin /admin/boutique/discounts: tabel met inline edit (code/type/
-  valeur/min/expire/active) + nouveau-form. Volledige CRUD.
-- CheckoutFormClient: nieuw promo-code blok in summary met live
-  preview via previewDiscount server-action. Toont discount-regel +
-  removeknop.
-- prepareShopOrder action: server-side hervalidatie van de code,
-  bewaart discount_code + discount_cents op order, logt redemption
-  + bumpt uses_count.
+Server actions (in admin/boutique/photos/actions.ts):
+- uploadShopPhotoOne: per-file upload die fouten retourneert ipv throwen
+  -> bulk-client kan per file feedback geven zonder de batch te breken.
+- generateShopPhotoAltText: roept Claude Vision aan met species/location
+  hints, slaat alt_text + ai_alt_generated_at op.
+- toggleFeaturedShopPhoto: zet shop.photos.is_featured (gebruikt door
+  boutique-landing "Coups de coeur"-strip).
 
-Featured banner:
-- Migration 0025: shop.photos.is_featured + featured_order kolommen
-  + filtered index.
-- lib/shop/photos.ts: listFeaturedShopPhotos(limit) helper.
-- Boutique landing toont nieuwe "Coups de coeur de Jean-Pierre" strip
-  bovenaan met max 6 highlight-foto's, alleen als admin er gemarkeerd
-  heeft (Sparkles icoon, 6-koloms grid).
+UI:
+- /admin/boutique/photos/bulk-upload (page + BulkUploadClient):
+  drag-and-drop multi-file zone, EXIF-extractie + dimensions VOOR
+  upload, defaults panel (espece/lieu/publish), per-file editable
+  velden (titre/slug/espece/lieu), sequentiele upload met status per
+  file (idle -> uploading -> done/error).
+- /admin/boutique/photos lijst krijgt CTA "Import en lot" rechtsboven.
+- /admin/boutique/photos/[id] krijgt:
+   * "Generer alt-text (IA)" knop naast het alt-veld + timestamp van
+     laatste IA-generatie.
+   * Featured-toggle (Star icoon, bronze als actief) -> verschijnt op
+     boutique-landing in de "Coups de coeur"-strip.
 
-Related products:
-- Photo detail-pagina toont onderaan "Vous aimerez aussi" met 4 andere
-  foto's: zelfde species voorrang, anders willekeurig.
-
-Admin sidebar:
-- Nieuwe links: Codes promo + Avis clients (met pending-badge).
+Vereiste env-var voor AI alt-text: ANTHROPIC_API_KEY in Vercel.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
