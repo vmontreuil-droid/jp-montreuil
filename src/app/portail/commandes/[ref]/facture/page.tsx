@@ -1,57 +1,49 @@
 import { notFound, redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import {
-  getShopOrderByReference,
-  listShopOrderItems,
-} from '@/lib/shop/orders'
-import { createShopAdminClient } from '@/lib/shop/supabase'
+  getMyShopOrderByReference,
+  listMyShopOrderItems,
+  getPhotosByIds,
+} from '@/lib/shop/customer-portal'
 import { shopPhotoUrl } from '@/lib/shop/photo-url'
 import { PrintButton } from '@/components/shop/PrintButton'
-import { createClient } from '@/lib/supabase/server'
+
+export const dynamic = 'force-dynamic'
 
 const fmt = new Intl.NumberFormat('fr-BE', {
   style: 'currency', currency: 'EUR', minimumFractionDigits: 2,
 })
 const formatPrice = (cents: number) => fmt.format(cents / 100)
 
+const dateFmt = new Intl.DateTimeFormat('fr-BE', {
+  year: 'numeric', month: 'long', day: 'numeric',
+})
+
 /**
- * Print-vriendelijke factuur. Browser Cmd/Ctrl+P → save als PDF.
+ * /portail/commandes/[ref]/facture — printvriendelijke factuur voor de
+ * ingelogde klant. Toont B2B-velden (company_name + VAT) wanneer
+ * aanwezig.
  */
-export default async function ShopInvoicePage({
+export default async function PortailInvoicePage({
   params,
-  searchParams,
 }: {
   params: Promise<{ ref: string }>
-  searchParams: Promise<{ email?: string }>
 }) {
   const { ref } = await params
-  const sp = await searchParams
-  const email = (sp.email ?? '').trim().toLowerCase()
 
-  // Session-aware: ingelogde klanten gaan naar de nieuwe portail-route
-  // (geen email-querystring nodig, B2B-velden worden ook getoond).
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (user?.email) {
-    redirect(`/portail/commandes/${ref}/facture`)
+  if (!user || !user.email) {
+    redirect(`/portail/login?next=${encodeURIComponent(`/portail/commandes/${ref}/facture`)}`)
   }
 
-  const order = await getShopOrderByReference(ref)
+  const order = await getMyShopOrderByReference(user.email, ref)
   if (!order) notFound()
-  if (!email || order.email.toLowerCase() !== email) notFound()
 
-  const items = await listShopOrderItems(order.id)
-
-  // Hydrate photo storage_paths voor thumbnails
-  const sb = createShopAdminClient()
+  const items = await listMyShopOrderItems(order.id)
   const photoIds = items.map((i) => i.photo_id).filter((x): x is string => !!x)
-  const { data: photoRows } = photoIds.length
-    ? await sb.from('photos').select('id, storage_path').in('id', photoIds)
-    : { data: [] as Array<{ id: string; storage_path: string }> }
-  const photoPathById = new Map((photoRows ?? []).map((p) => [p.id, p.storage_path]))
+  const photoMap = await getPhotosByIds(photoIds)
 
-  const dateFmt = new Intl.DateTimeFormat('fr-BE', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  })
   const addr = (order.shipping_address ?? {}) as Record<string, string>
 
   return (
@@ -67,7 +59,7 @@ export default async function ShopInvoicePage({
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="no-print mb-6 flex items-center justify-between gap-3">
           <a
-            href={`/shop/portail/commande/${order.reference}?email=${encodeURIComponent(order.email)}`}
+            href={`/portail/commandes/${order.reference}`}
             className="text-sm text-stone-500 hover:text-stone-900"
           >
             ← Retour
@@ -76,7 +68,6 @@ export default async function ShopInvoicePage({
         </div>
 
         <div className="bg-white border border-stone-200 rounded p-10 invoice-page">
-          {/* Header */}
           <header className="flex justify-between items-start mb-8 pb-6 border-b border-stone-200">
             <div>
               <h1 className="text-2xl font-semibold mb-1">Atelier JP Montreuil</h1>
@@ -86,7 +77,7 @@ export default async function ShopInvoicePage({
             <div className="text-right">
               <span
                 aria-hidden
-                className="inline-flex items-center justify-center bg-stone-900 text-white font-display tracking-wider rounded-sm select-none"
+                className="inline-flex items-center justify-center bg-stone-900 text-white tracking-wider rounded-sm select-none"
                 style={{ width: 56, height: 56, fontSize: 22, lineHeight: 1 }}
               >
                 JP
@@ -112,9 +103,7 @@ export default async function ShopInvoicePage({
               {order.company_name && (
                 <p className="font-semibold">{order.company_name}</p>
               )}
-              <p className={order.company_name ? 'text-sm text-stone-700' : 'font-medium'}>
-                {order.full_name}
-              </p>
+              <p className={order.company_name ? 'text-sm text-stone-700' : 'font-medium'}>{order.full_name}</p>
               <p className="text-sm text-stone-600">{order.email}</p>
               <address className="not-italic text-sm text-stone-600 mt-2 leading-relaxed">
                 {addr.street && <div>{addr.street}</div>}
@@ -133,7 +122,6 @@ export default async function ShopInvoicePage({
             </div>
           </div>
 
-          {/* Items */}
           <table className="w-full text-sm mb-8 border-separate border-spacing-x-3 sm:border-spacing-x-6">
             <colgroup>
               <col className="w-16" />
@@ -153,14 +141,14 @@ export default async function ShopInvoicePage({
             </thead>
             <tbody>
               {items.map((it) => {
-                const photoPath = it.photo_id ? photoPathById.get(it.photo_id) : null
+                const photo = it.photo_id ? photoMap.get(it.photo_id) : null
                 return (
                   <tr key={it.id} className="border-b border-stone-200">
                     <td className="py-3 align-top">
-                      {photoPath ? (
+                      {photo ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={shopPhotoUrl(photoPath)}
+                          src={shopPhotoUrl(photo.storage_path)}
                           alt=""
                           className="w-12 h-12 object-cover rounded-sm border border-stone-200"
                           loading="lazy"

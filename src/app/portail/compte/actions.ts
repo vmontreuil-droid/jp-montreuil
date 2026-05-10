@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail, ADMIN_EMAIL } from '@/lib/email/client'
 import { NewContactMessage } from '@/lib/email/templates/NewContactMessage'
+import { upsertMyShopCustomer } from '@/lib/shop/customer-portal'
+import { checkVies } from '@/lib/vies'
 
 export type ChangePasswordResult =
   | { ok: true }
@@ -53,6 +55,87 @@ export async function signOut() {
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/portail/login')
+}
+
+export type SaveShopProfileResult = { ok: true } | { ok: false; error: string }
+
+/**
+ * Save the customer's shipping/billing profile + B2B settings into
+ * shop.customers. Triggered by the ShopProfileForm in /portail/compte.
+ *
+ * VIES re-validatie gebeurt server-side bij elke save: zelfs als de
+ * client-side check ok zei, controleren we hier opnieuw — anders kan
+ * een ingelogde klant een willekeurig BTW-nummer als "validated"
+ * doordrukken.
+ */
+export async function saveShopProfile(input: {
+  full_name: string
+  phone: string
+  street: string
+  postal_code: string
+  city: string
+  country: string
+  is_b2b: boolean
+  company: string
+  vat_number: string
+  vies_validated: { name: string | null; address: string | null } | null
+}): Promise<SaveShopProfileResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || !user.email) return { ok: false, error: 'Niet ingelogd' }
+
+  const isB2B = !!input.is_b2b
+  let vatNumber: string | null = null
+  let vatValidatedAt: string | null = null
+  let vatCompanyName: string | null = null
+
+  if (isB2B && input.vat_number.trim()) {
+    const raw = input.vat_number.trim().toUpperCase().replace(/[\s.\-_]/g, '')
+    vatNumber = raw
+    // Server-side re-check (8s timeout). Bij unavailable bewaren we het
+    // nummer wel, maar markeren we het als niet-gevalideerd.
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 8_000)
+    try {
+      const result = await checkVies(raw, ctrl.signal)
+      if (result.status === 'ok') {
+        vatValidatedAt = new Date().toISOString()
+        vatCompanyName = result.name
+      }
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  const address = {
+    street: input.street.trim(),
+    postal_code: input.postal_code.trim(),
+    city: input.city.trim(),
+    country: (input.country || 'BE').toUpperCase(),
+  }
+
+  try {
+    await upsertMyShopCustomer({
+      email: user.email,
+      authUserId: user.id,
+      full_name: input.full_name.trim() || null,
+      phone: input.phone.trim() || null,
+      address,
+      billing_address: address,
+      is_b2b: isB2B,
+      company: isB2B ? (input.company.trim() || null) : null,
+      vat_number: vatNumber,
+      vat_validated_at: vatValidatedAt,
+      vat_company_name: vatCompanyName,
+      source: 'portail_compte',
+    })
+  } catch (e) {
+    console.error('[compte/saveShopProfile] error:', e)
+    return { ok: false, error: e instanceof Error ? e.message : 'Server error' }
+  }
+
+  revalidatePath('/portail/compte')
+  return { ok: true }
 }
 
 export type SendMessageState =

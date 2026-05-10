@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { ArrowLeft, Truck, Save } from 'lucide-react'
+import { ArrowLeft, Truck, Save, Building2, BadgeCheck, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import {
   getShopOrderById,
@@ -86,10 +86,37 @@ export default async function ShopOrderDetailPage({
       <section className="grid sm:grid-cols-2 gap-4">
         <div className="bg-white border border-stone-200 rounded p-5">
           <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-2">Client</h2>
-          <p className="font-medium">{order.full_name}</p>
+          {order.is_b2b && (
+            <p className="inline-flex items-center gap-1.5 px-2 py-0.5 mb-2 bg-stone-900 text-white text-[10px] uppercase tracking-widest rounded-sm">
+              <Building2 size={11} /> B2B
+            </p>
+          )}
+          {order.company_name && (
+            <p className="font-semibold text-stone-900">{order.company_name}</p>
+          )}
+          <p className={order.company_name ? 'text-sm text-stone-700' : 'font-medium'}>{order.full_name}</p>
           <p className="text-sm text-stone-600">
             <a href={`mailto:${order.email}`} className="hover:text-stone-900">{order.email}</a>
           </p>
+          {order.vat_number && (
+            <p className="mt-2 text-xs font-mono text-stone-700 inline-flex items-center gap-1.5">
+              TVA : {order.vat_number}
+              {order.vat_validated_at ? (
+                <span className="inline-flex items-center gap-0.5 text-emerald-700">
+                  <BadgeCheck size={11} /> VIES
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-0.5 text-amber-700">
+                  <AlertCircle size={11} /> non validé
+                </span>
+              )}
+            </p>
+          )}
+          {order.vat_company_name && order.vat_company_name !== order.company_name && (
+            <p className="text-xs text-stone-500 mt-1">
+              VIES retourne : <em>{order.vat_company_name}</em>
+            </p>
+          )}
         </div>
         <div className="bg-white border border-stone-200 rounded p-5">
           <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 mb-2">Livraison</h2>

@@ -1,11 +1,16 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Camera, ArrowRight, Calendar, ImageIcon, Brush, CheckCircle2, Clock } from 'lucide-react'
+import {
+  Camera, ArrowRight, Calendar, ImageIcon, Brush, CheckCircle2, Clock,
+  ShoppingBag, Lock, Receipt,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getDictionary } from '@/i18n/dictionaries'
 import { getPortailLocale } from './locale'
 import { localePath } from '@/lib/links'
+import { listMyShopOrders } from '@/lib/shop/customer-portal'
+import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/lib/shop/orders'
 
 export const dynamic = 'force-dynamic'
 
@@ -102,6 +107,15 @@ export default async function PortailDashboardPage() {
   const tDevis = getDictionary(locale).devis
   const statusLabels = tDevis.statusLabels as Record<string, string>
 
+  // Shop-orders (publieke webshop). Zit in shop-schema, dus eigen helper.
+  const shopOrders = await listMyShopOrders(user.email).catch(() => [])
+  const tShop = t.shopOrders
+  const fmtEur = new Intl.NumberFormat(dateLocale, {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+  })
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
       <header className="mb-10">
@@ -181,7 +195,69 @@ export default async function PortailDashboardPage() {
         </section>
       )}
 
-      {albums.length === 0 && commissions.length === 0 ? (
+      {/* Shop-orders section */}
+      {shopOrders.length > 0 && (
+        <section className="mb-12">
+          <div className="mb-4">
+            <h2 className="text-2xl text-(--color-ink) font-[family-name:var(--font-display)] inline-flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5 text-(--color-bronze)" />
+              {tShop.sectionTitle}
+            </h2>
+            <p className="mt-1 text-sm text-(--color-charcoal)">{tShop.sectionLead}</p>
+          </div>
+
+          <ul className="space-y-3">
+            {shopOrders.map((o) => (
+              <li key={o.id}>
+                <Link
+                  href={`/portail/commandes/${o.reference}`}
+                  className="block group bg-(--color-paper) border border-(--color-frame) hover:border-(--color-bronze) p-5 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-mono text-(--color-ink) text-base">{o.reference}</p>
+                      <p className="text-xs text-(--color-stone) mt-1">
+                        {tShop.orderedOn}{' '}
+                        {new Date(o.created_at).toLocaleDateString(dateLocale, { dateStyle: 'long' })}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] uppercase tracking-[0.15em] whitespace-nowrap ${ORDER_STATUS_COLORS[o.status]}`}>
+                        {ORDER_STATUS_LABELS[o.status]}
+                      </span>
+                      <span className="text-sm font-medium tabular-nums text-(--color-ink)">
+                        {fmtEur.format(o.amount_cents / 100)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
+                    <div className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] text-(--color-bronze) group-hover:gap-2 transition-all">
+                      {o.status === 'pending' && o.mollie_checkout_url ? (
+                        <>
+                          <Lock className="w-3.5 h-3.5" />
+                          {tShop.payNow}
+                        </>
+                      ) : o.status === 'paid' || o.status === 'shipped' || o.status === 'fulfilled' ? (
+                        <>
+                          <Receipt className="w-3.5 h-3.5" />
+                          {tShop.viewInvoice}
+                        </>
+                      ) : (
+                        <>
+                          {tShop.viewDetail}
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {albums.length === 0 && commissions.length === 0 && shopOrders.length === 0 ? (
         <div className="bg-(--color-paper) border border-(--color-frame) p-10 text-center">
           <Camera className="w-10 h-10 mx-auto mb-4 text-(--color-stone) opacity-50" />
           <p className="text-sm text-(--color-charcoal)">{t.dashboard.empty}</p>

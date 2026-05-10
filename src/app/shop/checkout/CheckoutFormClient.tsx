@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { Lock, Truck } from 'lucide-react'
+import {
+  Lock, Truck, Building2, BadgeCheck, AlertCircle, Loader2,
+} from 'lucide-react'
 import { useCart } from '@/components/shop/CartProvider'
 import { cartSubtotal } from '@/lib/shop/cart'
 import { estimateShopShipping, prepareShopOrder } from './actions'
@@ -12,7 +14,33 @@ const fmt = new Intl.NumberFormat('fr-BE', {
 })
 const formatPrice = (cents: number) => fmt.format(cents / 100)
 
-export function CheckoutFormClient() {
+export type CheckoutPrefill = {
+  email: string
+  full_name: string
+  phone: string
+  street: string
+  postal_code: string
+  city: string
+  country: string
+  is_b2b: boolean
+  company: string
+  vat_number: string
+}
+
+type ViesState =
+  | { status: 'idle' }
+  | { status: 'checking' }
+  | { status: 'ok'; name: string | null }
+  | { status: 'invalid'; reason: string }
+  | { status: 'unavailable' }
+
+export function CheckoutFormClient({
+  prefill,
+  loggedIn,
+}: {
+  prefill: CheckoutPrefill | null
+  loggedIn: boolean
+}) {
   const { items, hydrated, clear } = useCart()
   const [isPending, startTransition] = useTransition()
   const [result, setResult] = useState<
@@ -20,7 +48,23 @@ export function CheckoutFormClient() {
     | { ok: false; msg: string }
     | null
   >(null)
-  const [country, setCountry] = useState('BE')
+
+  // Form-state met prefill
+  const [email, setEmail] = useState(prefill?.email ?? '')
+  const [fullName, setFullName] = useState(prefill?.full_name ?? '')
+  const [phone, setPhone] = useState(prefill?.phone ?? '')
+  const [street, setStreet] = useState(prefill?.street ?? '')
+  const [postal, setPostal] = useState(prefill?.postal_code ?? '')
+  const [city, setCity] = useState(prefill?.city ?? '')
+  const [country, setCountry] = useState(prefill?.country ?? 'BE')
+  const [notes, setNotes] = useState('')
+
+  const [isB2B, setIsB2B] = useState(prefill?.is_b2b ?? false)
+  const [company, setCompany] = useState(prefill?.company ?? '')
+  const [vat, setVat] = useState(prefill?.vat_number ?? '')
+  const [vies, setVies] = useState<ViesState>({ status: 'idle' })
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const [shipping, setShipping] = useState<{ cents: number; zoneName: string | null; freeAbove: number | null } | null>(null)
 
   const subtotalForShipping = cartSubtotal(items)
@@ -33,6 +77,49 @@ export function CheckoutFormClient() {
       .catch(() => { if (!cancelled) setShipping(null) })
     return () => { cancelled = true }
   }, [country, subtotalForShipping, hydrated, items.length])
+
+  // Live VIES-check (debounced 600ms)
+  useEffect(() => {
+    if (!isB2B) {
+      setVies({ status: 'idle' })
+      return
+    }
+    const trimmed = vat.trim()
+    if (trimmed.length < 8) {
+      setVies({ status: 'idle' })
+      return
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      void runViesCheck(trimmed)
+    }, 600)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vat, isB2B])
+
+  async function runViesCheck(value: string) {
+    setVies({ status: 'checking' })
+    try {
+      const res = await fetch('/api/shop/vies-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vat_number: value }),
+      })
+      const json = await res.json()
+      if (json.ok) {
+        setVies({ status: 'ok', name: json.name ?? null })
+        if (json.name && !company) setCompany(json.name)
+      } else if (json.unavailable) {
+        setVies({ status: 'unavailable' })
+      } else {
+        setVies({ status: 'invalid', reason: json.reason ?? 'Invalide' })
+      }
+    } catch {
+      setVies({ status: 'unavailable' })
+    }
+  }
 
   if (!hydrated) {
     return (
@@ -71,22 +158,32 @@ export function CheckoutFormClient() {
             Vous recevrez un email avec les instructions de paiement.
           </p>
         )}
+        {loggedIn && (
+          <p className="text-xs text-stone-500">
+            <Link
+              href={`/portail/commandes/${result.reference}`}
+              className="text-stone-700 underline hover:text-stone-900"
+            >
+              Voir ma commande dans mon espace
+            </Link>
+          </p>
+        )}
       </div>
     )
   }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const fd = new FormData(e.currentTarget)
     const payload = {
-      email: String(fd.get('email') || '').trim(),
-      full_name: String(fd.get('full_name') || '').trim(),
+      email: email.trim(),
+      full_name: fullName.trim(),
+      phone: phone.trim(),
       shipping_address: {
-        street: String(fd.get('street') || '').trim(),
-        postal_code: String(fd.get('postal_code') || '').trim(),
-        city: String(fd.get('city') || '').trim(),
-        country: String(fd.get('country') || 'BE').trim(),
-        notes: String(fd.get('notes') || '').trim(),
+        street: street.trim(),
+        postal_code: postal.trim(),
+        city: city.trim(),
+        country: country.trim(),
+        notes: notes.trim(),
       },
       items: items.map((i) => ({
         product_id: i.productId,
@@ -100,13 +197,15 @@ export function CheckoutFormClient() {
         print_size_label: i.variantLabel ?? null,
       })),
       locale: 'fr',
+      is_b2b: isB2B,
+      company_name: isB2B ? company.trim() : null,
+      vat_number: isB2B ? vat.trim() : null,
     }
     startTransition(async () => {
       try {
         const res = await prepareShopOrder(payload)
         setResult({ ok: true, reference: res.reference, checkoutUrl: res.checkoutUrl })
         clear()
-        // Auto-redirect naar Mollie checkout indien beschikbaar
         if (res.checkoutUrl) {
           setTimeout(() => { window.location.href = res.checkoutUrl! }, 800)
         }
@@ -123,21 +222,21 @@ export function CheckoutFormClient() {
     <form onSubmit={onSubmit} className="grid lg:grid-cols-[1fr_320px] gap-8">
       <div className="bg-white border border-stone-200 rounded p-6 space-y-4">
         <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500">Coordonnées</h2>
-        <Field label="Nom complet *" name="full_name" required autoComplete="name" />
-        <Field label="Email *" name="email" type="email" required autoComplete="email" />
+        <Field label="Nom complet *" name="full_name" value={fullName} onChange={setFullName} required autoComplete="name" />
+        <Field label="Email *" name="email" type="email" value={email} onChange={setEmail} required autoComplete="email" />
+        <Field label="Téléphone (optionnel)" name="phone" type="tel" value={phone} onChange={setPhone} autoComplete="tel" />
 
         <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 pt-3">Adresse de livraison</h2>
-        <Field label="Rue + numéro *" name="street" required autoComplete="address-line1" />
+        <Field label="Rue + numéro *" name="street" value={street} onChange={setStreet} required autoComplete="address-line1" />
         <div className="grid grid-cols-3 gap-3">
-          <Field label="Code postal *" name="postal_code" required autoComplete="postal-code" />
+          <Field label="Code postal *" name="postal_code" value={postal} onChange={setPostal} required autoComplete="postal-code" />
           <div className="col-span-2">
-            <Field label="Ville *" name="city" required autoComplete="address-level2" />
+            <Field label="Ville *" name="city" value={city} onChange={setCity} required autoComplete="address-level2" />
           </div>
         </div>
         <label className="block">
           <span className="text-sm text-stone-700 mb-1 block">Pays</span>
           <select
-            name="country"
             value={country}
             onChange={(e) => setCountry(e.target.value)}
             required
@@ -154,11 +253,60 @@ export function CheckoutFormClient() {
         <label className="block">
           <span className="text-sm text-stone-700 mb-1 block">Remarques (optionnel)</span>
           <textarea
-            name="notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
             rows={2}
             className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm"
           />
         </label>
+
+        {/* B2B section */}
+        <div className="border-t border-stone-200 pt-4 space-y-3">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isB2B}
+              onChange={(e) => setIsB2B(e.target.checked)}
+              className="mt-1 w-4 h-4"
+            />
+            <span>
+              <span className="block text-sm font-medium text-stone-800 inline-flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-stone-600" />
+                Je commande en tant que professionnel (B2B)
+              </span>
+              <span className="block text-xs text-stone-500 mt-0.5">
+                Une facture avec votre n° TVA sera générée.
+              </span>
+            </span>
+          </label>
+
+          {isB2B && (
+            <div className="grid sm:grid-cols-2 gap-3">
+              <Field
+                label="Nom de l'entreprise *"
+                name="company_name"
+                value={company}
+                onChange={setCompany}
+                required
+                autoComplete="organization"
+              />
+              <div>
+                <label className="block">
+                  <span className="text-sm text-stone-700 mb-1 block">N° TVA *</span>
+                  <input
+                    type="text"
+                    value={vat}
+                    onChange={(e) => setVat(e.target.value)}
+                    placeholder="BE0123456789"
+                    required
+                    className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm font-mono"
+                  />
+                </label>
+                <ViesLine state={vies} />
+              </div>
+            </div>
+          )}
+        </div>
 
         {result && !result.ok && (
           <p className="px-4 py-3 bg-amber-50 border border-amber-200 text-amber-900 text-sm rounded">
@@ -230,9 +378,10 @@ export function CheckoutFormClient() {
 }
 
 function Field({
-  label, name, type = 'text', required, autoComplete,
+  label, name, type = 'text', required, autoComplete, value, onChange,
 }: {
   label: string; name: string; type?: string; required?: boolean; autoComplete?: string
+  value: string; onChange: (v: string) => void
 }) {
   return (
     <label className="block">
@@ -242,8 +391,45 @@ function Field({
         name={name}
         required={required}
         autoComplete={autoComplete}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm"
       />
     </label>
+  )
+}
+
+function ViesLine({ state }: { state: ViesState }) {
+  if (state.status === 'idle') return null
+  if (state.status === 'checking') {
+    return (
+      <p className="mt-1.5 text-xs text-stone-500 inline-flex items-center gap-1.5">
+        <Loader2 className="w-3 h-3 animate-spin" />
+        Vérification VIES…
+      </p>
+    )
+  }
+  if (state.status === 'ok') {
+    return (
+      <p className="mt-1.5 text-xs text-emerald-700 inline-flex items-center gap-1.5">
+        <BadgeCheck className="w-3.5 h-3.5" />
+        Numéro valide
+        {state.name && <span className="text-stone-500"> — {state.name}</span>}
+      </p>
+    )
+  }
+  if (state.status === 'invalid') {
+    return (
+      <p className="mt-1.5 text-xs text-red-700 inline-flex items-center gap-1.5">
+        <AlertCircle className="w-3.5 h-3.5" />
+        Numéro non valide ({state.reason})
+      </p>
+    )
+  }
+  return (
+    <p className="mt-1.5 text-xs text-amber-700 inline-flex items-center gap-1.5">
+      <AlertCircle className="w-3.5 h-3.5" />
+      VIES indisponible — vérifié par le serveur
+    </p>
   )
 }

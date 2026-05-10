@@ -27,6 +27,70 @@ export type ResetRequestResult =
 const EMAIL_RX = /^\S+@\S+\.\S+$/
 
 /**
+ * Zoek in alle "known klant"-bronnen (albums, commissions, shop.orders)
+ * en geef terug of de email gekend is + welke locale we voor de mail
+ * moeten gebruiken. Volgorde = recentste interactie wint.
+ *
+ * Shop-orders zitten in een apart schema (`shop`) — we vragen ze op via
+ * een schema-isolated client zodat de bestaande admin-client niet aan
+ * `db: { schema: 'shop' }` hoeft te raken.
+ */
+async function lookupKnownEmail(email: string): Promise<{
+  known: boolean
+  locale: 'fr' | 'nl'
+}> {
+  const admin = createAdminClient()
+
+  let locale: 'fr' | 'nl' = 'fr'
+  let known = false
+
+  const { data: album } = await admin
+    .from('event_albums')
+    .select('client_locale')
+    .ilike('client_email', email)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle<{ client_locale: 'fr' | 'nl' | null }>()
+  if (album) {
+    known = true
+    if (album.client_locale === 'nl') locale = 'nl'
+  }
+
+  if (!known) {
+    const { data: commission } = await admin
+      .from('commission_requests')
+      .select('locale')
+      .ilike('email', email)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle<{ locale: 'fr' | 'nl' }>()
+    if (commission) {
+      known = true
+      locale = commission.locale === 'nl' ? 'nl' : 'fr'
+    }
+  }
+
+  if (!known) {
+    // Shop-schema apart bevragen
+    const { createShopAdminClient } = await import('@/lib/shop/supabase')
+    const shop = createShopAdminClient()
+    const { data: order } = await shop
+      .from('orders')
+      .select('locale')
+      .ilike('email', email)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle<{ locale: string | null }>()
+    if (order) {
+      known = true
+      if (order.locale === 'nl') locale = 'nl'
+    }
+  }
+
+  return { known, locale }
+}
+
+/**
  * Login met email + password. Server-side flow zodat de cookies juist
  * worden geschreven door Supabase SSR client.
  */
@@ -73,35 +137,10 @@ export async function requestPasswordReset(input: {
   const email = (input.email ?? '').trim().toLowerCase()
   if (!email || !EMAIL_RX.test(email)) return { ok: false, error: 'invalid_email' }
 
+  const { known, locale } = await lookupKnownEmail(email)
+  if (!known) return { ok: false, error: 'unknown_email' }
+
   const admin = createAdminClient()
-
-  // Kijk welke locale we moeten gebruiken voor de mail
-  let locale: 'fr' | 'nl' = 'fr'
-  const { data: album } = await admin
-    .from('event_albums')
-    .select('client_locale')
-    .ilike('client_email', email)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  if (album?.client_locale === 'nl') locale = 'nl'
-
-  if (!album) {
-    // Probeer commissions
-    const { data: commission } = await admin
-      .from('commission_requests')
-      .select('locale')
-      .ilike('email', email)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle<{ locale: 'fr' | 'nl' }>()
-
-    if (!commission) {
-      return { ok: false, error: 'unknown_email' }
-    }
-    locale = commission.locale === 'nl' ? 'nl' : 'fr'
-  }
-
   const origin = PUBLIC_BASE_URL.replace(/\/$/, '')
   const next = '/portail/reset-password'
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`
@@ -160,40 +199,10 @@ export async function requestPortalMagicLink(input: {
       ? input.next
       : '/portail'
 
+  const { known, locale } = await lookupKnownEmail(email)
+  if (!known) return { ok: false, error: 'unknown_email' }
+
   const admin = createAdminClient()
-
-  // Vind locale via album of commission
-  let locale: 'fr' | 'nl' = 'fr'
-  const { data: album } = await admin
-    .from('event_albums')
-    .select('client_locale')
-    .ilike('client_email', email)
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  let known = !!album
-  if (album?.client_locale === 'nl') locale = 'nl'
-
-  if (!known) {
-    const { data: commission } = await admin
-      .from('commission_requests')
-      .select('locale')
-      .ilike('email', email)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle<{ locale: 'fr' | 'nl' }>()
-    if (commission) {
-      known = true
-      locale = commission.locale === 'nl' ? 'nl' : 'fr'
-    }
-  }
-
-  if (!known) {
-    return { ok: false, error: 'unknown_email' }
-  }
-
   const origin = PUBLIC_BASE_URL.replace(/\/$/, '')
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
 

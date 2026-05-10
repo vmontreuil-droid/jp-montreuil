@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { Lock, Receipt, ArrowRight } from 'lucide-react'
 import {
   getShopOrderByReference,
@@ -7,6 +7,7 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 } from '@/lib/shop/orders'
+import { createClient } from '@/lib/supabase/server'
 
 const fmt = new Intl.NumberFormat('fr-BE', {
   style: 'currency', currency: 'EUR', minimumFractionDigits: 2,
@@ -28,11 +29,19 @@ export default async function ShopOrderTrackingPage({
 }) {
   const { ref } = await params
   const sp = await searchParams
-  const email = (sp.email ?? '').trim().toLowerCase()
+  const emailParam = (sp.email ?? '').trim().toLowerCase()
+
+  // Session-aware: ingelogde klanten gaan naar de nieuwe portail-route
+  // (geen email-querystring nodig, B2B-velden worden ook getoond).
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user?.email) {
+    redirect(`/portail/commandes/${ref}`)
+  }
 
   const order = await getShopOrderByReference(ref)
   if (!order) notFound()
-  if (!email || order.email.toLowerCase() !== email) {
+  if (!emailParam || order.email.toLowerCase() !== emailParam) {
     return (
       <main className="max-w-md mx-auto px-6 py-16 text-center space-y-4">
         <h1 className="text-2xl font-semibold">Vérification</h1>

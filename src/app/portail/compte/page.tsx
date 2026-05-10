@@ -1,11 +1,13 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowLeft, Mail } from 'lucide-react'
+import { ArrowLeft, Mail, Building2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getDictionary } from '@/i18n/dictionaries'
 import { getPortailLocale } from '../locale'
 import AccountForm from './AccountForm'
 import MessageForm from './MessageForm'
+import ShopProfileForm from './ShopProfileForm'
+import { getMyShopCustomer } from '@/lib/shop/customer-portal'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +21,24 @@ export default async function PortailComptePage() {
   const locale = await getPortailLocale()
   const t = getDictionary(locale).portail
   const isFR = locale === 'fr'
+
+  // Bestaande shop-customer rij (kan null zijn voor klanten die nog
+  // geen webshop-bestelling deden — form vult dan met defaults).
+  const customer = await getMyShopCustomer(user.email!).catch(() => null)
+  const addr = (customer?.address ?? {}) as Record<string, string>
+  const initialShopProfile = {
+    full_name: customer?.full_name ?? '',
+    phone: customer?.phone ?? '',
+    street: addr.street ?? '',
+    postal_code: addr.postal_code ?? '',
+    city: addr.city ?? '',
+    country: addr.country ?? 'BE',
+    is_b2b: customer?.is_b2b ?? false,
+    company: customer?.company ?? '',
+    vat_number: customer?.vat_number ?? '',
+    vat_validated_at: customer?.vat_validated_at ?? null,
+    vat_company_name: customer?.vat_company_name ?? null,
+  }
 
   return (
     <div className="max-w-xl mx-auto px-6 py-10 space-y-8">
@@ -52,6 +72,15 @@ export default async function PortailComptePage() {
       </section>
 
       <MessageForm locale={locale} labels={t.account.message} />
+
+      <section>
+        <h2 className="text-base text-(--color-ink) font-[family-name:var(--font-display)] mb-1 inline-flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-(--color-bronze)" />
+          {t.shopProfile.sectionTitle}
+        </h2>
+        <p className="text-xs text-(--color-stone) mb-3">{t.shopProfile.sectionLead}</p>
+        <ShopProfileForm t={t.shopProfile} initial={initialShopProfile} />
+      </section>
 
       <section>
         <h2 className="text-base text-(--color-ink) font-[family-name:var(--font-display)] mb-3">

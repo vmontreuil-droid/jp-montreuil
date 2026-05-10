@@ -29,6 +29,7 @@ export type ShopOrder = {
   vat_number: string | null
   vat_validated_at: string | null
   vat_company_name: string | null
+  is_b2b: boolean
   created_at: string
   paid_at: string | null
   updated_at: string

@@ -6,6 +6,9 @@ import { generateShopReference } from '@/lib/shop/orders'
 import { shopShippingForCountry } from '@/lib/shop/shipping'
 import { createMolliePayment } from '@/lib/shop/mollie'
 import { sendOrderConfirmationEmail } from '@/lib/shop/mail'
+import { upsertMyShopCustomer } from '@/lib/shop/customer-portal'
+import { createClient } from '@/lib/supabase/server'
+import { checkVies } from '@/lib/vies'
 
 type CheckoutItem = {
   product_id: string | null
@@ -22,6 +25,7 @@ type CheckoutItem = {
 type CheckoutPayload = {
   email: string
   full_name: string
+  phone?: string
   shipping_address: {
     street: string
     postal_code: string
@@ -31,6 +35,9 @@ type CheckoutPayload = {
   }
   items: CheckoutItem[]
   locale?: string
+  is_b2b?: boolean
+  company_name?: string | null
+  vat_number?: string | null
 }
 
 /**
@@ -75,6 +82,38 @@ export async function prepareShopOrder(payload: CheckoutPayload): Promise<{
   const { cents: shippingCents } = await shopShippingForCountry(country, subtotalCents)
   const amountCents = subtotalCents + shippingCents
 
+  // B2B-validatie: re-check VIES server-side. Bij unavailable bewaren we
+  // het nummer wel, maar zonder validated-timestamp — admin kan
+  // achteraf manueel valideren.
+  const isB2B = !!payload.is_b2b
+  let vatNormalized: string | null = null
+  let vatValidatedAt: string | null = null
+  let vatCompanyName: string | null = null
+  if (isB2B && payload.vat_number) {
+    const raw = payload.vat_number.toUpperCase().replace(/[\s.\-_]/g, '')
+    if (raw) {
+      vatNormalized = raw
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 8_000)
+      try {
+        const result = await checkVies(raw, ctrl.signal)
+        if (result.status === 'ok') {
+          vatValidatedAt = new Date().toISOString()
+          vatCompanyName = result.name
+        }
+      } finally {
+        clearTimeout(timer)
+      }
+    }
+  }
+
+  // Optioneel auth-user koppelen (gast checkout = null)
+  const userClient = await createClient()
+  const { data: { user } } = await userClient.auth.getUser()
+  const authUserId = user?.email?.toLowerCase() === payload.email.toLowerCase()
+    ? user.id
+    : null
+
   // Insert order
   const { data: order, error: orderErr } = await sb
     .from('orders')
@@ -89,10 +128,36 @@ export async function prepareShopOrder(payload: CheckoutPayload): Promise<{
       amount_cents: amountCents,
       currency: 'EUR',
       locale: payload.locale ?? 'fr',
+      is_b2b: isB2B,
+      company_name: isB2B ? (payload.company_name ?? null) : null,
+      vat_number: vatNormalized,
+      vat_validated_at: vatValidatedAt,
+      vat_company_name: vatCompanyName,
     })
     .select('id')
     .single()
   if (orderErr) throw new Error(orderErr.message)
+
+  // Upsert klant-profiel — zorgt dat een volgende bestelling pre-fill heeft
+  try {
+    await upsertMyShopCustomer({
+      email: payload.email,
+      authUserId,
+      full_name: payload.full_name,
+      phone: payload.phone || null,
+      address: payload.shipping_address,
+      billing_address: payload.shipping_address,
+      is_b2b: isB2B,
+      company: isB2B ? (payload.company_name ?? null) : null,
+      vat_number: vatNormalized,
+      vat_validated_at: vatValidatedAt,
+      vat_company_name: vatCompanyName,
+      source: authUserId ? 'shop_checkout_authed' : 'shop_checkout_guest',
+    })
+  } catch (e) {
+    console.error('[checkout] customer upsert failed:', e)
+    // niet fataal — order staat al, we gaan door
+  }
 
   // Insert items
   const { error: itemsErr } = await sb
