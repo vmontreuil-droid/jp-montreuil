@@ -1,34 +1,27 @@
-Batch 3: foto-import - bulk-upload, EXIF, AI alt-text, featured-toggle
+Batch 4: quick-view modal + admin photos bulk-actions/filter + orders CSV export
 
-Libs (geport van allardphilippe):
-- lib/exif.ts: minimale JPEG/EXIF-parser zonder dependencies. Leest
-  DateTimeOriginal (-> taken_at YYYY-MM-DD) en GPSLat/Lon (-> gpsLabel
-  "lat, lon"). Plus readImageDimensions() via Image-element voor alle
-  browser-supported types.
-- lib/ai-alt.ts: Claude Vision REST-call (model claude-haiku-4-5) voor
-  automatische alt-text in FR. Vereist ANTHROPIC_API_KEY env-var.
+Publieke shop:
+- QuickViewModal component: klik eye-knop op boutique-grid card -> modal
+  met grote preview + metadata (espece/lieu/datum/description) + CTA
+  "Personnaliser" naar configurator. ESC sluit, pijltjes navigeren naar
+  vorige/volgende foto. WishlistButton in modal-corner.
+- BoutiqueGrid: "Apercu rapide" eye-knop verschijnt op hover linksboven
+  elke card. Doorgegeven taken_at + description aan grid.
 
-Server actions (in admin/boutique/photos/actions.ts):
-- uploadShopPhotoOne: per-file upload die fouten retourneert ipv throwen
-  -> bulk-client kan per file feedback geven zonder de batch te breken.
-- generateShopPhotoAltText: roept Claude Vision aan met species/location
-  hints, slaat alt_text + ai_alt_generated_at op.
-- toggleFeaturedShopPhoto: zet shop.photos.is_featured (gebruikt door
-  boutique-landing "Coups de coeur"-strip).
+Admin photos lijst (/admin/boutique/photos):
+- PhotosGrid client-component: filter pills (Toutes/Publiees/Brouillons/
+  Coups de coeur) met counts, "Tout selectionner" checkbox, sticky
+  bulk-action bar (publish/unpublish/feature/unfeature/delete) zodra > 0
+  geselecteerd. Selectie-checkbox verschijnt op hover linksboven elke
+  thumbnail. Featured-foto's krijgen Star-badge naast Eye-status.
+- bulkPhotoAction server-action: 1 round-trip voor N foto's (delete
+  ruimt ook Storage op).
 
-UI:
-- /admin/boutique/photos/bulk-upload (page + BulkUploadClient):
-  drag-and-drop multi-file zone, EXIF-extractie + dimensions VOOR
-  upload, defaults panel (espece/lieu/publish), per-file editable
-  velden (titre/slug/espece/lieu), sequentiele upload met status per
-  file (idle -> uploading -> done/error).
-- /admin/boutique/photos lijst krijgt CTA "Import en lot" rechtsboven.
-- /admin/boutique/photos/[id] krijgt:
-   * "Generer alt-text (IA)" knop naast het alt-veld + timestamp van
-     laatste IA-generatie.
-   * Featured-toggle (Star icoon, bronze als actief) -> verschijnt op
-     boutique-landing in de "Coups de coeur"-strip.
-
-Vereiste env-var voor AI alt-text: ANTHROPIC_API_KEY in Vercel.
+Orders CSV export:
+- /api/admin/shop-orders-csv route: streamt CSV met BOM + RFC 4180
+  escaping. Kolommen: reference, status, dates, klant + B2B,
+  shipping-adres, subtotal/shipping/discount/amount, items_summary,
+  Mollie ID, tracking. Bestandsnaam met datum.
+- Admin orders page: "Export CSV" knop rechtsboven (Download icoon).
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>

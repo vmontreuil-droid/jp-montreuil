@@ -125,6 +125,8 @@ export default async function ShopBoutiquePage() {
               storage_path: p.storage_path,
               species: p.species,
               taken_at_location: p.taken_at_location,
+              taken_at: p.taken_at,
+              description: p.description,
               created_at: p.created_at,
             }))}
             labels={{

@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Image as ImageIcon, Upload, ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { Image as ImageIcon, Upload, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { listShopPhotos, shopPhotoUrl, photoAlt } from '@/lib/shop/photos'
+import { listShopPhotos } from '@/lib/shop/photos'
 import { uploadShopPhoto } from './actions'
+import PhotosGrid from './PhotosGrid'
 
 /**
  * /admin/boutique/photos — overzicht + upload-form. Klikken op een
@@ -90,41 +91,23 @@ export default async function ShopPhotosPage() {
         </form>
       </section>
 
-      {/* Grid */}
+      {/* Grid + bulk-actions + filter */}
       {photos.length === 0 ? (
         <p className="text-center text-(--color-stone) py-10">
           Pas encore de photos. Téléversez votre première ci-dessus.
         </p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {photos.map((p) => (
-            <Link
-              key={p.id}
-              href={`/admin/boutique/photos/${p.id}`}
-              className={`block group relative aspect-square overflow-hidden bg-(--color-frame)/40 border border-(--color-frame) rounded ${
-                p.is_published ? '' : 'opacity-60'
-              }`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={shopPhotoUrl(p.storage_path)}
-                alt={photoAlt(p)}
-                className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform"
-                loading="lazy"
-              />
-              <div className="absolute top-2 right-2">
-                {p.is_published ? (
-                  <Eye size={14} className="text-white drop-shadow" />
-                ) : (
-                  <EyeOff size={14} className="text-white drop-shadow" />
-                )}
-              </div>
-              <div className="absolute inset-x-0 bottom-0 px-2 py-1 bg-gradient-to-t from-black/60 to-transparent">
-                <p className="text-white text-xs truncate">{p.title ?? p.slug}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <PhotosGrid
+          photos={photos.map((p) => ({
+            id: p.id,
+            slug: p.slug,
+            title: p.title,
+            alt_text: p.alt_text,
+            storage_path: p.storage_path,
+            is_published: p.is_published,
+            is_featured: (p as { is_featured?: boolean }).is_featured ?? false,
+          }))}
+        />
       )}
     </main>
   )

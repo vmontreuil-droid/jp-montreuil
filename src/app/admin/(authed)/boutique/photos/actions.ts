@@ -181,6 +181,48 @@ export async function generateShopPhotoAltText(id: string): Promise<{ ok: true; 
   }
 }
 
+export type BulkActionResult = { ok: true; affected: number } | { ok: false; error: string }
+
+/**
+ * Bulk-actie voor 1 of meer foto's. Veiliger dan client-side N requests
+ * te doen — single round-trip + 1 revalidate. Gebruikt door PhotosBulkBar
+ * in de admin lijst.
+ */
+export async function bulkPhotoAction(
+  ids: string[],
+  action: 'publish' | 'unpublish' | 'feature' | 'unfeature' | 'delete',
+): Promise<BulkActionResult> {
+  await requireAdmin()
+  if (!ids.length) return { ok: true, affected: 0 }
+  const sb = createShopAdminClient()
+
+  if (action === 'delete') {
+    // Eerst storage_paths ophalen om Storage te kunnen opruimen
+    const { data: rows } = await sb.from('photos').select('storage_path').in('id', ids)
+    const paths = (rows ?? []).map((r: { storage_path: string }) => r.storage_path)
+    const { error } = await sb.from('photos').delete().in('id', ids)
+    if (error) return { ok: false, error: error.message }
+    if (paths.length) {
+      await sb.storage.from(SHOP_PHOTOS_BUCKET).remove(paths).catch(() => {})
+    }
+    revalidatePath('/admin/boutique/photos')
+    revalidatePath('/shop/boutique')
+    return { ok: true, affected: ids.length }
+  }
+
+  const patch: Record<string, boolean> = {}
+  if (action === 'publish') patch.is_published = true
+  if (action === 'unpublish') patch.is_published = false
+  if (action === 'feature') patch.is_featured = true
+  if (action === 'unfeature') patch.is_featured = false
+
+  const { error } = await sb.from('photos').update(patch).in('id', ids)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath('/admin/boutique/photos')
+  revalidatePath('/shop/boutique')
+  return { ok: true, affected: ids.length }
+}
+
 export type BulkUploadFileInput = {
   file: File
   slug: string

@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { ArrowRight, Search, ArrowDownUp, Heart, X } from 'lucide-react'
+import { ArrowRight, Search, ArrowDownUp, Heart, X, Eye } from 'lucide-react'
 import { WishlistButton } from '@/components/shop/WishlistButton'
 import { useWishlist } from '@/components/shop/WishlistProvider'
+import QuickViewModal from '@/components/shop/QuickViewModal'
 import { shopPhotoUrl } from '@/lib/shop/photo-url'
 
 type PhotoMini = {
@@ -15,6 +16,8 @@ type PhotoMini = {
   storage_path: string
   species: string | null
   taken_at_location: string | null
+  taken_at: string | null
+  description: string | null
   created_at: string
 }
 
@@ -48,6 +51,7 @@ export default function BoutiqueGrid({
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<SortKey>('recent')
   const [onlyFavs, setOnlyFavs] = useState(false)
+  const [quickViewIdx, setQuickViewIdx] = useState<number | null>(null)
   const { ids, hydrated } = useWishlist()
 
   const filtered = useMemo(() => {
@@ -167,7 +171,7 @@ export default function BoutiqueGrid({
         </div>
       ) : (
         <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-          {filtered.map((p) => (
+          {filtered.map((p, idx) => (
             <li key={p.id}>
               <Link
                 href={`/shop/boutique/photo/${p.slug}`}
@@ -186,6 +190,20 @@ export default function BoutiqueGrid({
                     className="absolute top-2 right-2 z-10"
                     size={14}
                   />
+                  {/* Quick-view eye-knop linksboven — verschijnt op hover */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setQuickViewIdx(idx)
+                    }}
+                    aria-label="Aperçu rapide"
+                    title="Aperçu rapide"
+                    className="absolute top-2 left-2 z-10 inline-flex items-center justify-center w-7 h-7 rounded-full bg-(--color-canvas)/80 backdrop-blur-sm text-(--color-charcoal) hover:bg-(--color-canvas) hover:text-(--color-bronze) opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
                 </div>
                 <div className="p-3">
                   <p className="text-sm text-(--color-ink) truncate font-medium">
@@ -205,6 +223,18 @@ export default function BoutiqueGrid({
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Quick-view modal */}
+      {quickViewIdx !== null && filtered[quickViewIdx] && (
+        <QuickViewModal
+          photo={filtered[quickViewIdx]}
+          onClose={() => setQuickViewIdx(null)}
+          onPrev={() => setQuickViewIdx((i) => (i !== null && i > 0 ? i - 1 : i))}
+          onNext={() => setQuickViewIdx((i) => (i !== null && i < filtered.length - 1 ? i + 1 : i))}
+          hasPrev={quickViewIdx > 0}
+          hasNext={quickViewIdx < filtered.length - 1}
+        />
       )}
     </>
   )

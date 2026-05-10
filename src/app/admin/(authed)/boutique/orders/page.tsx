@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ShoppingCart, ArrowLeft } from 'lucide-react'
+import { ShoppingCart, ArrowLeft, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { listShopOrders, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/lib/shop/orders'
 
@@ -26,11 +26,23 @@ export default async function ShopOrdersAdminPage() {
         <span className="text-(--color-ink)">Bestellingen</span>
       </div>
 
-      <header>
-        <h1 className="font-[family-name:var(--font-display)] text-3xl text-(--color-ink) inline-flex items-center gap-2">
-          <ShoppingCart size={24} /> Bestellingen
-        </h1>
-        <p className="text-sm text-(--color-charcoal)">{orders.length} bestelling{orders.length === 1 ? '' : 'en'}</p>
+      <header className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-[family-name:var(--font-display)] text-3xl text-(--color-ink) inline-flex items-center gap-2">
+            <ShoppingCart size={24} /> Bestellingen
+          </h1>
+          <p className="text-sm text-(--color-charcoal)">{orders.length} bestelling{orders.length === 1 ? '' : 'en'}</p>
+        </div>
+        {orders.length > 0 && (
+          <a
+            href="/api/admin/shop-orders-csv"
+            download
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-(--color-paper) border border-(--color-frame) hover:border-(--color-bronze) text-(--color-charcoal) hover:text-(--color-bronze) text-xs uppercase tracking-[0.2em] transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </a>
+        )}
       </header>
 
       {orders.length === 0 ? (
