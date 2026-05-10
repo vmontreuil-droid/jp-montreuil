@@ -4,6 +4,8 @@ import { Megrim, Montserrat } from 'next/font/google'
 import { getRequestLocale } from '@/i18n/server'
 import { getDictionary } from '@/i18n/dictionaries'
 import { htmlLang } from '@/i18n/config'
+import { CartProvider } from '@/components/shop/CartProvider'
+import { WishlistProvider } from '@/components/shop/WishlistProvider'
 
 // Megrim — geometrische display-font, zelfde als oude jp.montreuil.be
 const megrim = Megrim({
@@ -92,7 +94,16 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {/* Cart + Wishlist providers globaal — header heeft die counts
+            nodig op alle pagina's, niet enkel /shop. localStorage-only,
+            geen runtime-cost op pagina's zonder cart-content. */}
+        <WishlistProvider>
+          <CartProvider>
+            {children}
+          </CartProvider>
+        </WishlistProvider>
+      </body>
     </html>
   )
 }

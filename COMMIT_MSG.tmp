@@ -1,47 +1,51 @@
-Footer wide + gift cards + abandoned carts (auto-capture + reminders)
+Header shop-icons + Errors + GDPR + Top photos analytics
 
-UX-fix:
-- Footer was max-w-7xl en gaf overlap tussen "S'INSCRIRE" knop en
-  Menu-kolom op md (zie screenshot). Nu w-full px-6 lg:px-10 xl:px-14
-  (zelfde als header) + grid-gap md:gap-12. NewsletterSubscribe in
-  footer-variant toont nu enkel het Send-icoontje (geen tekst-label) en
-  flex min-w-0 voorkomt overflow.
+UX-fix (Vincent's screenshot):
+- Wishlist + Cart icoontjes verplaatst van floating FAB naar de
+  Header (rechtsboven, naast User/Theme/Lang). Werkt nu op ALLE
+  pagina's, niet enkel /shop.
+- CartProvider + WishlistProvider verhuisd naar root layout zodat
+  de header-counts overal beschikbaar zijn.
+- Mobile variant: 2 compacte icoontjes naast hamburger.
+- /shop/layout.tsx vereenvoudigd (geen FAB meer, providers staan
+  globaal).
 
-Migration 0027:
-- shop.gift_cards (code uniek, initial/remaining cents, recipient,
-  expiration, source_order_id, created_by)
-- shop.gift_card_usages (audit log per gebruik)
-- shop.abandoned_carts (snapshot tijdens checkout met items JSONB +
-  cart_signature + reminder_sent_at + recovered_order_id)
-- shop.orders +gift_card_code +gift_card_cents (idempotent)
+Migration 0028:
+- public.error_log: source / message / stack / url / user_agent /
+  user_email / context jsonb / occurred_at / is_acknowledged +
+  acknowledged_by/at + indexes (recent, open, dup) + RLS (anon
+  insert toegelaten voor /api/log-error, admin all).
+- public.gdpr_requests: type (export/delete/rectification) + status
+  enum (received/in_progress/completed/rejected) + notes + RLS.
+- analytics_events: + 'shop_photo_view' event_type + shop_photo_id
+  kolom + index.
 
 Libs:
-- lib/shop/gift-cards.ts: list/get/create/delete + generateGiftCardCode
-  (12 alfa-num, leesbaar, 0/O/I weggelaten) + validateGiftCard +
-  redeemGiftCard
-- lib/shop/abandoned-carts.ts: trackAbandonedCart (server-side dedup
-  via cart_signature + 1u window), listAbandonedCarts,
-  sendAbandonedCartReminder (recovered-check + Resend send met
-  bilingual HTML)
+- lib/error-log.ts: logError (server) + listErrors / acknowledge /
+  delete helpers. Best-effort: log-fout breekt nooit primary action.
+- lib/gdpr.ts: listGdprRequests / setGdprStatus + eraseCustomerData
+  (anonimiseert orders + reviews voor audit, hard-deletes contact-
+  messages + customer-row, unsubscribed newsletter) + exportCustomerData.
 
 Admin:
-- /admin/boutique/gift-cards: stats (émises/utilisées/restant) + form
-  voor nieuwe uitgifte (montant, expiry, destinataire, message) + tabel
-  met code/montant/restant/destinataire + delete
-- /admin/boutique/abandoned-carts: 3-col stats (à relancer/relancés/
-  récupérés) + lijst per cart (klantgegevens + items + subtotaal) +
-  "Envoyer un rappel" knop per pending cart
-- Sidebar: nieuwe links Cartes-cadeaux + Paniers abandonnés (met badge)
+- /admin/errors: lijst (à traiter / historique) met source-badges
+  (Browser/Serveur/Cron/Webhook), stack-trace details, context jsonb
+  pretty-print, "Vu" + delete acties.
+- /admin/gdpr: form voor 1-click eraseCustomerData per email + lijst
+  van GDPR-requests met status-progressie buttons.
+- /api/log-error endpoint voor client-side errors (rate-limited 30/min
+  per IP).
+- /admin/boutique dashboard krijgt "Top photos · 30 derniers jours"
+  widget (top-8 op shop_photo_view counts).
 
-Checkout-integratie:
-- Gift-card input naast promo-code in checkout summary, met live
-  preview + remove + bronze accent (vs emerald voor promo)
-- previewGiftCard server-action (clamp op total before gift)
-- prepareShopOrder: server-side validate + redeem (debit
-  remaining_cents + log usage). Gift-cents na discount-cents
-  toegepast op total.
-- Auto-capture abandoned-cart: useEffect 5s na laatste email-input
-  zodra valid + items > 0 → captureAbandonedCartAction. Server
-  dedupliceert via signature + 1u window.
+Tracker:
+- components/shop/PhotoViewTracker.tsx: lichte useEffect-tracker op
+  /shop/boutique/photo/[slug] die shop_photo_view event POSTet naar
+  /api/analytics. SessionStorage-id, geen cookies.
+- /api/analytics route accepteert nu shop_photo_view events.
+
+Sidebar (groep "Compte & configuration"):
+- Nieuwe links Erreurs (badge bij open) + RGPD (subtle badge bij
+  open requests).
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>

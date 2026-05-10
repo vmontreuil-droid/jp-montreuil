@@ -9,6 +9,7 @@ import ThemeToggle from './ThemeToggle'
 import MobileMenu from './MobileMenu'
 import DesktopNav from './DesktopNav'
 import PortailLocaleSwitch from './PortailLocaleSwitch'
+import HeaderShopIcons from './HeaderShopIcons'
 
 type Props = {
   locale: Locale
@@ -64,8 +65,9 @@ export default async function Header({ locale, t, portailMode = false }: Props) 
         <DesktopNav items={navItems} />
 
         <div className="flex items-center gap-2">
-          {/* Desktop: portail + thema + taal-switch zichtbaar */}
+          {/* Desktop: shop-icons + portail + thema + taal-switch zichtbaar */}
           <div className="hidden md:flex items-center gap-2">
+            <HeaderShopIcons />
             <Link
               href="/portail/login"
               aria-label={locale === 'fr' ? 'Espace client' : 'Klantenportaal'}
@@ -89,7 +91,10 @@ export default async function Header({ locale, t, portailMode = false }: Props) 
             )}
           </div>
 
-          {/* Mobile: hamburger-menu */}
+          {/* Mobile: shop-icons + hamburger */}
+          <div className="md:hidden flex items-center">
+            <HeaderShopIcons stack="mobile" />
+          </div>
           <MobileMenu
             items={navItems}
             altHref={altHref}

@@ -87,6 +87,20 @@ export default async function AuthedAdminLayout({
     // negeer
   }
 
+  // Errors + GDPR open counts
+  let openErrors: number | null = null
+  let openGdpr: number | null = null
+  try {
+    const [{ count: errs }, { count: gdpr }] = await Promise.all([
+      supabase.from('error_log').select('*', { count: 'exact', head: true }).eq('is_acknowledged', false),
+      supabase.from('gdpr_requests').select('*', { count: 'exact', head: true }).in('status', ['received', 'in_progress']),
+    ])
+    openErrors = errs ?? 0
+    openGdpr = gdpr ?? 0
+  } catch {
+    // negeer
+  }
+
   const pinned: SidebarItem[] = [
     { href: '/admin', label: 'Dashboard', icon: 'LayoutGrid' },
   ]
@@ -240,6 +254,20 @@ export default async function AuthedAdminLayout({
       items: [
         { href: '/admin/account', label: 'Mon compte', icon: 'UserCircle' },
         { href: '/admin/settings', label: 'Paramètres du site', icon: 'Settings' },
+        {
+          href: '/admin/errors',
+          label: 'Erreurs',
+          icon: 'AlertTriangle',
+          badge: openErrors,
+          badgeStyle: 'accent',
+        },
+        {
+          href: '/admin/gdpr',
+          label: 'RGPD',
+          icon: 'Shield',
+          badge: openGdpr,
+          badgeStyle: 'subtle',
+        },
       ],
     },
   ]

@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const ALLOWED_TYPES = new Set(['page_view', 'work_view', 'ibook_view', 'album_view'])
+const ALLOWED_TYPES = new Set([
+  'page_view', 'work_view', 'ibook_view', 'album_view', 'shop_photo_view',
+])
 
 type Body = {
   event_type: string
@@ -13,6 +15,7 @@ type Body = {
   category_slug?: string | null
   ibook_id?: string | null
   album_slug?: string | null
+  shop_photo_id?: string | null
 }
 
 function parseUserAgent(ua: string): { device: string; browser: string; os: string } {
@@ -79,6 +82,7 @@ export async function POST(request: NextRequest) {
     category_slug: body.category_slug || null,
     ibook_id: body.ibook_id || null,
     album_slug: body.album_slug || null,
+    shop_photo_id: body.shop_photo_id || null,
   })
 
   return new NextResponse(null, { status: 204 })

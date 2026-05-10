@@ -13,6 +13,7 @@ import { listApprovedReviewsForPhoto, aggregateReviews } from '@/lib/shop/review
 import { PrintConfigurator } from '@/components/shop/PrintConfigurator'
 import { WishlistButton } from '@/components/shop/WishlistButton'
 import ReviewsSection from '@/components/shop/ReviewsSection'
+import PhotoViewTracker from '@/components/shop/PhotoViewTracker'
 
 export const dynamic = 'force-dynamic'
 
@@ -79,6 +80,8 @@ export default async function PhotoConfiguratorPage({
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-8">
+      <PhotoViewTracker photoId={photo.id} path={`/shop/boutique/photo/${photo.slug}`} />
+
       <Link
         href="/shop/boutique"
         className="inline-flex items-center gap-2 text-sm text-(--color-stone) hover:text-(--color-ink) mb-6"
