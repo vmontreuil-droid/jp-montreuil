@@ -1,27 +1,36 @@
-Batch 4: quick-view modal + admin photos bulk-actions/filter + orders CSV export
+Newsletter: admin (dashboard/subscribers/composer/issues) + footer subscribe + unsubscribe page
 
-Publieke shop:
-- QuickViewModal component: klik eye-knop op boutique-grid card -> modal
-  met grote preview + metadata (espece/lieu/datum/description) + CTA
-  "Personnaliser" naar configurator. ESC sluit, pijltjes navigeren naar
-  vorige/volgende foto. WishlistButton in modal-corner.
-- BoutiqueGrid: "Apercu rapide" eye-knop verschijnt op hover linksboven
-  elke card. Doorgegeven taken_at + description aan grid.
+Tabel newsletter_subscribers + newsletter_issues bestaan al uit
+migration 0009 — deze commit voegt het volledige UI-deel toe.
 
-Admin photos lijst (/admin/boutique/photos):
-- PhotosGrid client-component: filter pills (Toutes/Publiees/Brouillons/
-  Coups de coeur) met counts, "Tout selectionner" checkbox, sticky
-  bulk-action bar (publish/unpublish/feature/unfeature/delete) zodra > 0
-  geselecteerd. Selectie-checkbox verschijnt op hover linksboven elke
-  thumbnail. Featured-foto's krijgen Star-badge naast Eye-status.
-- bulkPhotoAction server-action: 1 round-trip voor N foto's (delete
-  ruimt ook Storage op).
+lib/newsletter.ts:
+- listSubscribers (active/inactive/locale filters)
+- countActiveSubscribers (FR/NL/total)
+- listIssues + getIssue
+- subscribeToNewsletter (idempotent: re-subscribe na unsub OK)
+- unsubscribeByToken (via email-link)
 
-Orders CSV export:
-- /api/admin/shop-orders-csv route: streamt CSV met BOM + RFC 4180
-  escaping. Kolommen: reference, status, dates, klant + B2B,
-  shipping-adres, subtotal/shipping/discount/amount, items_summary,
-  Mollie ID, tracking. Bestandsnaam met datum.
-- Admin orders page: "Export CSV" knop rechtsboven (Download icoon).
+Admin /admin/newsletter:
+- Dashboard: 3 stat-cards (FR/NL/total) + lijst recent issues +
+  quick-action "Composer" / "Voir abonnés".
+- /subscribers: tabel met email, locale, inschrijfdatum, status +
+  CSV-export-knop + delete per rij.
+- /compose: vertaalbare composer (subject_fr/nl + body_fr/nl HTML),
+  live preview met FR/NL toggle, sticky send-bar onderaan met confirm-
+  dialog. Verzendt sequentieel via Resend, logt counts in
+  newsletter_issues.
+- /issues/[id]: detailpagina met side-by-side FR/NL render van een
+  verzonden newsletter.
+- API /api/admin/newsletter-csv: export subscribers met BOM + RFC 4180.
+
+Public:
+- NewsletterSubscribe component (footer-variant + inline-variant) met
+  validatie + "already subscribed"-feedback. Standalone server-action
+  met IP-rate-limit (5/min).
+- Footer krijgt nieuwe block "Newsletter / Nieuwsbrief" met email-input
+  + send-knop.
+- /newsletter/unsubscribe?token=... pagina: bevestiging + retour-link.
+
+Sidebar: nieuwe groep "Communication" met Newsletter-link.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>

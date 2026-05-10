@@ -4,6 +4,7 @@ import { Mail, Phone, MapPin, BookOpen, KeyRound } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
 import { localePath, whatsappHref } from '@/lib/links'
+import NewsletterSubscribe from './NewsletterSubscribe'
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -43,16 +44,25 @@ export default function Footer({ locale, t }: Props) {
     <>
     <footer className="mt-24 border-t border-(--color-frame) bg-(--color-paper) pb-[96px] md:pb-[56px]">
       <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-8">
-        {/* 1. Logo + tagline */}
-        <div className="md:col-span-1">
-          <Image
-            src="/logo.png"
-            alt="Atelier Montreuil"
-            width={743}
-            height={258}
-            className="h-12 w-auto mb-3 logo-invert"
-          />
-          <p className="text-(--color-charcoal) text-sm">{t.tagline}</p>
+        {/* 1. Logo + tagline + newsletter */}
+        <div className="md:col-span-1 space-y-4">
+          <div>
+            <Image
+              src="/logo.png"
+              alt="Atelier Montreuil"
+              width={743}
+              height={258}
+              className="h-12 w-auto mb-3 logo-invert"
+            />
+            <p className="text-(--color-charcoal) text-sm">{t.tagline}</p>
+          </div>
+          <div className="pt-2">
+            <h3 className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-2 inline-flex items-center gap-1.5">
+              <Mail className="w-3 h-3" />
+              {locale === 'fr' ? 'Newsletter' : 'Nieuwsbrief'}
+            </h3>
+            <NewsletterSubscribe locale={locale as 'fr' | 'nl'} variant="footer" />
+          </div>
         </div>
 
         {/* 2. Menu */}

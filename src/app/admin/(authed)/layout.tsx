@@ -198,6 +198,14 @@ export default async function AuthedAdminLayout({
       ],
     },
     {
+      id: 'communication',
+      title: 'Communication',
+      icon: 'Send',
+      items: [
+        { href: '/admin/newsletter', label: 'Newsletter', icon: 'Newspaper' },
+      ],
+    },
+    {
       id: 'compte',
       title: 'Compte & configuration',
       icon: 'Settings',
