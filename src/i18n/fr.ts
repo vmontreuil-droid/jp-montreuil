@@ -9,6 +9,8 @@ const dict = {
     social: 'Réseaux sociaux',
     contact: 'Contact',
     devis: 'Commander une œuvre',
+    boutique: 'Boutique',
+    commentCaMarche: 'Comment ça marche',
   },
 
   home: {
@@ -406,6 +408,57 @@ const dict = {
       signature: 'Veuillez tracer votre signature.',
       server: 'Une erreur est survenue. Veuillez réessayer.',
     },
+  },
+
+  boutique: {
+    eyebrow: 'Boutique',
+    title: "Tirages d'art",
+    lead: 'Choisissez une photographie et personnalisez son tirage — matériau, format, prix en direct.',
+    fromPrice: 'À partir de',
+    inMedium: 'sur',
+    photoCountSingular: 'photo disponible',
+    photoCountPlural: 'photos disponibles',
+    customizeCta: 'Personnaliser',
+    seeHow: 'Voir comment ça marche',
+    emptyTitle: 'Pas encore de tirages',
+    emptyBody: 'Jean-Pierre est en train de préparer la sélection. Revenez bientôt.',
+  },
+
+  hoeWerkt: {
+    eyebrow: 'Le processus',
+    title: 'Comment ça marche',
+    lead: 'De la photo choisie au tirage encadré chez vous, en quatre étapes simples.',
+    steps: [
+      {
+        number: '01',
+        title: 'Choisissez une photographie',
+        body: "Parcourez la boutique : chaque image a été prise par Jean-Pierre. Cliquez pour ouvrir la fiche détaillée.",
+      },
+      {
+        number: '02',
+        title: 'Personnalisez votre tirage',
+        body: "Choisissez le matériau (papier baryté, toile canvas, dibond, plexi…) et le format. Le prix s'adapte en direct.",
+      },
+      {
+        number: '03',
+        title: 'Commande & paiement sécurisé',
+        body: 'Renseignez vos coordonnées de livraison, validez et payez en ligne via Mollie (Bancontact, carte, Apple Pay…).',
+      },
+      {
+        number: '04',
+        title: 'Production & livraison',
+        body: 'Jean-Pierre supervise la production chez son imprimeur de confiance. Livraison soignée à votre domicile sous 7 à 14 jours.',
+      },
+    ],
+    questionsTitle: 'Une question ?',
+    questionsBody: 'Pour une commande sur mesure (très grand format, autre support, encadrement particulier), passez plutôt par le formulaire',
+    questionsLinkLabel: 'Commander une œuvre',
+    customCommissionTitle: 'Vous cherchez une œuvre originale ?',
+    customCommissionBody: "Si vous voulez plus qu'un tirage — un portrait à l'huile, un sujet réalisé sur mesure — Jean-Pierre crée des œuvres entièrement personnalisées.",
+    customCommissionCta: 'Découvrir le sur-mesure',
+    boutiqueCtaTitle: 'Prêt à choisir ?',
+    boutiqueCtaBody: 'Toutes les photographies disponibles à la vente dans la boutique.',
+    boutiqueCtaLabel: 'Aller à la boutique',
   },
 }
 

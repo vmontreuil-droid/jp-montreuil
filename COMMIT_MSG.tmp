@@ -1,0 +1,25 @@
+Publieke site: Boutique knop in nav + /comment-ca-marche pagina + shop in site-stijl
+
+Hoofdnav (desktop + mobile):
+- Nieuwe links: Boutique (-> /shop/boutique) en Comment ca marche
+  (-> /<locale>/comment-ca-marche), met ShoppingBag + HelpCircle iconen.
+- FR + NL labels in i18n dictionaries (boutique / hoeWerkt blokken).
+
+Shop layout in site-stijl:
+- /shop/layout.tsx vervangt zijn eigen mini-header door de echte
+  site-Header + site-Footer. Zelfde nav, zelfde theme/locale-switch,
+  zelfde Footer-links als de hoofdsite. CartIcon hangt nu als floating
+  action button rechtsonder, in bronze-stijl met badge.
+- /shop/boutique landing-page herschreven met --color-bronze, paper,
+  canvas, frame tokens, font-display titels en hero + photo grid in
+  jp-montreuil look.
+
+Nieuwe /<locale>/comment-ca-marche pagina:
+- Stijl gelijk aan /a-propos: hero met eyebrow + display-font titel,
+  4-stappen lijst met grote bronzen step-nummers, CTA-grid met
+  Boutique-knop en commission-uitleg, slot met link naar /devis.
+- 4 stappen (FR + NL): Kies foto -> Personnaliseer -> Bestel/betaal ->
+  Productie/levering.
+- Metadata via pageMetadata helper, Lucide-icons.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>

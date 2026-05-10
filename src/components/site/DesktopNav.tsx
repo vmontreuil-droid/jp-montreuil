@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, LayoutGrid, User, Share2, Mail, Brush } from 'lucide-react'
+import { Home, LayoutGrid, User, Share2, Mail, Brush, ShoppingBag, HelpCircle } from 'lucide-react'
 
-type IconName = 'home' | 'collection' | 'about' | 'social' | 'contact' | 'devis'
+type IconName = 'home' | 'collection' | 'about' | 'social' | 'contact' | 'devis' | 'boutique' | 'comment'
 
 const ICONS: Record<IconName, React.ElementType> = {
   home: Home,
@@ -13,6 +13,8 @@ const ICONS: Record<IconName, React.ElementType> = {
   social: Share2,
   contact: Mail,
   devis: Brush,
+  boutique: ShoppingBag,
+  comment: HelpCircle,
 }
 
 type Item = {

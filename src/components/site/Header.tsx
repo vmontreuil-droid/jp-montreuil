@@ -40,6 +40,8 @@ export default async function Header({ locale, t, portailMode = false }: Props) 
   // (klikbaar). 'Réseaux sociaux' blijft bereikbaar via /social en footer.
   const navItems = [
     { href: localePath(locale, '/galerie'), label: t.nav.collection, iconName: 'collection' as const },
+    { href: '/shop/boutique', label: t.nav.boutique, iconName: 'boutique' as const },
+    { href: localePath(locale, '/comment-ca-marche'), label: t.nav.commentCaMarche, iconName: 'comment' as const },
     { href: localePath(locale, '/a-propos'), label: t.nav.about, iconName: 'about' as const },
     { href: localePath(locale, '/devis'), label: t.nav.devis, iconName: 'devis' as const },
     { href: localePath(locale, '/contact'), label: t.nav.contact, iconName: 'contact' as const },

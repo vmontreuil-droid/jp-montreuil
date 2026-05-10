@@ -11,6 +11,8 @@ const dict: Dictionary = {
     social: 'Sociale media',
     contact: 'Contact',
     devis: 'Een werk bestellen',
+    boutique: 'Boutique',
+    commentCaMarche: 'Hoe werkt het',
   },
 
   home: {
@@ -408,6 +410,57 @@ const dict: Dictionary = {
       signature: 'Plaats uw handtekening.',
       server: 'Er is een fout opgetreden. Probeer opnieuw.',
     },
+  },
+
+  boutique: {
+    eyebrow: 'Boutique',
+    title: 'Kunstprints',
+    lead: 'Kies een foto en stel uw print samen — materiaal, formaat, prijs in real-time.',
+    fromPrice: 'Vanaf',
+    inMedium: 'op',
+    photoCountSingular: 'foto beschikbaar',
+    photoCountPlural: 'foto’s beschikbaar',
+    customizeCta: 'Personaliseren',
+    seeHow: 'Bekijk hoe het werkt',
+    emptyTitle: 'Nog geen prints',
+    emptyBody: 'Jean-Pierre is de selectie aan het samenstellen. Kom binnenkort terug.',
+  },
+
+  hoeWerkt: {
+    eyebrow: 'Het proces',
+    title: 'Hoe werkt het',
+    lead: 'Van gekozen foto tot ingelijste print bij u thuis, in vier eenvoudige stappen.',
+    steps: [
+      {
+        number: '01',
+        title: 'Kies een foto',
+        body: 'Blader door de boutique : elk beeld is door Jean-Pierre gemaakt. Klik om de detailpagina te openen.',
+      },
+      {
+        number: '02',
+        title: 'Stel uw print samen',
+        body: 'Kies het materiaal (baryta-papier, canvas, dibond, plexi…) en het formaat. De prijs wordt direct aangepast.',
+      },
+      {
+        number: '03',
+        title: 'Bestelling & veilige betaling',
+        body: 'Vul uw leveringsgegevens in, bevestig en betaal online via Mollie (Bancontact, kaart, Apple Pay…).',
+      },
+      {
+        number: '04',
+        title: 'Productie & levering',
+        body: 'Jean-Pierre overziet de productie bij zijn vaste drukker. Verzorgde levering bij u thuis binnen 7 tot 14 dagen.',
+      },
+    ],
+    questionsTitle: 'Een vraag ?',
+    questionsBody: 'Voor een bestelling op maat (zeer groot formaat, ander materiaal, speciale kadrering), gebruik dan',
+    questionsLinkLabel: 'Een werk bestellen',
+    customCommissionTitle: 'Op zoek naar een origineel werk ?',
+    customCommissionBody: 'Als u meer wil dan een print — een olieportret, een onderwerp op maat — maakt Jean-Pierre volledig op maat gemaakte werken.',
+    customCommissionCta: 'Ontdek maatwerk',
+    boutiqueCtaTitle: 'Klaar om te kiezen ?',
+    boutiqueCtaBody: 'Alle foto’s beschikbaar in de boutique.',
+    boutiqueCtaLabel: 'Naar de boutique',
   },
 }
 

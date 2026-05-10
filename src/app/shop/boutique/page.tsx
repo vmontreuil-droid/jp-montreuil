@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ArrowRight, HelpCircle, ShoppingBag } from 'lucide-react'
 import { listShopPhotos, shopPhotoUrl, photoAlt } from '@/lib/shop/photos'
 import { formatPrice } from '@/lib/shop/products'
 import {
@@ -7,13 +8,19 @@ import {
   listAvailablePrices,
   mediumName,
 } from '@/lib/shop/print-shop'
+import { getDictionary } from '@/i18n/dictionaries'
+
+export const dynamic = 'force-dynamic'
 
 /**
- * /shop/boutique — publieke landing met de print-on-demand fotokeuze.
- * Geen kalenders-tab — JP-Montreuil verkoopt enkel personnalisable
- * tirages.
+ * /shop/boutique — publieke landing in site-stijl van jp-montreuil.
+ * Toont alle gepubliceerde foto's + link naar Comment ça marche.
+ * Niet locale-gerouteerd; gebruikt FR-dict (komt overeen met de rest
+ * van de webshop content).
  */
 export default async function ShopBoutiquePage() {
+  const t = getDictionary('fr').boutique
+
   const [photos, media, sizes, prices] = await Promise.all([
     listShopPhotos({ publishedOnly: true }),
     listActiveMedia(),
@@ -30,60 +37,96 @@ export default async function ShopBoutiquePage() {
   })()
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12">
-      <header className="mb-8">
-        <p className="text-stone-500 text-xs tracking-[0.3em] uppercase mb-2">Boutique</p>
-        <h1 className="text-4xl md:text-5xl mb-2 font-semibold">Tirages d&apos;art</h1>
-        <p className="text-stone-600 text-sm">
-          Choisissez une photo et personnalisez son tirage — matériau, format, prix en direct.
-        </p>
-      </header>
+    <div className="bg-(--color-canvas)">
+      {/* Hero */}
+      <section className="border-b border-(--color-frame) bg-(--color-paper)/40">
+        <div className="max-w-6xl mx-auto px-6 py-16 md:py-20">
+          <p className="text-xs uppercase tracking-[0.3em] text-(--color-bronze) mb-3 inline-flex items-center gap-2">
+            <ShoppingBag className="w-3.5 h-3.5" />
+            {t.eyebrow}
+          </p>
+          <h1 className="font-[family-name:var(--font-display)] text-4xl md:text-6xl text-(--color-ink) leading-tight mb-4">
+            {t.title}
+          </h1>
+          <p className="text-(--color-charcoal) text-base md:text-lg max-w-2xl leading-relaxed">
+            {t.lead}
+          </p>
 
-      {photos.length === 0 ? (
-        <p className="py-16 text-center text-stone-500">
-          Pas encore de photos. Ajoutez-en via{' '}
-          <Link href="/admin/boutique/photos" className="underline hover:text-stone-900">
-            /admin/boutique/photos
-          </Link>
-          .
-        </p>
-      ) : (
-        <>
-          <div className="flex items-center justify-between mb-6 text-sm text-stone-700">
-            <p>{photos.length} photo{photos.length === 1 ? '' : 's'} disponible{photos.length === 1 ? '' : 's'}</p>
+          <div className="mt-8 flex flex-wrap items-center gap-3 text-sm">
+            <Link
+              href="/comment-ca-marche"
+              className="inline-flex items-center gap-2 px-4 py-2.5 border border-(--color-frame) text-(--color-charcoal) hover:border-(--color-bronze) hover:text-(--color-bronze) transition-colors"
+            >
+              <HelpCircle className="w-4 h-4" />
+              {t.seeHow}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
             {minCents && cheapestMedium && (
-              <p className="text-xs text-stone-500">
-                À partir de <strong className="text-stone-900">{formatPrice(minCents)}</strong>
-                {' '}({mediumName(cheapestMedium, 'fr')}, {sizes[0]?.label})
-              </p>
+              <span className="text-xs text-(--color-stone)">
+                {t.fromPrice}{' '}
+                <strong className="text-(--color-ink)">{formatPrice(minCents)}</strong>{' '}
+                ({mediumName(cheapestMedium, 'fr')}, {sizes[0]?.label})
+              </span>
             )}
           </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {photos.map((p) => (
-              <Link
-                key={p.id}
-                href={`/shop/boutique/photo/${p.slug}`}
-                className="block group"
-              >
-                <div className="aspect-square bg-stone-100 border border-stone-200 rounded overflow-hidden mb-2 relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={shopPhotoUrl(p.storage_path)}
-                    alt={photoAlt(p)}
-                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 px-2 py-2 bg-gradient-to-t from-black/60 to-transparent">
-                    <p className="text-white text-xs truncate">{p.title ?? p.slug}</p>
-                    <p className="text-white/70 text-[10px] tracking-wider uppercase">Personnaliser</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
+      {/* Photo grid */}
+      <section className="max-w-6xl mx-auto px-6 py-12">
+        {photos.length === 0 ? (
+          <div className="bg-(--color-paper) border border-(--color-frame) p-12 text-center">
+            <ShoppingBag className="w-10 h-10 mx-auto mb-4 text-(--color-stone) opacity-40" />
+            <p className="font-[family-name:var(--font-display)] text-2xl text-(--color-ink) mb-2">
+              {t.emptyTitle}
+            </p>
+            <p className="text-sm text-(--color-charcoal)">{t.emptyBody}</p>
           </div>
-        </>
-      )}
-    </main>
+        ) : (
+          <>
+            <div className="flex items-baseline justify-between mb-6">
+              <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone)">
+                {photos.length}{' '}
+                {photos.length === 1 ? t.photoCountSingular : t.photoCountPlural}
+              </p>
+            </div>
+
+            <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+              {photos.map((p) => (
+                <li key={p.id}>
+                  <Link
+                    href={`/shop/boutique/photo/${p.slug}`}
+                    className="group block bg-(--color-paper) border border-(--color-frame) hover:border-(--color-bronze) overflow-hidden transition-colors"
+                  >
+                    <div className="aspect-square bg-(--color-canvas) relative overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={shopPhotoUrl(p.storage_path)}
+                        alt={photoAlt(p)}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                        loading="lazy"
+                      />
+                      <div
+                        aria-hidden
+                        className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/55 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm text-(--color-ink) truncate font-medium">
+                        {p.title ?? p.slug}
+                      </p>
+                      <p className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-(--color-bronze) group-hover:gap-2 transition-all">
+                        {t.customizeCta}
+                        <ArrowRight className="w-3 h-3" />
+                      </p>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
+    </div>
   )
 }
