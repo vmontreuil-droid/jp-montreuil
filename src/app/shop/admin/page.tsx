@@ -7,6 +7,7 @@ import {
   Users,
   Truck,
   Image as ImageIcon,
+  Layers,
   AlertCircle,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -70,15 +71,20 @@ export default async function ShopAdminPage() {
             count={health.counts.photos}
             href="/shop/admin/photos"
             description="Foto's voor de print-on-demand configurator"
-            disabled
           />
           <ModuleCard
             icon={Package}
             label="Producten"
             count={health.counts.products}
             href="/shop/admin/products"
-            description="Klassieke producten + configurator-matrix"
-            disabled
+            description="Klassieke producten + variants"
+          />
+          <ModuleCard
+            icon={Layers}
+            label="Configurateur"
+            count={null}
+            href="/shop/admin/boutique"
+            description="Materialen, formaten en prijs-matrix"
           />
           <ModuleCard
             icon={ShoppingCart}
