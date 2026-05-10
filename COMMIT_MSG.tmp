@@ -1,48 +1,47 @@
-Drukkerijen-flow: imprimeurs CRUD + bons de production + auto-trigger paid
+Footer wide + gift cards + abandoned carts (auto-capture + reminders)
 
-Geport van allardphilippe (0023_suppliers + lib + admin pages),
-volledig in shop.* schema voor jp-montreuil.
+UX-fix:
+- Footer was max-w-7xl en gaf overlap tussen "S'INSCRIRE" knop en
+  Menu-kolom op md (zie screenshot). Nu w-full px-6 lg:px-10 xl:px-14
+  (zelfde als header) + grid-gap md:gap-12. NewsletterSubscribe in
+  footer-variant toont nu enkel het Send-icoontje (geen tekst-label) en
+  flex min-w-0 voorkomt overflow.
 
-DB (migration 0026):
-- shop.suppliers (name, email, phone, default_for_media[], notes,
-  is_active, sort_order)
-- shop.supplier_order_status enum (pending->sent->acked->in_production
-  ->received_by_studio, of cancelled)
-- shop.supplier_orders (1-op-1 per shop.order_items via UNIQUE
-  constraint), met sent_at/acked_at/received_at/cancelled_at,
-  external_ref, signed_url_expires_at, notes
-- RLS authed-all (admin via service-role)
+Migration 0027:
+- shop.gift_cards (code uniek, initial/remaining cents, recipient,
+  expiration, source_order_id, created_by)
+- shop.gift_card_usages (audit log per gebruik)
+- shop.abandoned_carts (snapshot tijdens checkout met items JSONB +
+  cart_signature + reminder_sent_at + recovered_order_id)
+- shop.orders +gift_card_code +gift_card_cents (idempotent)
 
 Libs:
-- lib/shop/suppliers.ts: listSuppliers, getSupplierById,
-  getDefaultSupplierFor (per medium-slug)
-- lib/shop/supplier-orders.ts: listSupplierOrders, getById, getDetail,
-  createSupplierOrdersForOrder (idempotent), setSupplierOrderStatus,
-  reassignSupplier, updateSupplierOrderNotes, sendSupplierOrderEmail
-  (genereert 30-dagen signed URL voor hi-res Storage foto, rendert
-  bon-de-commande HTML in jp-montreuil bronze/paper stijl)
+- lib/shop/gift-cards.ts: list/get/create/delete + generateGiftCardCode
+  (12 alfa-num, leesbaar, 0/O/I weggelaten) + validateGiftCard +
+  redeemGiftCard
+- lib/shop/abandoned-carts.ts: trackAbandonedCart (server-side dedup
+  via cart_signature + 1u window), listAbandonedCarts,
+  sendAbandonedCartReminder (recovered-check + Resend send met
+  bilingual HTML)
 
-Admin pages (in nieuwe sidebar links onder Boutique):
-- /admin/boutique/imprimeurs/ : lijst met active/inactive badges +
-  default-media tags + notes preview
-- /admin/boutique/imprimeurs/nouveau : create form
-- /admin/boutique/imprimeurs/[id] : edit + delete (SupplierForm met
-  4 media-checkboxes, sort_order, is_active, notes)
-- /admin/boutique/production/ : alle bons met filter pills (En cours
-  / pending / sent / ... / Toutes), kolommen status/commande/tirage/
-  imprimeur/datum
-- /admin/boutique/production/[id] : detail met foto-preview, specs,
-  status-actions per fase, imprimeur-assignment dropdown (in pending),
-  klant-info, external_ref + notes inputs, en complete timeline
-  (creee/envoyee/confirmee/en production/recue/annulee/lien expire)
+Admin:
+- /admin/boutique/gift-cards: stats (émises/utilisées/restant) + form
+  voor nieuwe uitgifte (montant, expiry, destinataire, message) + tabel
+  met code/montant/restant/destinataire + delete
+- /admin/boutique/abandoned-carts: 3-col stats (à relancer/relancés/
+  récupérés) + lijst per cart (klantgegevens + items + subtotaal) +
+  "Envoyer un rappel" knop per pending cart
+- Sidebar: nieuwe links Cartes-cadeaux + Paniers abandonnés (met badge)
 
-Auto-trigger:
-- /admin/boutique/orders/actions.ts updateOrderStatus(status='paid')
-  roept createSupplierOrdersForOrder() aan -> per print-order_item
-  (photo_id + print_media_slug not null) wordt een bon aangemaakt met
-  default-imprimeur (op basis van print_media_slug). Niet fataal bij
-  fout.
-- /api/shop/mollie-webhook idem -> wanneer Mollie status->paid update,
-  triggert ook createSupplierOrdersForOrder().
+Checkout-integratie:
+- Gift-card input naast promo-code in checkout summary, met live
+  preview + remove + bronze accent (vs emerald voor promo)
+- previewGiftCard server-action (clamp op total before gift)
+- prepareShopOrder: server-side validate + redeem (debit
+  remaining_cents + log usage). Gift-cents na discount-cents
+  toegepast op total.
+- Auto-capture abandoned-cart: useEffect 5s na laatste email-input
+  zodra valid + items > 0 → captureAbandonedCartAction. Server
+  dedupliceert via signature + 1u window.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>

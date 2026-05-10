@@ -60,20 +60,29 @@ export default async function AuthedAdminLayout({
       .is('archived_at', null),
   ])
 
-  // Webshop pending-counts (orders + reviews + production-bons "à envoyer")
+  // Webshop pending-counts (orders + reviews + production-bons + abandoned)
   let pendingShopOrders: number | null = null
   let pendingReviews: number | null = null
   let pendingBons: number | null = null
+  let pendingAbandoned: number | null = null
   try {
     const shop = createShopAdminClient()
-    const [{ count: ordersCount }, { count: reviewsCount }, { count: bonsCount }] = await Promise.all([
+    const [
+      { count: ordersCount },
+      { count: reviewsCount },
+      { count: bonsCount },
+      { count: abandonedCount },
+    ] = await Promise.all([
       shop.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       shop.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       shop.from('supplier_orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      shop.from('abandoned_carts').select('*', { count: 'exact', head: true })
+        .is('reminder_sent_at', null).is('recovered_order_id', null),
     ])
     pendingShopOrders = ordersCount ?? 0
     pendingReviews = reviewsCount ?? 0
     pendingBons = bonsCount ?? 0
+    pendingAbandoned = abandonedCount ?? 0
   } catch {
     // negeer
   }
@@ -205,6 +214,14 @@ export default async function AuthedAdminLayout({
           icon: 'FileText',
           badge: pendingBons,
           badgeStyle: 'accent',
+        },
+        { href: '/admin/boutique/gift-cards', label: 'Cartes-cadeaux', icon: 'Gift' },
+        {
+          href: '/admin/boutique/abandoned-carts',
+          label: 'Paniers abandonnés',
+          icon: 'ShoppingCart',
+          badge: pendingAbandoned,
+          badgeStyle: 'subtle',
         },
       ],
     },

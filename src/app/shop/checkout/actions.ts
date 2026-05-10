@@ -10,6 +10,8 @@ import { upsertMyShopCustomer } from '@/lib/shop/customer-portal'
 import { createClient } from '@/lib/supabase/server'
 import { checkVies } from '@/lib/vies'
 import { validateDiscount, recordRedemption } from '@/lib/shop/discount-codes'
+import { validateGiftCard, redeemGiftCard } from '@/lib/shop/gift-cards'
+import { trackAbandonedCart } from '@/lib/shop/abandoned-carts'
 
 type CheckoutItem = {
   product_id: string | null
@@ -40,6 +42,54 @@ type CheckoutPayload = {
   company_name?: string | null
   vat_number?: string | null
   discount_code?: string | null
+  gift_card_code?: string | null
+}
+
+/**
+ * Server-side preview van een gift-card-code, identieke API als
+ * previewDiscount. Berekent hoeveel afgetrokken zou worden van het
+ * huidige order-totaal (subtotaal + shipping − discount).
+ */
+export async function previewGiftCard(input: {
+  code: string
+  totalCents: number
+}): Promise<{ ok: true; appliedCents: number; remainingAfter: number } | { ok: false; reason: string }> {
+  const result = await validateGiftCard(input.code, input.totalCents)
+  if (!result.ok) {
+    const map: Record<string, string> = {
+      unknown: 'Code inconnu',
+      empty: 'Carte épuisée',
+      expired: 'Carte expirée',
+    }
+    return { ok: false, reason: map[result.reason] ?? 'Carte invalide' }
+  }
+  return {
+    ok: true,
+    appliedCents: result.appliedCents,
+    remainingAfter: result.card.remaining_cents - result.appliedCents,
+  }
+}
+
+/**
+ * Snapshot een abandoned-cart wanneer een klant zijn email + items
+ * heeft, vóór de daadwerkelijke order-creatie. Idempotent (signature
+ * + 1u dedupe). Niet kritisch — faalt stil.
+ */
+export async function captureAbandonedCartAction(input: {
+  email: string
+  fullName?: string
+  locale: string
+  items: { title: string; unit_price_cents: number; quantity: number }[]
+  subtotalCents: number
+}): Promise<void> {
+  if (!input.email || !input.items.length) return
+  await trackAbandonedCart({
+    email: input.email,
+    fullName: input.fullName ?? null,
+    locale: input.locale,
+    items: input.items,
+    subtotalCents: input.subtotalCents,
+  })
 }
 
 /**
@@ -127,7 +177,21 @@ export async function prepareShopOrder(payload: CheckoutPayload): Promise<{
     // previewDiscount; we willen geen order blokkeren door een verlopen code.
   }
 
-  const amountCents = subtotalCents + shippingCents - discountCents
+  // Gift-card validatie + clamp op subtotal+shipping−discount
+  let giftCardCents = 0
+  let giftCardCode: string | null = null
+  let giftCardId: string | null = null
+  const totalBeforeGift = subtotalCents + shippingCents - discountCents
+  if (payload.gift_card_code && totalBeforeGift > 0) {
+    const gc = await validateGiftCard(payload.gift_card_code, totalBeforeGift)
+    if (gc.ok) {
+      giftCardCents = gc.appliedCents
+      giftCardCode = gc.card.code
+      giftCardId = gc.card.id
+    }
+  }
+
+  const amountCents = totalBeforeGift - giftCardCents
 
   // B2B-validatie: re-check VIES server-side. Bij unavailable bewaren we
   // het nummer wel, maar zonder validated-timestamp — admin kan
@@ -177,6 +241,8 @@ export async function prepareShopOrder(payload: CheckoutPayload): Promise<{
       locale: payload.locale ?? 'fr',
       discount_code: discountCode,
       discount_cents: discountCents,
+      gift_card_code: giftCardCode,
+      gift_card_cents: giftCardCents,
       is_b2b: isB2B,
       company_name: isB2B ? (payload.company_name ?? null) : null,
       vat_number: vatNormalized,
@@ -198,7 +264,19 @@ export async function prepareShopOrder(payload: CheckoutPayload): Promise<{
       })
     } catch (e) {
       console.error('[checkout] discount redemption log failed:', e)
-      // niet fataal
+    }
+  }
+
+  // Gift-card debit + usage log
+  if (giftCardId && giftCardCents > 0) {
+    try {
+      await redeemGiftCard({
+        cardId: giftCardId,
+        orderId: order.id,
+        amountCents: giftCardCents,
+      })
+    } catch (e) {
+      console.error('[checkout] gift card redemption failed:', e)
     }
   }
 

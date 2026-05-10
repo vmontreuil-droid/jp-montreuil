@@ -76,7 +76,7 @@ export default function NewsletterSubscribe({ locale, variant = 'inline' }: Prop
         </>
       )}
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 min-w-0">
         <input
           type="email"
           required
@@ -84,7 +84,7 @@ export default function NewsletterSubscribe({ locale, variant = 'inline' }: Prop
           onChange={(e) => setEmail(e.target.value)}
           placeholder={t.placeholder}
           autoComplete="email"
-          className={`flex-1 px-3 py-2 text-sm focus:outline-none border ${
+          className={`flex-1 min-w-0 px-3 py-2 text-sm focus:outline-none border ${
             isFooter
               ? 'bg-(--color-canvas) border-(--color-frame) text-(--color-ink) focus:border-(--color-bronze)'
               : 'bg-(--color-paper) border-(--color-frame) text-(--color-ink) focus:border-(--color-bronze)'
@@ -93,10 +93,18 @@ export default function NewsletterSubscribe({ locale, variant = 'inline' }: Prop
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-xs uppercase tracking-[0.15em] disabled:opacity-50 whitespace-nowrap"
+          aria-label={pending ? t.submitting : t.submit}
+          title={t.submit}
+          className={`inline-flex items-center justify-center gap-1.5 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-xs uppercase tracking-[0.15em] disabled:opacity-50 whitespace-nowrap shrink-0 ${
+            isFooter ? 'px-3 py-2' : 'px-4 py-2'
+          }`}
         >
           {pending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-          <span className="hidden sm:inline">{pending ? t.submitting : t.submit}</span>
+          {/* In footer-variant: enkel het icoon (krappe kolom).
+              In inline-variant: tekst-label vanaf sm. */}
+          {!isFooter && (
+            <span className="hidden sm:inline">{pending ? t.submitting : t.submit}</span>
+          )}
         </button>
       </div>
 

@@ -8,7 +8,11 @@ import {
 import { Tag, X } from 'lucide-react'
 import { useCart } from '@/components/shop/CartProvider'
 import { cartSubtotal } from '@/lib/shop/cart'
-import { estimateShopShipping, prepareShopOrder, previewDiscount } from './actions'
+import { Gift } from 'lucide-react'
+import {
+  estimateShopShipping, prepareShopOrder, previewDiscount,
+  previewGiftCard, captureAbandonedCartAction,
+} from './actions'
 
 const fmt = new Intl.NumberFormat('fr-BE', {
   style: 'currency', currency: 'EUR', minimumFractionDigits: 2,
@@ -77,6 +81,18 @@ export function CheckoutFormClient({
   const [promoError, setPromoError] = useState<string | null>(null)
   const [promoChecking, setPromoChecking] = useState(false)
 
+  // Gift-card state — werkt op (subtotal + shipping − discount)
+  const [giftInput, setGiftInput] = useState('')
+  const [giftApplied, setGiftApplied] = useState<
+    | null
+    | { code: string; appliedCents: number; remainingAfter: number }
+  >(null)
+  const [giftError, setGiftError] = useState<string | null>(null)
+  const [giftChecking, setGiftChecking] = useState(false)
+
+  // Abandoned-cart capture — debounced wanneer email getypt is + items > 0
+  const abandonedRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const subtotalForShipping = cartSubtotal(items)
 
   useEffect(() => {
@@ -108,6 +124,59 @@ export function CheckoutFormClient({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vat, isB2B])
+
+  // Capture abandoned-cart 5s na elke email-wijziging zodra valid +
+  // items > 0. Server-side dedup voorkomt spam.
+  useEffect(() => {
+    if (abandonedRef.current) clearTimeout(abandonedRef.current)
+    if (!hydrated || items.length === 0) return
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return
+    abandonedRef.current = setTimeout(() => {
+      void captureAbandonedCartAction({
+        email: email.trim(),
+        fullName: fullName.trim() || undefined,
+        locale: 'fr',
+        items: items.map((i) => ({
+          title: i.variantLabel ? `${i.title} — ${i.variantLabel}` : i.title,
+          unit_price_cents: i.unitPriceCents,
+          quantity: i.quantity,
+        })),
+        subtotalCents: cartSubtotal(items),
+      }).catch(() => {})
+    }, 5000)
+    return () => {
+      if (abandonedRef.current) clearTimeout(abandonedRef.current)
+    }
+  }, [email, fullName, hydrated, items])
+
+  async function applyGift() {
+    setGiftError(null)
+    if (!giftInput.trim()) return
+    setGiftChecking(true)
+    try {
+      const totalSoFar = cartSubtotal(items) + (shipping?.cents ?? 0) - (promoApplied?.discountCents ?? 0)
+      const r = await previewGiftCard({
+        code: giftInput.trim(),
+        totalCents: Math.max(0, totalSoFar),
+      })
+      if (r.ok) {
+        setGiftApplied({
+          code: giftInput.trim().toUpperCase(),
+          appliedCents: r.appliedCents,
+          remainingAfter: r.remainingAfter,
+        })
+        setGiftInput('')
+      } else {
+        setGiftError(r.reason)
+      }
+    } finally {
+      setGiftChecking(false)
+    }
+  }
+  function removeGift() {
+    setGiftApplied(null)
+    setGiftError(null)
+  }
 
   async function applyPromo() {
     setPromoError(null)
@@ -240,6 +309,7 @@ export function CheckoutFormClient({
       company_name: isB2B ? company.trim() : null,
       vat_number: isB2B ? vat.trim() : null,
       discount_code: promoApplied?.code ?? null,
+      gift_card_code: giftApplied?.code ?? null,
     }
     startTransition(async () => {
       try {
@@ -257,7 +327,8 @@ export function CheckoutFormClient({
 
   const subtotal = cartSubtotal(items)
   const discount = promoApplied?.discountCents ?? 0
-  const total = Math.max(0, subtotal + (shipping?.cents ?? 0) - discount)
+  const giftAmt = giftApplied?.appliedCents ?? 0
+  const total = Math.max(0, subtotal + (shipping?.cents ?? 0) - discount - giftAmt)
 
   return (
     <form onSubmit={onSubmit} className="grid lg:grid-cols-[1fr_320px] gap-8">
@@ -445,6 +516,59 @@ export function CheckoutFormClient({
                 <span className="text-stone-500">Code {promoApplied.code}</span>
                 <span className="font-medium tabular-nums text-emerald-700">
                   −{formatPrice(discount)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Gift-card */}
+          <div className="pt-2 space-y-2">
+            {giftApplied ? (
+              <div className="flex items-center justify-between gap-2 px-3 py-2 bg-(--color-bronze)/10 border border-(--color-bronze)/30 rounded text-xs">
+                <span className="inline-flex items-center gap-1.5 text-(--color-ink) font-medium">
+                  <Gift className="w-3.5 h-3.5 text-(--color-bronze)" />
+                  <span className="font-mono">{giftApplied.code}</span>
+                  <span className="text-(--color-bronze)">−{formatPrice(giftAmt)}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={removeGift}
+                  aria-label="Retirer la carte"
+                  className="text-(--color-stone) hover:text-(--color-ink)"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={giftInput}
+                    onChange={(e) => { setGiftInput(e.target.value); setGiftError(null) }}
+                    placeholder="Carte-cadeau"
+                    className="flex-1 min-w-0 px-3 py-2 bg-white border border-stone-300 rounded text-xs font-mono uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={applyGift}
+                    disabled={giftChecking || !giftInput.trim()}
+                    className="inline-flex items-center gap-1 px-3 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) disabled:opacity-50 text-xs uppercase tracking-widest rounded"
+                  >
+                    <Gift className="w-3 h-3" />
+                    OK
+                  </button>
+                </div>
+                {giftError && (
+                  <p className="text-[11px] text-amber-700">{giftError}</p>
+                )}
+              </>
+            )}
+            {giftApplied && (
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Carte-cadeau</span>
+                <span className="font-medium tabular-nums text-(--color-bronze)">
+                  −{formatPrice(giftAmt)}
                 </span>
               </div>
             )}

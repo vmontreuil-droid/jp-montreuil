@@ -36,6 +36,7 @@ import {
   Receipt,
   MessageSquare,
   FileText,
+  Gift,
   type LucideIcon,
 } from 'lucide-react'
 import { useSidebarCollapse } from './SidebarCollapseContext'
@@ -72,6 +73,7 @@ const ICONS: Record<string, LucideIcon> = {
   Receipt,
   MessageSquare,
   FileText,
+  Gift,
 }
 
 export type IconName = keyof typeof ICONS
