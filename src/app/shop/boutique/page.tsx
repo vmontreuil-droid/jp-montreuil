@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { ArrowRight, HelpCircle, ShoppingBag } from 'lucide-react'
-import { listShopPhotos } from '@/lib/shop/photos'
+import { ArrowRight, HelpCircle, ShoppingBag, Sparkles } from 'lucide-react'
+import { listShopPhotos, listFeaturedShopPhotos, shopPhotoUrl, photoAlt } from '@/lib/shop/photos'
 import { formatPrice } from '@/lib/shop/products'
 import {
   listActiveMedia,
@@ -21,11 +21,12 @@ export const dynamic = 'force-dynamic'
 export default async function ShopBoutiquePage() {
   const t = getDictionary('fr').boutique
 
-  const [photos, media, sizes, prices] = await Promise.all([
+  const [photos, media, sizes, prices, featured] = await Promise.all([
     listShopPhotos({ publishedOnly: true }),
     listActiveMedia(),
     listActiveSizes(),
     listAvailablePrices(),
+    listFeaturedShopPhotos(6).catch(() => []),
   ])
 
   const minCents = prices.length > 0 ? Math.min(...prices.map((p) => p.price_cents)) : null
@@ -71,6 +72,38 @@ export default async function ShopBoutiquePage() {
           </div>
         </div>
       </section>
+
+      {/* Featured strip — toont enkel als admin foto's heeft als "is_featured" gemarkeerd */}
+      {featured.length > 0 && (
+        <section className="max-w-6xl mx-auto px-6 pt-12">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl text-(--color-ink) inline-flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-(--color-bronze)" />
+              Coups de cœur de Jean-Pierre
+            </h2>
+          </div>
+          <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+            {featured.map((p) => (
+              <li key={p.id}>
+                <Link
+                  href={`/shop/boutique/photo/${p.slug}`}
+                  className="group block bg-(--color-paper) border border-(--color-frame) hover:border-(--color-bronze) overflow-hidden transition-colors"
+                >
+                  <div className="aspect-square bg-(--color-canvas) relative overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={shopPhotoUrl(p.storage_path)}
+                      alt={photoAlt(p)}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                      loading="lazy"
+                    />
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Photo grid + sort/search filter */}
       <section className="max-w-6xl mx-auto px-6 py-12">

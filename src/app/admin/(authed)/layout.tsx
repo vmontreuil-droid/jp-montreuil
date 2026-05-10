@@ -60,16 +60,17 @@ export default async function AuthedAdminLayout({
       .is('archived_at', null),
   ])
 
-  // Webshop pending-orders count (apart schema). Faalt stil als shop nog
-  // niet bereikbaar is — dan toont de badge gewoon niets.
+  // Webshop pending-orders count + pending-reviews count (apart schema).
   let pendingShopOrders: number | null = null
+  let pendingReviews: number | null = null
   try {
     const shop = createShopAdminClient()
-    const { count } = await shop
-      .from('orders')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending')
-    pendingShopOrders = count ?? 0
+    const [{ count: ordersCount }, { count: reviewsCount }] = await Promise.all([
+      shop.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      shop.from('reviews').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    ])
+    pendingShopOrders = ordersCount ?? 0
+    pendingReviews = reviewsCount ?? 0
   } catch {
     // negeer
   }
@@ -186,6 +187,14 @@ export default async function AuthedAdminLayout({
         { href: '/admin/boutique/boutique', label: 'Configurateur tirages', icon: 'Sliders' },
         { href: '/admin/boutique/photos', label: 'Photos boutique', icon: 'ImageIcon' },
         { href: '/admin/boutique/shipping', label: 'Frais de port', icon: 'Truck' },
+        { href: '/admin/boutique/discounts', label: 'Codes promo', icon: 'Tags' },
+        {
+          href: '/admin/boutique/reviews',
+          label: 'Avis clients',
+          icon: 'MessageSquare',
+          badge: pendingReviews,
+          badgeStyle: 'accent',
+        },
       ],
     },
     {

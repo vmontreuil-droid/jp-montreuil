@@ -5,9 +5,10 @@ import Link from 'next/link'
 import {
   Lock, Truck, Building2, BadgeCheck, AlertCircle, Loader2,
 } from 'lucide-react'
+import { Tag, X } from 'lucide-react'
 import { useCart } from '@/components/shop/CartProvider'
 import { cartSubtotal } from '@/lib/shop/cart'
-import { estimateShopShipping, prepareShopOrder } from './actions'
+import { estimateShopShipping, prepareShopOrder, previewDiscount } from './actions'
 
 const fmt = new Intl.NumberFormat('fr-BE', {
   style: 'currency', currency: 'EUR', minimumFractionDigits: 2,
@@ -67,6 +68,15 @@ export function CheckoutFormClient({
 
   const [shipping, setShipping] = useState<{ cents: number; zoneName: string | null; freeAbove: number | null } | null>(null)
 
+  // Promo-code state
+  const [promoInput, setPromoInput] = useState('')
+  const [promoApplied, setPromoApplied] = useState<
+    | null
+    | { code: string; discountCents: number; description: string | null }
+  >(null)
+  const [promoError, setPromoError] = useState<string | null>(null)
+  const [promoChecking, setPromoChecking] = useState(false)
+
   const subtotalForShipping = cartSubtotal(items)
 
   useEffect(() => {
@@ -98,6 +108,35 @@ export function CheckoutFormClient({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vat, isB2B])
+
+  async function applyPromo() {
+    setPromoError(null)
+    if (!promoInput.trim()) return
+    setPromoChecking(true)
+    try {
+      const r = await previewDiscount({
+        code: promoInput.trim(),
+        subtotalCents: cartSubtotal(items),
+      })
+      if (r.ok) {
+        setPromoApplied({
+          code: promoInput.trim().toUpperCase(),
+          discountCents: r.discountCents,
+          description: r.description,
+        })
+        setPromoInput('')
+      } else {
+        setPromoError(r.reason)
+      }
+    } finally {
+      setPromoChecking(false)
+    }
+  }
+
+  function removePromo() {
+    setPromoApplied(null)
+    setPromoError(null)
+  }
 
   async function runViesCheck(value: string) {
     setVies({ status: 'checking' })
@@ -200,6 +239,7 @@ export function CheckoutFormClient({
       is_b2b: isB2B,
       company_name: isB2B ? company.trim() : null,
       vat_number: isB2B ? vat.trim() : null,
+      discount_code: promoApplied?.code ?? null,
     }
     startTransition(async () => {
       try {
@@ -216,7 +256,8 @@ export function CheckoutFormClient({
   }
 
   const subtotal = cartSubtotal(items)
-  const total = subtotal + (shipping?.cents ?? 0)
+  const discount = promoApplied?.discountCents ?? 0
+  const total = Math.max(0, subtotal + (shipping?.cents ?? 0) - discount)
 
   return (
     <form onSubmit={onSubmit} className="grid lg:grid-cols-[1fr_320px] gap-8">
@@ -355,6 +396,60 @@ export function CheckoutFormClient({
               Encore {formatPrice(shipping.freeAbove - subtotal)} pour la livraison gratuite.
             </p>
           )}
+
+          {/* Promo-code */}
+          <div className="pt-3 border-t border-stone-200 mt-2 space-y-2">
+            {promoApplied ? (
+              <div className="flex items-center justify-between gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded text-xs">
+                <span className="inline-flex items-center gap-1.5 text-emerald-900 font-medium">
+                  <BadgeCheck className="w-3.5 h-3.5" />
+                  <span className="font-mono">{promoApplied.code}</span>
+                  <span className="text-emerald-700">−{formatPrice(promoApplied.discountCents)}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={removePromo}
+                  aria-label="Retirer le code"
+                  className="text-emerald-700 hover:text-emerald-900"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoInput}
+                    onChange={(e) => { setPromoInput(e.target.value); setPromoError(null) }}
+                    placeholder="Code promo"
+                    className="flex-1 px-3 py-2 bg-white border border-stone-300 rounded text-xs font-mono uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={applyPromo}
+                    disabled={promoChecking || !promoInput.trim()}
+                    className="inline-flex items-center gap-1 px-3 py-2 bg-stone-900 text-white hover:bg-stone-800 disabled:opacity-50 text-xs uppercase tracking-widest rounded"
+                  >
+                    <Tag className="w-3 h-3" />
+                    OK
+                  </button>
+                </div>
+                {promoError && (
+                  <p className="text-[11px] text-amber-700">{promoError}</p>
+                )}
+              </>
+            )}
+            {promoApplied && (
+              <div className="flex justify-between text-sm">
+                <span className="text-stone-500">Code {promoApplied.code}</span>
+                <span className="font-medium tabular-nums text-emerald-700">
+                  −{formatPrice(discount)}
+                </span>
+              </div>
+            )}
+          </div>
+
           <div className="flex justify-between pt-2 border-t border-stone-200 mt-2">
             <span className="text-sm uppercase tracking-widest text-stone-500">Total</span>
             <span className="text-2xl font-semibold tabular-nums">{formatPrice(total)}</span>

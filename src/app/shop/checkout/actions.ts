@@ -9,6 +9,7 @@ import { sendOrderConfirmationEmail } from '@/lib/shop/mail'
 import { upsertMyShopCustomer } from '@/lib/shop/customer-portal'
 import { createClient } from '@/lib/supabase/server'
 import { checkVies } from '@/lib/vies'
+import { validateDiscount, recordRedemption } from '@/lib/shop/discount-codes'
 
 type CheckoutItem = {
   product_id: string | null
@@ -38,6 +39,34 @@ type CheckoutPayload = {
   is_b2b?: boolean
   company_name?: string | null
   vat_number?: string | null
+  discount_code?: string | null
+}
+
+/**
+ * Server-side preview van een kortingscode op basis van het huidige
+ * cart-subtotaal. Wordt vanuit de CheckoutForm aangeroepen om feedback
+ * te tonen vóór submit.
+ */
+export async function previewDiscount(input: {
+  code: string
+  subtotalCents: number
+}): Promise<{ ok: true; discountCents: number; description: string | null } | { ok: false; reason: string }> {
+  const result = await validateDiscount(input.code, input.subtotalCents)
+  if (!result.ok) {
+    const map: Record<string, string> = {
+      unknown: 'Code inconnu',
+      inactive: 'Code inactif',
+      expired: 'Code expiré',
+      min_subtotal: 'Sous-total trop faible pour ce code',
+      max_uses: 'Code épuisé',
+    }
+    return { ok: false, reason: map[result.reason] ?? 'Code invalide' }
+  }
+  return {
+    ok: true,
+    discountCents: result.discountCents,
+    description: result.code.description,
+  }
 }
 
 /**
@@ -80,7 +109,25 @@ export async function prepareShopOrder(payload: CheckoutPayload): Promise<{
 
   const country = (payload.shipping_address.country || 'BE').toUpperCase()
   const { cents: shippingCents } = await shopShippingForCountry(country, subtotalCents)
-  const amountCents = subtotalCents + shippingCents
+
+  // Optionele kortingscode — server-side hervalidatie (klant kan via
+  // browser-tools het object aanpassen, dus nooit op de prijs in de
+  // payload vertrouwen).
+  let discountCents = 0
+  let discountCode: string | null = null
+  let discountCodeId: string | null = null
+  if (payload.discount_code) {
+    const validation = await validateDiscount(payload.discount_code, subtotalCents)
+    if (validation.ok) {
+      discountCents = validation.discountCents
+      discountCode = validation.code.code
+      discountCodeId = validation.code.id
+    }
+    // Bij invalide code stil falen — de UI heeft al feedback gegeven via
+    // previewDiscount; we willen geen order blokkeren door een verlopen code.
+  }
+
+  const amountCents = subtotalCents + shippingCents - discountCents
 
   // B2B-validatie: re-check VIES server-side. Bij unavailable bewaren we
   // het nummer wel, maar zonder validated-timestamp — admin kan
@@ -128,6 +175,8 @@ export async function prepareShopOrder(payload: CheckoutPayload): Promise<{
       amount_cents: amountCents,
       currency: 'EUR',
       locale: payload.locale ?? 'fr',
+      discount_code: discountCode,
+      discount_cents: discountCents,
       is_b2b: isB2B,
       company_name: isB2B ? (payload.company_name ?? null) : null,
       vat_number: vatNormalized,
@@ -137,6 +186,21 @@ export async function prepareShopOrder(payload: CheckoutPayload): Promise<{
     .select('id')
     .single()
   if (orderErr) throw new Error(orderErr.message)
+
+  // Discount-redemption loggen + uses_count bumpen
+  if (discountCodeId && discountCents > 0) {
+    try {
+      await recordRedemption({
+        codeId: discountCodeId,
+        orderId: order.id,
+        amountCents: discountCents,
+        email: payload.email,
+      })
+    } catch (e) {
+      console.error('[checkout] discount redemption log failed:', e)
+      // niet fataal
+    }
+  }
 
   // Upsert klant-profiel — zorgt dat een volgende bestelling pre-fill heeft
   try {

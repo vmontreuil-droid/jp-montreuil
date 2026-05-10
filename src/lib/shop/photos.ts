@@ -28,3 +28,26 @@ export async function getShopPhotoById(id: string): Promise<Photo | null> {
   if (error) throw error
   return (data as Photo | null) ?? null
 }
+
+export type FeaturedPhoto = Pick<
+  Photo,
+  'id' | 'slug' | 'title' | 'alt_text' | 'storage_path' | 'description'
+>
+
+/**
+ * Featured-rij voor de boutique-landing — vereist `is_featured = true`
+ * op shop.photos en respecteert featured_order. Toegevoegd via migration
+ * 0025; admin kan dit togglen via /admin/boutique/photos.
+ */
+export async function listFeaturedShopPhotos(limit = 6): Promise<FeaturedPhoto[]> {
+  const sb = createShopAdminClient()
+  const { data, error } = await sb
+    .from('photos')
+    .select('id, slug, title, alt_text, storage_path, description')
+    .eq('is_published', true)
+    .eq('is_featured', true)
+    .order('featured_order', { ascending: true })
+    .limit(limit)
+  if (error) throw error
+  return (data ?? []) as FeaturedPhoto[]
+}
