@@ -75,6 +75,8 @@ export function PhotoStage({
   const sizeLabel = sizeForLabel
     ? orientation === 'landscape' ? flipSizeLabel(sizeForLabel.label) : sizeForLabel.label
     : null
+  const mediaForName = media.find((m) => m.slug === mediaSlug)
+  const mediaName = mediaForName?.name ?? null
 
   const naturalAspect =
     photoNaturalWidth && photoNaturalHeight
@@ -89,6 +91,7 @@ export function PhotoStage({
           photoUrl={photoUrl}
           alt={photoAlt}
           mediaSlug={mediaSlug}
+          mediaName={mediaName}
           sizeLabel={sizeLabel}
           orientation={orientation}
           naturalAspect={naturalAspect}

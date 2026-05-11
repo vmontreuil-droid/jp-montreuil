@@ -1,8 +1,23 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ShoppingBag, Check, RectangleHorizontal, RectangleVertical } from 'lucide-react'
+import {
+  ShoppingBag, Check, RectangleHorizontal, RectangleVertical,
+  Frame, FileImage, Square, Sparkles,
+} from 'lucide-react'
 import { useCart } from './CartProvider'
+
+/** Iconen per materiaal-slug — visuele herkenning naast de tekst. */
+function MaterialIcon({ slug, className }: { slug: string; className?: string }) {
+  const cls = className ?? 'w-4 h-4'
+  switch (slug) {
+    case 'canvas':   return <Frame className={cls} />
+    case 'fine_art': return <FileImage className={cls} />
+    case 'aluminum': return <Square className={cls} />
+    case 'plexi':    return <Sparkles className={cls} />
+    default:         return <Frame className={cls} />
+  }
+}
 
 /**
  * Print-on-demand configurator: kies een materiaal + formaat → live
@@ -177,11 +192,12 @@ export function PrintConfigurator({
                 key={m.id}
                 type="button"
                 onClick={() => setMediaSlug(m.slug)}
-                className={`px-3 py-2 text-sm border rounded transition-colors ${
+                className={`px-3 py-2 text-sm border rounded transition-colors inline-flex items-center gap-2 ${
                   sel ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 hover:border-stone-500'
                 }`}
               >
-                {m.name}
+                <MaterialIcon slug={m.slug} className="w-4 h-4 shrink-0" />
+                <span className="truncate">{m.name}</span>
               </button>
             )
           })}
