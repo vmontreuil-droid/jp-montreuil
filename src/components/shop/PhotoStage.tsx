@@ -103,6 +103,15 @@ export function PhotoStage({
     paysage: labels.paysage,
   }
 
+  const allSlugs = media.map((m) => m.slug)
+
+  // Helper voor prijzen in compare-mode
+  function priceFor(matSlug: string | null): string | null {
+    if (!matSlug || !sizeSlug) return null
+    const cell = prices.find((p) => p.mediaSlug === matSlug && p.sizeSlug === sizeSlug)
+    return cell ? cell.priceFormatted : null
+  }
+
   // ── Compare-mode: full-width 2-kolom layout, configurator verborgen ──
   if (compareOpen) {
     return (
@@ -129,6 +138,7 @@ export function PhotoStage({
             mediaList={media}
             currentSlug={mediaSlug}
             onChange={setMediaSlug}
+            price={priceFor(mediaSlug)}
           >
             <FramedPreview
               photoUrl={photoUrl}
@@ -139,6 +149,8 @@ export function PhotoStage({
               orientation={orientation}
               naturalAspect={naturalAspect}
               labels={previewLabels}
+              availableMaterialSlugs={allSlugs}
+              onMaterialCycle={setMediaSlug}
             />
           </CompareCell>
 
@@ -148,6 +160,7 @@ export function PhotoStage({
             mediaList={media}
             currentSlug={compareSlugB}
             onChange={setCompareSlugB}
+            price={priceFor(compareSlugB)}
           >
             <FramedPreview
               photoUrl={photoUrl}
@@ -158,6 +171,8 @@ export function PhotoStage({
               orientation={orientation}
               naturalAspect={naturalAspect}
               labels={previewLabels}
+              availableMaterialSlugs={allSlugs}
+              onMaterialCycle={setCompareSlugB}
             />
           </CompareCell>
         </div>
@@ -179,6 +194,8 @@ export function PhotoStage({
           orientation={orientation}
           naturalAspect={naturalAspect}
           labels={previewLabels}
+          availableMaterialSlugs={allSlugs}
+          onMaterialCycle={setMediaSlug}
         />
         <WishlistButton
           photoId={photoId}
@@ -214,18 +231,21 @@ export function PhotoStage({
   )
 }
 
-/** Cell in de compare-grid: titel + materiaal-dropdown bovenaan, preview eronder. */
+/** Cell in de compare-grid: titel + materiaal-dropdown bovenaan,
+ *  preview in het midden, prijs onderaan rechts. */
 function CompareCell({
   title,
   mediaList,
   currentSlug,
   onChange,
+  price,
   children,
 }: {
   title: string
   mediaList: Medium[]
   currentSlug: string | null
   onChange: (slug: string) => void
+  price: string | null
   children: ReactNode
 }) {
   return (
@@ -245,6 +265,11 @@ function CompareCell({
         </select>
       </div>
       <div className="relative">{children}</div>
+      {price && (
+        <p className="text-right text-sm tabular-nums text-(--color-ink) font-medium">
+          {price}
+        </p>
+      )}
     </div>
   )
 }

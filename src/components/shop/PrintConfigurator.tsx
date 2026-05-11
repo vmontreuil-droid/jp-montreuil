@@ -7,6 +7,64 @@ import {
 } from 'lucide-react'
 import { useCart } from './CartProvider'
 
+/** "S — 30×45 cm" → { w: 30, h: 45 }. Voor SizeIndicator-rendering. */
+function parseSizeDims(label: string): { w: number; h: number } | null {
+  const m = label.match(/(\d+)\s*[×x]\s*(\d+)/)
+  if (!m) return null
+  return { w: Number(m[1]), h: Number(m[2]) }
+}
+
+/** Mini-rechthoek met relatieve afmetingen t.o.v. het grootste formaat
+ *  in de lijst. Geeft een visuele schaal-cue naast de cm-tekst. */
+function SizeIndicator({
+  label,
+  maxLong,
+  selected,
+  disabled,
+  orientation,
+}: {
+  label: string
+  /** Langste-kant van het grootste beschikbare formaat in cm. */
+  maxLong: number
+  selected: boolean
+  disabled: boolean
+  orientation: 'portrait' | 'landscape'
+}) {
+  const dims = parseSizeDims(label)
+  if (!dims) return null
+  const w = orientation === 'landscape' ? Math.max(dims.w, dims.h) : Math.min(dims.w, dims.h)
+  const h = orientation === 'landscape' ? Math.min(dims.w, dims.h) : Math.max(dims.w, dims.h)
+  // Schaal: maxBox = 22px voor de langste zijde
+  const scale = 22 / maxLong
+  const px = Math.max(4, Math.round(w * scale))
+  const py = Math.max(4, Math.round(h * scale))
+  return (
+    <span
+      aria-hidden
+      className="inline-block shrink-0"
+      style={{
+        width: 24,
+        height: 24,
+        position: 'relative',
+      }}
+    >
+      <span
+        className="absolute"
+        style={{
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: px,
+          height: py,
+          border: `1px solid ${selected ? 'rgba(255,255,255,0.85)' : disabled ? 'rgba(0,0,0,0.20)' : 'rgba(0,0,0,0.55)'}`,
+          background: selected ? 'rgba(255,255,255,0.18)' : 'transparent',
+          transition: 'all 200ms ease-out',
+        }}
+      />
+    </span>
+  )
+}
+
 /** Iconen per materiaal-slug — visuele herkenning naast de tekst. */
 function MaterialIcon({ slug, className }: { slug: string; className?: string }) {
   const cls = className ?? 'w-4 h-4'
@@ -273,32 +331,51 @@ export function PrintConfigurator({
       <div>
         <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">{labels.format}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {sizes.map((s) => {
-            const sel = s.slug === sizeSlug
-            const cell = mediaSlug ? cellMap.get(`${mediaSlug}|${s.slug}`) : null
-            const disabled = !cell || !cell.isAvailable
-            const displayLabel = orientation === 'landscape' ? flipSizeLabel(s.label) : s.label
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => !disabled && setSizeSlug(s.slug)}
-                disabled={disabled}
-                className={`px-3 py-2 text-sm border rounded transition-colors text-left ${
-                  disabled
-                    ? 'border-stone-200 opacity-40 cursor-not-allowed'
-                    : sel
-                      ? 'border-stone-900 bg-stone-900 text-white'
-                      : 'border-stone-300 hover:border-stone-500'
-                }`}
-              >
-                <div className="font-medium">{displayLabel}</div>
-                <div className="text-xs opacity-75 mt-0.5">
-                  {cell ? cell.priceFormatted : '—'}
-                </div>
-              </button>
-            )
-          })}
+          {(() => {
+            // Compute langste zijde van grootste beschikbare formaat
+            // (gebruikt door SizeIndicator om alle mini-rechthoeken op
+            // dezelfde schaal te tekenen).
+            let maxLong = 1
+            for (const s of sizes) {
+              const d = parseSizeDims(s.label)
+              if (d) maxLong = Math.max(maxLong, d.w, d.h)
+            }
+            return sizes.map((s) => {
+              const sel = s.slug === sizeSlug
+              const cell = mediaSlug ? cellMap.get(`${mediaSlug}|${s.slug}`) : null
+              const disabled = !cell || !cell.isAvailable
+              const displayLabel = orientation === 'landscape' ? flipSizeLabel(s.label) : s.label
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => !disabled && setSizeSlug(s.slug)}
+                  disabled={disabled}
+                  className={`px-3 py-2 text-sm border rounded transition-colors text-left inline-flex items-center gap-2 ${
+                    disabled
+                      ? 'border-stone-200 opacity-40 cursor-not-allowed'
+                      : sel
+                        ? 'border-stone-900 bg-stone-900 text-white'
+                        : 'border-stone-300 hover:border-stone-500'
+                  }`}
+                >
+                  <SizeIndicator
+                    label={s.label}
+                    maxLong={maxLong}
+                    selected={sel}
+                    disabled={disabled}
+                    orientation={orientation}
+                  />
+                  <span className="min-w-0">
+                    <span className="block font-medium truncate">{displayLabel}</span>
+                    <span className="block text-xs opacity-75 mt-0.5">
+                      {cell ? cell.priceFormatted : '—'}
+                    </span>
+                  </span>
+                </button>
+              )
+            })
+          })()}
         </div>
       </div>
 

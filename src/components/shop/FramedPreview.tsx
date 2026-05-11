@@ -1,16 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { Maximize2, X, AlertTriangle, User } from 'lucide-react'
-
-// Echte SVG-texture assets (in /public/shop/textures/) — vervangen de
-// CSS-only patterns voor canvas-vezel, plexi-glare, dibond-brushed,
-// papier-grain en houtnerf.
-const TEX_CANVAS = '/shop/textures/canvas-weave.svg'
-const TEX_PLEXI  = '/shop/textures/plexi-glare.svg'
-const TEX_DIBOND = '/shop/textures/dibond-brushed.svg'
-const TEX_PAPER  = '/shop/textures/paper-grain.svg'
-const TEX_WOOD   = '/shop/textures/wood-grain.svg'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Maximize2, X, AlertTriangle, User, Sun, Square, Moon } from 'lucide-react'
 
 /**
  * In-kader preview voor de shop. Toont de foto binnen een mockup van het
@@ -22,14 +13,18 @@ const TEX_WOOD   = '/shop/textures/wood-grain.svg'
  *
  * Extra's:
  *  - subtiele 3D-perspective tilt (lichtbron uit linksboven)
+ *  - mouse-parallax: kader volgt de cursor over de stage
  *  - hover-lift effect met diepere schaduw
  *  - schaal-aware drop-shadow (XL/XXL hangt zwaarder aan de muur)
- *  - smooth transities tussen materiaal- en formaat-keuzes
+ *  - alle 4 material-skins blijven gemount, crossfade bij switch
  *  - subtiele muur-textuur + vloer-hint achter het kader
+ *  - wall-toggle: 3 muur-themas (beige / wit galerij / donker)
  *  - crop-waarschuwing wanneer foto-aspect sterk afwijkt van kader
  *  - klik-op-foto opent fullscreen lightbox met pinch-zoom support
+ *  - arrow-keys in lightbox cyclen door de beschikbare materialen
  *  - mobile-aware stage-hoogte
  *  - shimmer-skeleton tijdens image-load
+ *  - eerbiedigt prefers-reduced-motion (zet parallax + tilt uit)
  */
 
 type Orientation = 'portrait' | 'landscape'
@@ -40,6 +35,13 @@ type KnownMaterial = (typeof KNOWN_MATERIALS)[number]
 function isKnownMaterial(s: string | null | undefined): s is KnownMaterial {
   return s != null && (KNOWN_MATERIALS as readonly string[]).includes(s)
 }
+
+// SVG-texture assets in /public/shop/textures/
+const TEX_CANVAS = '/shop/textures/canvas-weave.svg'
+const TEX_PLEXI  = '/shop/textures/plexi-glare.svg'
+const TEX_DIBOND = '/shop/textures/dibond-brushed.svg'
+const TEX_PAPER  = '/shop/textures/paper-grain.svg'
+const TEX_WOOD   = '/shop/textures/wood-grain.svg'
 
 /** "S — 30×45 cm" → { w: 30, h: 45 }. Returnt null bij geen match. */
 function parseDimensions(label: string | null | undefined): { w: number; h: number } | null {
@@ -58,6 +60,29 @@ export type FramedPreviewLabels = {
   paysage: string
 }
 
+type WallTheme = 'beige' | 'white' | 'dark'
+
+const WALL_THEMES: Record<WallTheme, { background: string; floor: string; lightSpot: string; ink: string }> = {
+  beige: {
+    background: 'linear-gradient(180deg, #f3efe8 0%, #ece7df 60%, #d8d2c8 100%)',
+    floor: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(74,55,30,0.18) 100%)',
+    lightSpot: 'radial-gradient(ellipse at 18% 12%, rgba(255,255,250,0.60) 0%, rgba(255,255,250,0) 55%)',
+    ink: '#1f1d1a',
+  },
+  white: {
+    background: 'linear-gradient(180deg, #ffffff 0%, #f6f6f5 60%, #e8e7e4 100%)',
+    floor: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.10) 100%)',
+    lightSpot: 'radial-gradient(ellipse at 18% 12%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 50%)',
+    ink: '#3a3a3a',
+  },
+  dark: {
+    background: 'linear-gradient(180deg, #2a2620 0%, #221f1a 60%, #15120e 100%)',
+    floor: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 100%)',
+    lightSpot: 'radial-gradient(ellipse at 18% 12%, rgba(255,240,210,0.18) 0%, rgba(0,0,0,0) 60%)',
+    ink: '#e8e3da',
+  },
+}
+
 export function FramedPreview({
   photoUrl,
   alt,
@@ -67,6 +92,8 @@ export function FramedPreview({
   orientation,
   naturalAspect,
   labels,
+  availableMaterialSlugs,
+  onMaterialCycle,
 }: {
   photoUrl: string
   alt: string
@@ -82,6 +109,12 @@ export function FramedPreview({
    *  Optioneel. */
   naturalAspect?: number | null
   labels: FramedPreviewLabels
+  /** Lijst van materiaal-slugs die de parent ondersteunt. Wanneer
+   *  meegegeven kan de lightbox via ←/→ cyclen. */
+  availableMaterialSlugs?: string[]
+  /** Callback om de actieve material-slug aan de parent door te geven
+   *  (gebruikt door arrow-key cycling). */
+  onMaterialCycle?: (slug: string) => void
 }) {
   const dims = parseDimensions(sizeLabel)
   const aspect = dims ? dims.w / dims.h : 1
@@ -92,7 +125,20 @@ export function FramedPreview({
   const [hovered, setHovered] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [stageSize, setStageSize] = useState({ w: 380, h: 460 })
+  const [parallax, setParallax] = useState({ x: 0, y: 0 })
+  const [reducedMotion, setReducedMotion] = useState(false)
+  const [wall, setWall] = useState<WallTheme>('beige')
   const stageRef = useRef<HTMLDivElement | null>(null)
+
+  // Detect prefers-reduced-motion
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setReducedMotion(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
 
   // Mount fade-in: één tick na mount triggert de transitie naar opacity 1
   useEffect(() => {
@@ -109,7 +155,6 @@ export function FramedPreview({
     const el = stageRef.current
     const ro = new ResizeObserver(() => {
       const w = el.clientWidth
-      // Beperk hoogte op mobile zodat preview niet te dominant wordt
       const h = Math.max(280, Math.min(520, Math.round(w * 1.18)))
       setStageSize({ w: Math.min(420, w - 40), h })
     })
@@ -117,9 +162,19 @@ export function FramedPreview({
     return () => ro.disconnect()
   }, [])
 
+  // Mouse-parallax: kader volgt cursor binnen ±0.5 van centrum
+  const onMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (reducedMotion || !stageRef.current) return
+    const rect = stageRef.current.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width - 0.5
+    const y = (e.clientY - rect.top) / rect.height - 0.5
+    setParallax({ x, y })
+  }, [reducedMotion])
+  const resetParallax = useCallback(() => setParallax({ x: 0, y: 0 }), [])
+
   // Compute frame-afmetingen binnen stage-zone
   const stageMaxW = stageSize.w
-  const stageMaxH = stageSize.h - 80 // ruimte voor caption + padding
+  const stageMaxH = stageSize.h - 80
   let frameW: number
   let frameH: number
   if (aspect >= 1) {
@@ -138,39 +193,48 @@ export function FramedPreview({
     }
   }
 
-  // Schaal-aware shadow & frame-thickness — grotere kaders voelen
-  // zwaarder aan en hebben dus diepere schaduw + iets dikkere rand.
+  // Schaal-aware shadow & frame-thickness
   const sizeWeight = dims ? Math.min(1, Math.max(0.4, (dims.w + dims.h) / 200)) : 0.6
-  // Lichtbron uit linksboven → schaduw rechtsonder. Hover = lift +
-  // diepere schaduw (alsof het kader iets van de muur loskomt).
   const shadowOffsetX = 6 + sizeWeight * 8
   const shadowOffsetY = 10 + sizeWeight * 18 + (hovered ? 6 : 0)
   const shadowBlur = 20 + sizeWeight * 22 + (hovered ? 10 : 0)
   const shadowOpacity = 0.20 + sizeWeight * 0.18 + (hovered ? 0.05 : 0)
 
-  // Crop-waarschuwing: significant verschil tussen foto-aspect en
-  // kader-aspect (>20% relatief).
+  // Crop-waarschuwing
   let showCropHint = false
   if (naturalAspect != null && dims) {
     const ratio = aspect / naturalAspect
     showCropHint = ratio < 0.8 || ratio > 1.25
   }
 
-  // ESC sluit lightbox
+  // ESC + arrow-key cycling in lightbox
   useEffect(() => {
     if (!zoomOpen) return
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setZoomOpen(false)
+      if (e.key === 'Escape') { setZoomOpen(false); return }
+      if (!availableMaterialSlugs || !onMaterialCycle || availableMaterialSlugs.length < 2) return
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+      e.preventDefault()
+      const idx = mediaSlug ? availableMaterialSlugs.indexOf(mediaSlug) : -1
+      const dir = e.key === 'ArrowRight' ? 1 : -1
+      const next = availableMaterialSlugs[(idx + dir + availableMaterialSlugs.length) % availableMaterialSlugs.length]
+      if (next) onMaterialCycle(next)
     }
     window.addEventListener('keydown', onKey)
-    // Body scroll lock
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = prev
     }
-  }, [zoomOpen])
+  }, [zoomOpen, availableMaterialSlugs, mediaSlug, onMaterialCycle])
+
+  // Combineer alle rotaties: 3D-tilt + hover + parallax (laatste alleen
+  // wanneer geen reduced-motion). Parallax-strength: ±5° max op X/Y.
+  const tiltY = -1.5 + (hovered ? -1.5 : 0) + (reducedMotion ? 0 : parallax.x * -5)
+  const tiltX = 0.5 + (hovered ? 0.5 : 0) + (reducedMotion ? 0 : parallax.y * 4)
+  const lift = hovered ? 12 : 0
+  const wallTheme = WALL_THEMES[wall]
 
   return (
     <>
@@ -179,47 +243,43 @@ export function FramedPreview({
         className="relative w-full overflow-hidden rounded-sm"
         style={{
           height: stageSize.h,
-          background:
-            'linear-gradient(180deg, #f3efe8 0%, #ece7df 60%, #d8d2c8 100%)',
-          // Perspective op de stage zodat het frame in 3D kan draaien
+          background: wallTheme.background,
           perspective: '1500px',
+          transition: 'background 400ms ease-out',
         }}
         onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseLeave={() => { setHovered(false); resetParallax() }}
+        onMouseMove={onMouseMove}
       >
-        {/* Lichtbron uit linksbovenhoek */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              'radial-gradient(ellipse at 18% 12%, rgba(255,255,250,0.60) 0%, rgba(255,255,250,0) 55%)',
-          }}
+          style={{ background: wallTheme.lightSpot, transition: 'background 400ms ease-out' }}
         />
-        {/* Vloer-hint onderaan */}
         <div
           aria-hidden
           className="absolute inset-x-0 bottom-0 pointer-events-none"
           style={{
             height: 22,
-            background:
-              'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(74,55,30,0.18) 100%)',
+            background: wallTheme.floor,
             borderTop: '1px solid rgba(74,55,30,0.18)',
+            transition: 'background 400ms ease-out',
           }}
         />
 
-        {/* Frame — gecentreerd, 3D tilt + scale-aware shadow + hover-lift +
-            mount fade-in (van opacity 0 + scale 0.94 → 1.0). */}
+        {/* Frame — alle 4 material-skins blijven gemount, crossfade via opacity. */}
         <div
           className="absolute left-1/2 top-1/2 cursor-zoom-in"
           style={{
             width: frameW,
             height: frameH,
-            transform: `translate(-50%, -52%) scale(${mounted ? 1 : 0.94}) rotateY(${hovered ? '-3deg' : '-1.5deg'}) rotateX(${hovered ? '1deg' : '0.5deg'}) translateZ(${hovered ? '12px' : '0'})`,
+            transform: `translate(-50%, -52%) scale(${mounted ? 1 : 0.94}) rotateY(${tiltY}deg) rotateX(${tiltX}deg) translateZ(${lift}px)`,
             transformStyle: 'preserve-3d',
             filter: `drop-shadow(${shadowOffsetX}px ${shadowOffsetY}px ${shadowBlur}px rgba(0,0,0,${shadowOpacity}))`,
             opacity: mounted ? 1 : 0,
-            transition: 'transform 500ms cubic-bezier(0.22, 1, 0.36, 1), opacity 500ms ease-out, filter 500ms ease-out',
+            transition: reducedMotion
+              ? 'opacity 200ms ease-out'
+              : 'transform 250ms cubic-bezier(0.22, 1, 0.36, 1), opacity 500ms ease-out, filter 500ms ease-out',
           }}
           onClick={() => setZoomOpen(true)}
           role="button"
@@ -227,10 +287,14 @@ export function FramedPreview({
           tabIndex={0}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setZoomOpen(true) } }}
         >
-          {variant === 'canvas' && <CanvasFrame photoUrl={photoUrl} alt={alt} onLoad={() => setImgLoaded(true)} />}
-          {variant === 'fine_art' && <FineArtFrame photoUrl={photoUrl} alt={alt} weight={sizeWeight} onLoad={() => setImgLoaded(true)} />}
-          {variant === 'aluminum' && <DibondFrame photoUrl={photoUrl} alt={alt} onLoad={() => setImgLoaded(true)} />}
-          {variant === 'plexi' && <PlexiFrame photoUrl={photoUrl} alt={alt} onLoad={() => setImgLoaded(true)} />}
+          <CrossfadeFrame
+            variant={variant}
+            photoUrl={photoUrl}
+            alt={alt}
+            sizeWeight={sizeWeight}
+            onLoad={() => setImgLoaded(true)}
+            reducedMotion={reducedMotion}
+          />
 
           {/* Shimmer overlay tijdens load */}
           {!imgLoaded && (
@@ -241,16 +305,13 @@ export function FramedPreview({
                 background:
                   'linear-gradient(110deg, rgba(232,228,220,0.6) 8%, rgba(245,242,236,0.95) 18%, rgba(232,228,220,0.6) 33%)',
                 backgroundSize: '200% 100%',
-                animation: 'fp-shimmer 1.2s linear infinite',
+                animation: reducedMotion ? undefined : 'fp-shimmer 1.2s linear infinite',
               }}
             />
           )}
         </div>
 
-        {/* Schaal-silhouette voor grote formaten — een gestileerd silhouet
-            (170 cm) naast het kader zodat de klant de fysieke grootte
-            voelt. Verschijnt zachtjes wanneer kader >= L (cumulatief
-            ≥120 cm) en er nog horizontale ruimte naast het kader is. */}
+        {/* Schaal-silhouette voor grote formaten */}
         {dims && dims.w + dims.h >= 120 && stageMaxW - frameW > 50 && (
           <ScaleSilhouette
             stageHeight={stageSize.h}
@@ -258,12 +319,19 @@ export function FramedPreview({
             frameHeightCm={dims.h}
             mounted={mounted}
             label={`${dims.h} cm`}
+            inkColor={wallTheme.ink}
           />
         )}
 
         {/* Caption rechtsonder met formaat + materiaal + oriëntatie */}
         {dims && (
-          <p className="absolute bottom-3 right-4 text-[10px] uppercase tracking-[0.2em] text-(--color-stone) bg-white/70 backdrop-blur-sm px-2 py-1 rounded">
+          <p
+            className="absolute bottom-3 right-4 text-[10px] uppercase tracking-[0.2em] backdrop-blur-sm px-2 py-1 rounded"
+            style={{
+              color: wall === 'dark' ? '#e8e3da' : 'var(--color-stone)',
+              background: wall === 'dark' ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.70)',
+            }}
+          >
             {dims.w} × {dims.h} cm
             {mediaName && <> · {mediaName}</>}
             {' · '}{orientation === 'landscape' ? labels.paysage : labels.portrait}
@@ -274,16 +342,51 @@ export function FramedPreview({
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); setZoomOpen(true) }}
-          className="absolute bottom-3 left-4 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-(--color-stone) bg-white/70 backdrop-blur-sm px-2 py-1 rounded hover:text-(--color-ink) hover:bg-white/90 transition-colors"
+          className="absolute bottom-3 left-4 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] backdrop-blur-sm px-2 py-1 rounded transition-colors"
+          style={{
+            color: wall === 'dark' ? '#e8e3da' : 'var(--color-stone)',
+            background: wall === 'dark' ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.70)',
+          }}
           aria-label={labels.zoom}
         >
           <Maximize2 className="w-3 h-3" />
           {labels.zoom}
         </button>
 
+        {/* Wall-toggle rechtsboven */}
+        <div
+          className="absolute top-3 right-3 inline-flex gap-1 backdrop-blur-sm rounded p-0.5"
+          style={{
+            background: wall === 'dark' ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.70)',
+          }}
+        >
+          {(['beige', 'white', 'dark'] as const).map((w) => {
+            const Icon = w === 'beige' ? Square : w === 'white' ? Sun : Moon
+            const sel = w === wall
+            return (
+              <button
+                key={w}
+                type="button"
+                onClick={() => setWall(w)}
+                className={`p-1.5 rounded transition-colors ${
+                  sel
+                    ? 'bg-stone-900 text-white'
+                    : wall === 'dark'
+                      ? 'text-stone-200 hover:bg-white/10'
+                      : 'text-stone-600 hover:bg-stone-200'
+                }`}
+                aria-label={`Wall: ${w}`}
+                aria-pressed={sel}
+              >
+                <Icon className="w-3 h-3" />
+              </button>
+            )
+          })}
+        </div>
+
         {/* Crop-hint linksboven */}
         {showCropHint && (
-          <div className="absolute top-3 left-3 max-w-[80%] inline-flex items-start gap-1.5 text-[10px] text-amber-900 bg-amber-50/95 border border-amber-200 px-2 py-1.5 rounded leading-snug shadow-sm">
+          <div className="absolute top-3 left-3 max-w-[60%] inline-flex items-start gap-1.5 text-[10px] text-amber-900 bg-amber-50/95 border border-amber-200 px-2 py-1.5 rounded leading-snug shadow-sm">
             <AlertTriangle className="w-3 h-3 mt-px shrink-0" />
             <span>{labels.cropHint}</span>
           </div>
@@ -330,9 +433,55 @@ export function FramedPreview({
           </button>
           <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.3em] text-white/50 select-none">
             {labels.close} · ESC
+            {availableMaterialSlugs && availableMaterialSlugs.length > 1 && (
+              <> · ← → matériau</>
+            )}
           </p>
         </div>
       )}
+    </>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Crossfade tussen materialen — alle 4 skins blijven gemount, alleen de
+// active heeft opacity 1.
+// ────────────────────────────────────────────────────────────────────────
+
+function CrossfadeFrame({
+  variant,
+  photoUrl,
+  alt,
+  sizeWeight,
+  onLoad,
+  reducedMotion,
+}: {
+  variant: KnownMaterial
+  photoUrl: string
+  alt: string
+  sizeWeight: number
+  onLoad: () => void
+  reducedMotion: boolean
+}) {
+  const variants: KnownMaterial[] = useMemo(() => ['fine_art', 'canvas', 'aluminum', 'plexi'], [])
+  return (
+    <>
+      {variants.map((v) => (
+        <div
+          key={v}
+          className="absolute inset-0"
+          style={{
+            opacity: v === variant ? 1 : 0,
+            transition: reducedMotion ? 'none' : 'opacity 280ms ease-out',
+            pointerEvents: v === variant ? 'auto' : 'none',
+          }}
+        >
+          {v === 'canvas' && <CanvasFrame photoUrl={photoUrl} alt={alt} onLoad={v === variant ? onLoad : undefined} />}
+          {v === 'fine_art' && <FineArtFrame photoUrl={photoUrl} alt={alt} weight={sizeWeight} onLoad={v === variant ? onLoad : undefined} />}
+          {v === 'aluminum' && <DibondFrame photoUrl={photoUrl} alt={alt} onLoad={v === variant ? onLoad : undefined} />}
+          {v === 'plexi' && <PlexiFrame photoUrl={photoUrl} alt={alt} onLoad={v === variant ? onLoad : undefined} />}
+        </div>
+      ))}
     </>
   )
 }
@@ -362,15 +511,9 @@ function CoverImg({
   )
 }
 
-/**
- * Canvas: foto vult voorvlak, met zichtbare wrap aan rechterkant + onder
- * (alsof het canvas over de zijkant van het houten frame is gespannen).
- * Drop-shadow staat op de stage zelf via filter.
- */
 function CanvasFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string; onLoad?: () => void }) {
   return (
     <div className="absolute inset-0">
-      {/* Wrap-schaduw rechts (3D-effect: zijde lijkt naar achter te wijken) */}
       <div
         aria-hidden
         className="absolute right-0 top-0 bottom-0"
@@ -381,7 +524,6 @@ function CanvasFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
             'linear-gradient(90deg, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.20) 100%)',
         }}
       />
-      {/* Wrap-schaduw onder */}
       <div
         aria-hidden
         className="absolute left-0 right-0 bottom-0"
@@ -392,10 +534,7 @@ function CanvasFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
             'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.10) 100%)',
         }}
       />
-
       <CoverImg photoUrl={photoUrl} alt={alt} onLoad={onLoad} />
-
-      {/* Zachte wrap-suggestie langs alle randen */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
@@ -404,8 +543,6 @@ function CanvasFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
             'inset 4px 4px 10px rgba(0,0,0,0.20), inset -4px -4px 8px rgba(0,0,0,0.14)',
         }}
       />
-      {/* Echte canvas-vezel-textuur via SVG-pattern (interwoven fibers
-          + fractalNoise grain) */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-70"
@@ -419,28 +556,20 @@ function CanvasFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
   )
 }
 
-/**
- * Fine art: papier baryté met wit passe-partout en dunne donkergrijze
- * houtkader. `weight` schaalt de passe-partout-marge zodat grotere
- * formaten een ruimere mat krijgen.
- */
 function FineArtFrame({
   photoUrl, alt, weight, onLoad,
 }: { photoUrl: string; alt: string; weight: number; onLoad?: () => void }) {
-  // Passe-partout marge: 6% bij kleine, 11% bij grote formaten.
   const margin = `${6 + weight * 5}%`
   return (
     <div
       className="absolute inset-0 bg-[#1a1612]"
       style={{
         border: '1px solid #0f0c0a',
-        // Echte houtnerf via SVG-texture
         backgroundImage: `url("${TEX_WOOD}")`,
         backgroundSize: 'auto 100%',
         backgroundRepeat: 'repeat-x',
       }}
     >
-      {/* Wit passe-partout met beveled inner edge */}
       <div
         className="absolute bg-white"
         style={{
@@ -451,13 +580,11 @@ function FineArtFrame({
       >
         <div className="absolute inset-0 overflow-hidden">
           <CoverImg photoUrl={photoUrl} alt={alt} onLoad={onLoad} />
-          {/* Inset-shadow alsof foto in passe-partout zit */}
           <div
             aria-hidden
             className="absolute inset-0 pointer-events-none"
             style={{ boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.22)' }}
           />
-          {/* Echte papier-grain via SVG-texture (warm noise overlay) */}
           <div
             aria-hidden
             className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-50"
@@ -473,9 +600,6 @@ function FineArtFrame({
   )
 }
 
-/**
- * Aluminium dibond: dunne brushed-metal rand, koel grijs, vlakke schaduw.
- */
 function DibondFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string; onLoad?: () => void }) {
   return (
     <div
@@ -489,7 +613,6 @@ function DibondFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
     >
       <div className="absolute inset-[2px] overflow-hidden">
         <CoverImg photoUrl={photoUrl} alt={alt} onLoad={onLoad} />
-        {/* Subtiele matte sheen — diagonale lichtflits */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
@@ -499,7 +622,6 @@ function DibondFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
           }}
         />
       </div>
-      {/* Echte brushed-metal textuur via SVG (verticale streepjes + grain) */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-50"
@@ -513,16 +635,10 @@ function DibondFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
   )
 }
 
-/**
- * Plexi: hoogglans reflectie (multi-stop), dunne plexi-randhint, zwaardere
- * zwevende schaduw. Drop-shadow zit op de stage zelf via filter.
- */
 function PlexiFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string; onLoad?: () => void }) {
   return (
     <div className="absolute inset-0">
       <CoverImg photoUrl={photoUrl} alt={alt} onLoad={onLoad} />
-      {/* Echte plexi-glare via SVG (multi-stop linear + radial hot-spot
-          + diagonale lichtband — schaalt mee met kader-aspect) */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
@@ -532,8 +648,6 @@ function PlexiFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string; 
           backgroundRepeat: 'no-repeat',
         }}
       />
-      {/* Dunne plexi-randhint (witte 1px-glow) + zachte zwarte onder-rand
-          voor 3D-effect */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
@@ -544,8 +658,7 @@ function PlexiFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string; 
 }
 
 // ────────────────────────────────────────────────────────────────────────
-// Schaal-silhouette: gestileerd silhouet (170 cm) naast het kader om de
-// fysieke grootte voelbaar te maken bij L/XL/XXL formaten.
+// Schaal-silhouette
 // ────────────────────────────────────────────────────────────────────────
 
 function ScaleSilhouette({
@@ -554,40 +667,41 @@ function ScaleSilhouette({
   frameHeightCm,
   mounted,
   label,
+  inkColor,
 }: {
   stageHeight: number
   frameHeightPx: number
   frameHeightCm: number
   mounted: boolean
   label: string
+  inkColor: string
 }) {
-  // Een persoon = 170 cm. Kader-pixels-per-cm = frameHeightPx / frameHeightCm.
-  // Silhouette krijgt dezelfde schaal.
   const pxPerCm = frameHeightPx / Math.max(1, frameHeightCm)
   const silhouettePx = Math.round(170 * pxPerCm)
-  // Beperk tot stage-hoogte (laat 30px ruimte voor vloer-hint + label)
   const maxPx = stageHeight - 50
   const finalPx = Math.min(silhouettePx, maxPx)
-  // Wat staat-zone met de "vloer" op stage gelijk
   return (
     <div
       aria-hidden
       className="absolute"
       style={{
         right: 12,
-        bottom: 22, // boven vloer-hint
+        bottom: 22,
         height: finalPx,
         width: 32,
         opacity: mounted ? 0.55 : 0,
         transition: 'opacity 700ms ease-out 200ms',
+        color: inkColor,
       }}
     >
       <User
-        className="text-stone-700"
         style={{ width: '100%', height: 'auto' }}
         strokeWidth={1.4}
       />
-      <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.2em] text-stone-600 whitespace-nowrap">
+      <span
+        className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.2em] whitespace-nowrap"
+        style={{ color: inkColor }}
+      >
         {label}
       </span>
     </div>
