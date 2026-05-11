@@ -143,6 +143,7 @@ export default async function PhotoConfiguratorPage({
           labels={t.configurator}
           popularMaterialSlug={popular.materialSlug}
           popularSizeSlug={popular.sizeSlug}
+          locale={locale}
           relatedPhotos={relatedRaw.slice(0, 2).map((r) => ({
             id: r.id,
             slug: r.slug,

@@ -479,6 +479,18 @@ const dict = {
       previewSaveDone: 'Téléchargé !',
       previewShare: 'Partager',
       previewShareCopied: 'Lien copié',
+      // Mail-share modal
+      previewMail: 'Envoyer par mail',
+      previewMailTitle: 'Partager cet aperçu',
+      previewMailLead: 'Envoyez cette configuration à un proche pour son avis.',
+      previewMailFromName: 'Votre prénom (optionnel)',
+      previewMailTo: 'Destinataire',
+      previewMailNote: 'Petit mot (optionnel)',
+      previewMailSend: 'Envoyer',
+      previewMailSending: 'Envoi…',
+      previewMailSent: 'Envoyé !',
+      previewMailFailed: 'Envoi impossible',
+      previewMailRateLimited: 'Trop de messages — patientez 1 h.',
       // Popular badge
       popular: 'Populaire',
       // Hang-positie
@@ -499,6 +511,15 @@ const dict = {
       triptychCenter: 'Au centre',
       triptychLeft: 'À gauche',
       triptychRight: 'À droite',
+      // Wand-composition page
+      compositionTitle: 'Composez votre mur',
+      compositionLead: 'Choisissez 3 œuvres et un matériau commun. Idéal au-dessus d\'un canapé ou dans un long couloir.',
+      compositionPickPhoto: 'Choisissez une œuvre',
+      compositionEmptySlot: 'Vide — cliquez pour choisir',
+      compositionAddAll: 'Tout ajouter au panier',
+      compositionAdded: 'Ajouté au panier',
+      compositionPickerTitle: 'Sélectionnez une œuvre',
+      compositionPickerSearch: 'Rechercher…',
     },
     panier: {
       title: 'Mon panier',

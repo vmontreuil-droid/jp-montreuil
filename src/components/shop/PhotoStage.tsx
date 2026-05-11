@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { X, Home, Bed, Briefcase, DoorOpen, Sparkles } from 'lucide-react'
+import { X, Home, Bed, Briefcase, DoorOpen, Sparkles, Mail } from 'lucide-react'
 import { WishlistButton } from './WishlistButton'
+import { PreviewMailModal } from './PreviewMailModal'
 import {
   FramedPreview,
   type FramedPreviewLabels,
@@ -85,6 +86,7 @@ export function PhotoStage({
   popularMaterialSlug = null,
   popularSizeSlug = null,
   relatedPhotos = [],
+  locale = 'fr',
 }: {
   photoId: string
   photoSlug: string
@@ -108,6 +110,8 @@ export function PhotoStage({
   /** 2 related foto's voor triptych-mode (links + rechts van de
    *  gekozen foto). Optioneel — als < 2 dan is triptych verborgen. */
   relatedPhotos?: RelatedPhoto[]
+  /** UI-locale ('fr'|'nl'). Wordt doorgegeven aan share-mail modal. */
+  locale?: 'fr' | 'nl'
 }) {
   const firstAvail = prices.find((p) => p.isAvailable)
   const [mediaSlug, setMediaSlug] = useState<string | null>(firstAvail?.mediaSlug ?? null)
@@ -122,6 +126,7 @@ export function PhotoStage({
 
   const [compareOpen, setCompareOpen] = useState(false)
   const [triptychOpen, setTriptychOpen] = useState(false)
+  const [mailOpen, setMailOpen] = useState(false)
   const fallbackB = media.find((m) => m.slug !== mediaSlug)?.slug ?? media[0]?.slug ?? null
   const [compareSlugB, setCompareSlugB] = useState<string | null>(fallbackB)
 
@@ -225,6 +230,18 @@ export function PhotoStage({
 
   const allSlugs = media.map((m) => m.slug)
   const fileNameBase = `${photoSlug}-${mediaSlug ?? 'preview'}-${sizeSlug ?? ''}`
+  // Leesbare configuratie-samenvatting voor de share-mail
+  const configSummary = [
+    photoTitle,
+    mediaName,
+    sizeLabel,
+    orientation === 'landscape' ? labels.paysage : labels.portrait,
+  ].filter(Boolean).join(' · ')
+  // Huidige URL inclusief alle state-params (alleen op de client beschikbaar)
+  const [currentUrl, setCurrentUrl] = useState('')
+  useEffect(() => {
+    setCurrentUrl(window.location.href)
+  }, [mediaSlug, sizeSlug, orientation, wall, frameColor, hang])
 
   function priceFor(matSlug: string | null): string | null {
     if (!matSlug || !sizeSlug) return null
@@ -427,6 +444,14 @@ export function PhotoStage({
 
       <div>
         {rightHeader}
+        <button
+          type="button"
+          onClick={() => setMailOpen(true)}
+          className="mb-4 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] text-(--color-bronze) hover:text-(--color-bronze-dark) transition-colors"
+        >
+          <Mail className="w-3.5 h-3.5" />
+          {labels.previewMail}
+        </button>
         <RoomRecommender
           labels={labels}
           room={room}
@@ -462,6 +487,28 @@ export function PhotoStage({
           popularSizeSlug={popularSizeSlug ?? undefined}
         />
       </div>
+
+      <PreviewMailModal
+        open={mailOpen}
+        onClose={() => setMailOpen(false)}
+        slug={photoSlug}
+        configUrl={currentUrl}
+        configSummary={configSummary}
+        locale={locale}
+        labels={{
+          title: labels.previewMailTitle,
+          lead: labels.previewMailLead,
+          fromName: labels.previewMailFromName,
+          to: labels.previewMailTo,
+          note: labels.previewMailNote,
+          send: labels.previewMailSend,
+          sending: labels.previewMailSending,
+          sent: labels.previewMailSent,
+          failed: labels.previewMailFailed,
+          rateLimited: labels.previewMailRateLimited,
+          cancel: labels.previewClose,
+        }}
+      />
     </div>
   )
 }

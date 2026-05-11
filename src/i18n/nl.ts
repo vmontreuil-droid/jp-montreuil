@@ -481,6 +481,18 @@ const dict: Dictionary = {
       previewSaveDone: 'Gedownload!',
       previewShare: 'Delen',
       previewShareCopied: 'Link gekopieerd',
+      // Mail-share modal
+      previewMail: 'Versturen per mail',
+      previewMailTitle: 'Deze preview delen',
+      previewMailLead: 'Stuur deze configuratie naar iemand voor hun advies.',
+      previewMailFromName: 'Uw voornaam (optioneel)',
+      previewMailTo: 'Ontvanger',
+      previewMailNote: 'Korte boodschap (optioneel)',
+      previewMailSend: 'Verzenden',
+      previewMailSending: 'Verzenden…',
+      previewMailSent: 'Verzonden!',
+      previewMailFailed: 'Verzenden mislukt',
+      previewMailRateLimited: 'Te veel berichten — wacht 1u.',
       // Popular badge
       popular: 'Populair',
       // Hang-positie
@@ -501,6 +513,15 @@ const dict: Dictionary = {
       triptychCenter: 'In het midden',
       triptychLeft: 'Links',
       triptychRight: 'Rechts',
+      // Wand-composition page
+      compositionTitle: 'Stel uw muur samen',
+      compositionLead: 'Kies 3 werken en een gemeenschappelijk materiaal. Ideaal boven een sofa of in een lange gang.',
+      compositionPickPhoto: 'Kies een werk',
+      compositionEmptySlot: 'Leeg — klik om te kiezen',
+      compositionAddAll: 'Alles in winkelmandje',
+      compositionAdded: 'Toegevoegd aan winkelmandje',
+      compositionPickerTitle: 'Selecteer een werk',
+      compositionPickerSearch: 'Zoeken…',
     },
     panier: {
       title: 'Mijn winkelmandje',

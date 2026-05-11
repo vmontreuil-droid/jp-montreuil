@@ -132,6 +132,17 @@ export type PrintConfiguratorLabels = {
   previewSaveDone: string
   previewShare: string
   previewShareCopied: string
+  previewMail: string
+  previewMailTitle: string
+  previewMailLead: string
+  previewMailFromName: string
+  previewMailTo: string
+  previewMailNote: string
+  previewMailSend: string
+  previewMailSending: string
+  previewMailSent: string
+  previewMailFailed: string
+  previewMailRateLimited: string
   popular: string
   hangPosition: string
   hangHigh: string
@@ -183,6 +194,17 @@ const DEFAULT_LABELS: PrintConfiguratorLabels = {
   previewSaveDone: 'Téléchargé !',
   previewShare: 'Partager',
   previewShareCopied: 'Lien copié',
+  previewMail: 'Envoyer par mail',
+  previewMailTitle: 'Partager cet aperçu',
+  previewMailLead: 'Envoyez cette configuration à un proche pour son avis.',
+  previewMailFromName: 'Votre prénom (optionnel)',
+  previewMailTo: 'Destinataire',
+  previewMailNote: 'Petit mot (optionnel)',
+  previewMailSend: 'Envoyer',
+  previewMailSending: 'Envoi…',
+  previewMailSent: 'Envoyé !',
+  previewMailFailed: 'Envoi impossible',
+  previewMailRateLimited: 'Trop de messages — patientez 1 h.',
   popular: 'Populaire',
   hangPosition: 'Hauteur',
   hangHigh: 'Haut',
