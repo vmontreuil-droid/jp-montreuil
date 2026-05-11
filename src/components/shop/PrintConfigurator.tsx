@@ -111,6 +111,7 @@ export function PrintConfigurator({
   onMediaSlugChange,
   onSizeSlugChange,
   onOrientationChange,
+  onCompareClick,
 }: {
   photoId: string
   photoSlug: string
