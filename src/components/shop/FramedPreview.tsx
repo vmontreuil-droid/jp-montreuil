@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Maximize2, X, AlertTriangle, User, Sun, Square, Moon, Sofa,
-  Download, Share2, Check, ArrowUp, ArrowDown, Minus,
+  Download, Share2, Check, ArrowUp, ArrowDown, Minus, Box,
 } from 'lucide-react'
 
 /**
@@ -168,6 +168,11 @@ export function FramedPreview({
   const [reducedMotion, setReducedMotion] = useState(false)
   const [savedFlash, setSavedFlash] = useState(false)
   const [sharedFlash, setSharedFlash] = useState(false)
+  // Spotlight: draggable lichtbron — start linksboven (18% / 12%).
+  // Wanneer user drag, update we positie en de frame-shadow/glare
+  // volgen mee. Disabled tijdens reduced-motion.
+  const [light, setLight] = useState({ x: 18, y: 12 })
+  const [lightDragging, setLightDragging] = useState(false)
   const stageRef = useRef<HTMLDivElement | null>(null)
   const setWall = onWallChange ?? (() => {})
 
@@ -214,12 +219,39 @@ export function FramedPreview({
   const resetParallax = useCallback(() => setParallax({ x: 0, y: 0 }), [])
 
   // Save stage als PNG via dynamic-import van html-to-image (~14kB,
-  // alleen geladen wanneer user effectief klikt).
+  // alleen geladen wanneer user effectief klikt). Voegt tijdelijk een
+  // watermark-element toe ('Atelier JP Montreuil — Aperçu uniquement')
+  // zodat de exported PNG niet als productiefoto kan circuleren.
   const onSave = useCallback(async () => {
     if (!stageRef.current) return
+    const stage = stageRef.current
+    // Tijdelijke watermark-overlay
+    const wm = document.createElement('div')
+    wm.setAttribute('data-fp-watermark', '1')
+    wm.style.cssText = [
+      'position: absolute',
+      'inset: 0',
+      'display: flex',
+      'flex-direction: column',
+      'justify-content: center',
+      'align-items: center',
+      'pointer-events: none',
+      'z-index: 50',
+      'transform: rotate(-22deg)',
+      'opacity: 0.18',
+      'font-family: serif',
+      'color: #1f1d1a',
+      'text-align: center',
+      'gap: 4px',
+    ].join(';')
+    wm.innerHTML = `
+      <div style="font-size: 28px; letter-spacing: 4px;">ATELIER JP MONTREUIL</div>
+      <div style="font-size: 11px; letter-spacing: 6px; text-transform: uppercase;">Aperçu uniquement · Preview only</div>
+    `
+    stage.appendChild(wm)
     try {
       const { toPng } = await import('html-to-image')
-      const dataUrl = await toPng(stageRef.current, {
+      const dataUrl = await toPng(stage, {
         cacheBust: true,
         pixelRatio: 2,
         backgroundColor: undefined,
@@ -232,8 +264,42 @@ export function FramedPreview({
       setTimeout(() => setSavedFlash(false), 1500)
     } catch (err) {
       console.error('PNG export failed', err)
+    } finally {
+      stage.removeChild(wm)
     }
   }, [fileNameBase])
+
+  // AR: open USDZ (iOS) of GLB (Android scene-viewer). Bestanden moeten
+  // door JP worden geüpload naar /public/shop/ar/ — formaat is
+  // {material}-{size}.usdz / .glb. Wanneer geen bestand bestaat geeft
+  // de browser een 404 die de gebruiker als "AR niet beschikbaar"
+  // ervaart — we kunnen later een check toevoegen via HEAD-request.
+  const onAR = useCallback(() => {
+    if (!mediaSlug || !sizeLabel) return
+    const sizeKey = sizeLabel
+      .toLowerCase()
+      .replace(/[\s—–-]+/g, '')
+      .replace(/cm$/, '')
+      .replace(/×/g, 'x')
+    const base = `/shop/ar/${mediaSlug}-${sizeKey}`
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    const isIOS = /iPad|iPhone|iPod/.test(ua)
+    if (isIOS) {
+      // iOS Quick Look — anchor met rel="ar" + img/picture binnenin
+      const a = document.createElement('a')
+      a.setAttribute('rel', 'ar')
+      a.href = `${base}.usdz`
+      const img = document.createElement('img')
+      a.appendChild(img)
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } else {
+      // Android: Scene Viewer intent
+      const sceneViewer = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(window.location.origin + base + '.glb')}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`
+      window.location.href = sceneViewer
+    }
+  }, [mediaSlug, sizeLabel])
 
   // Share huidige URL (state zit al in query-params via PhotoStage).
   const onShare = useCallback(async () => {
@@ -277,10 +343,15 @@ export function FramedPreview({
     }
   }
 
-  // Schaal-aware shadow & frame-thickness
+  // Schaal-aware shadow & frame-thickness — shadow-richting is NU
+  // afgeleid van de spotlight-positie (light), niet meer hardcoded
+  // top-left. Centerpoint is 50/50 → light beneden-rechts → shadow naar
+  // boven-links (negatief offset).
   const sizeWeight = dims ? Math.min(1, Math.max(0.4, (dims.w + dims.h) / 200)) : 0.6
-  const shadowOffsetX = 6 + sizeWeight * 8
-  const shadowOffsetY = 10 + sizeWeight * 18 + (hovered ? 6 : 0)
+  const shadowDirX = (50 - light.x) / 50 // -1..+1
+  const shadowDirY = (50 - light.y) / 50
+  const shadowOffsetX = shadowDirX * (8 + sizeWeight * 6)
+  const shadowOffsetY = shadowDirY * (12 + sizeWeight * 14) + (hovered ? 6 : 0)
   const shadowBlur = 20 + sizeWeight * 22 + (hovered ? 10 : 0)
   const shadowOpacity = 0.20 + sizeWeight * 0.18 + (hovered ? 0.05 : 0)
 
@@ -341,7 +412,16 @@ export function FramedPreview({
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
-          style={{ background: wallTheme.lightSpot, transition: 'background 400ms ease-out' }}
+          style={{
+            background: `radial-gradient(ellipse at ${light.x}% ${light.y}%, ${
+              wall === 'dark'
+                ? 'rgba(255,240,210,0.22)'
+                : wall === 'white'
+                  ? 'rgba(255,255,255,0.85)'
+                  : 'rgba(255,255,250,0.55)'
+            } 0%, rgba(255,255,250,0) 55%)`,
+            transition: lightDragging ? 'none' : 'background 200ms ease-out',
+          }}
         />
         <div
           aria-hidden
@@ -356,6 +436,53 @@ export function FramedPreview({
 
         {/* Room-scene: sofa + side table silhouette wanneer wall === 'room' */}
         {wall === 'room' && <RoomScene mounted={mounted} />}
+
+        {/* Draggable spotlight (Sun-icon). Verschijnt alleen wanneer
+            actions zichtbaar zijn én reduced-motion uit. */}
+        {showActions && !reducedMotion && (
+          <button
+            type="button"
+            className="absolute z-20 cursor-grab active:cursor-grabbing"
+            style={{
+              left: `${light.x}%`,
+              top: `${light.y}%`,
+              transform: 'translate(-50%, -50%)',
+              transition: lightDragging ? 'none' : 'left 200ms ease-out, top 200ms ease-out',
+              width: 24,
+              height: 24,
+            }}
+            onPointerDown={(e) => {
+              e.preventDefault()
+              ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+              setLightDragging(true)
+            }}
+            onPointerMove={(e) => {
+              if (!lightDragging || !stageRef.current) return
+              const rect = stageRef.current.getBoundingClientRect()
+              const x = ((e.clientX - rect.left) / rect.width) * 100
+              const y = ((e.clientY - rect.top) / rect.height) * 100
+              setLight({
+                x: Math.max(0, Math.min(100, x)),
+                y: Math.max(0, Math.min(100, y)),
+              })
+            }}
+            onPointerUp={(e) => {
+              setLightDragging(false)
+              try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch {}
+            }}
+            aria-label="Spotlight"
+            title="Spotlight (drag)"
+          >
+            <Sun
+              className="w-6 h-6 drop-shadow-md"
+              style={{
+                color: wall === 'dark' ? '#ffeaa7' : '#f59e0b',
+                filter: 'drop-shadow(0 0 8px rgba(255,215,140,0.6))',
+              }}
+              strokeWidth={1.6}
+            />
+          </button>
+        )}
 
         {/* Frame — alle 4 material-skins blijven gemount, crossfade via opacity. */}
         <div
@@ -560,6 +687,21 @@ export function FramedPreview({
                 title={labels.share}
               >
                 {sharedFlash ? <Check className="w-3 h-3" /> : <Share2 className="w-3 h-3" />}
+              </button>
+              {/* AR Quick Look — werkt enkel op iOS/Android wanneer JP
+                  USDZ/GLB bestanden uploadt onder /public/shop/ar/. */}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onAR() }}
+                className={`inline-flex items-center gap-1 px-2 py-1.5 rounded transition-colors text-[10px] uppercase tracking-[0.18em] ${
+                  wall === 'dark'
+                    ? 'text-stone-200 hover:bg-white/10'
+                    : 'text-stone-600 hover:bg-stone-200'
+                }`}
+                aria-label="AR"
+                title="AR (iOS/Android)"
+              >
+                <Box className="w-3 h-3" />
               </button>
             </div>
             {/* Toast voor save/share feedback */}
@@ -770,6 +912,33 @@ function CanvasFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
           opacity: 0,
         }}
       />
+      {/* Stretcher-corner accents (hoekjes van het houten frame) */}
+      <CanvasCorners />
+    </div>
+  )
+}
+
+/** Vier kleine V-vormpjes in de hoeken die suggereren dat je het canvas
+ *  over de stretcher-bars heen kan zien. Subtiel verschijnen na 400ms. */
+function CanvasCorners() {
+  const corner = (
+    <svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="rgba(0,0,0,0.35)" strokeWidth="1.2">
+      <path d="M2 2 L7 2 L7 7 L2 7 Z" />
+    </svg>
+  )
+  return (
+    <div
+      aria-hidden
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        animation: 'fp-tex-fade-in 600ms ease-out 400ms forwards',
+        opacity: 0,
+      }}
+    >
+      <div className="absolute top-1 left-1">{corner}</div>
+      <div className="absolute top-1 right-1 rotate-90">{corner}</div>
+      <div className="absolute bottom-1 right-1 rotate-180">{corner}</div>
+      <div className="absolute bottom-1 left-1 -rotate-90">{corner}</div>
     </div>
   )
 }
@@ -870,6 +1039,37 @@ function DibondFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
           backgroundRepeat: 'repeat',
         }}
       />
+      {/* 4 kleine "rivets" in de hoeken van de aluminium plaat */}
+      <DibondRivets />
+    </div>
+  )
+}
+
+/** Mini-rivet (zilveren cirkel met hoogtepunt) in de 4 hoeken. */
+function DibondRivets() {
+  const rivet = (
+    <span
+      aria-hidden
+      className="block w-1.5 h-1.5 rounded-full"
+      style={{
+        background: 'radial-gradient(circle at 30% 30%, #f4f4f4 0%, #b8b8b8 60%, #888 100%)',
+        boxShadow: '0 0 0 0.5px rgba(0,0,0,0.3), inset 0 0.5px 0 rgba(255,255,255,0.9)',
+      }}
+    />
+  )
+  return (
+    <div
+      aria-hidden
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        animation: 'fp-tex-fade-in 600ms ease-out 350ms forwards',
+        opacity: 0,
+      }}
+    >
+      <div className="absolute top-1.5 left-1.5">{rivet}</div>
+      <div className="absolute top-1.5 right-1.5">{rivet}</div>
+      <div className="absolute bottom-1.5 right-1.5">{rivet}</div>
+      <div className="absolute bottom-1.5 left-1.5">{rivet}</div>
     </div>
   )
 }
@@ -896,6 +1096,36 @@ function PlexiFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string; 
         className="absolute inset-0 pointer-events-none"
         style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.55), inset 0 -1px 0 rgba(0,0,0,0.20)' }}
       />
+      <PlexiStandoffs />
+    </div>
+  )
+}
+
+/** Chrome-spacer dots in de hoeken van een plexi-print. */
+function PlexiStandoffs() {
+  const dot = (
+    <span
+      aria-hidden
+      className="block w-2 h-2 rounded-full"
+      style={{
+        background: 'radial-gradient(circle at 30% 30%, #ffffff 0%, #d4d4d4 50%, #888 100%)',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.4), inset 0 0.5px 0 rgba(255,255,255,1)',
+      }}
+    />
+  )
+  return (
+    <div
+      aria-hidden
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        animation: 'fp-tex-fade-in 600ms ease-out 350ms forwards',
+        opacity: 0,
+      }}
+    >
+      <div className="absolute top-2 left-2">{dot}</div>
+      <div className="absolute top-2 right-2">{dot}</div>
+      <div className="absolute bottom-2 right-2">{dot}</div>
+      <div className="absolute bottom-2 left-2">{dot}</div>
     </div>
   )
 }

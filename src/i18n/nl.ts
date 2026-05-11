@@ -512,6 +512,8 @@ const dict: Dictionary = {
       subtotal: 'Subtotaal',
       shippingNote: 'Verzendkosten worden berekend in de volgende stap.',
       checkout: 'Naar de kassa',
+      bundleHint: 'Tip: voeg nog {{n}} print(s) toe om automatisch −10 % korting te krijgen.',
+      bundleApplied: 'Set van 3 prints — bespaar 10 %',
     },
     checkout: {
       title: 'Bestelling',

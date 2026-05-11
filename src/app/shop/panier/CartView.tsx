@@ -1,10 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react'
+import { Trash2, Minus, Plus, ShoppingBag, BadgeCheck, Sparkles } from 'lucide-react'
 import { useCart } from '@/components/shop/CartProvider'
 import { cartSubtotal } from '@/lib/shop/cart'
 import { shopPhotoUrl } from '@/lib/shop/photo-url'
+
+const BUNDLE_THRESHOLD = 3
+const BUNDLE_DISCOUNT_PCT = 10
 
 const fmt = new Intl.NumberFormat('fr-BE', {
   style: 'currency',
@@ -23,6 +26,8 @@ type Labels = {
   subtotal: string
   shippingNote: string
   checkout: string
+  bundleHint: string
+  bundleApplied: string
 }
 
 export function CartView({ labels }: { labels: Labels }) {
@@ -52,11 +57,33 @@ export function CartView({ labels }: { labels: Labels }) {
   }
 
   const subtotal = cartSubtotal(items)
+  // Bundle: tel hoeveel print-kwantums in de cart zitten. Server past
+  // de korting toe via discount-code 'BUNDLE3' (zie checkout-actions);
+  // hier tonen we enkel de hint of bevestiging.
+  const printCount = items
+    .filter((i) => i.kind === 'photo_print')
+    .reduce((acc, i) => acc + i.quantity, 0)
+  const bundleQualifies = printCount >= BUNDLE_THRESHOLD
+  const printsToGo = Math.max(0, BUNDLE_THRESHOLD - printCount)
 
   return (
     <div className="grid lg:grid-cols-[1fr_320px] gap-8">
       {/* Items */}
-      <ul className="bg-white border border-stone-200 rounded divide-y divide-stone-200">
+      <div className="space-y-3">
+        {/* Bundle banner */}
+        {bundleQualifies ? (
+          <div className="bg-emerald-50 border border-emerald-200 rounded p-3 text-xs text-emerald-900 inline-flex items-center gap-2">
+            <BadgeCheck className="w-4 h-4" />
+            <span>{labels.bundleApplied} ({BUNDLE_DISCOUNT_PCT}%)</span>
+          </div>
+        ) : printsToGo > 0 && printCount > 0 ? (
+          <div className="bg-(--color-bronze)/10 border border-(--color-bronze)/30 rounded p-3 text-xs text-(--color-ink) inline-flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-(--color-bronze)" />
+            <span>{labels.bundleHint.replace('{{n}}', String(printsToGo))}</span>
+          </div>
+        ) : null}
+
+        <ul className="bg-white border border-stone-200 rounded divide-y divide-stone-200">
         {items.map((it) => (
           <li key={it.key} className="p-4 flex gap-4 items-start">
             {it.storagePath ? (
@@ -113,7 +140,8 @@ export function CartView({ labels }: { labels: Labels }) {
             </div>
           </li>
         ))}
-      </ul>
+        </ul>
+      </div>
 
       {/* Sticky summary */}
       <aside className="bg-white border border-stone-200 rounded p-5 h-fit lg:sticky lg:top-24 space-y-4">

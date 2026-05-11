@@ -260,6 +260,34 @@ export function CheckoutFormClient({
     }
   }, [email, fullName, hydrated, items])
 
+  // Auto-apply BUNDLE3 wanneer ≥ 3 print-lijnen in de cart zitten en de
+  // klant nog geen andere promo-code heeft ingegeven. Verwijderen
+  // wanneer de drempel niet meer gehaald wordt en BUNDLE3 nog actief
+  // was — voorkomt verkeerde korting als items uit de cart vliegen.
+  useEffect(() => {
+    if (!hydrated) return
+    const printCount = items
+      .filter((i) => i.kind === 'photo_print')
+      .reduce((acc, i) => acc + i.quantity, 0)
+    const subtotalNow = cartSubtotal(items)
+    if (printCount >= 3) {
+      if (promoApplied?.code === 'BUNDLE3') return
+      if (promoApplied) return // klant heeft een eigen code, niet overschrijven
+      void previewDiscount({ code: 'BUNDLE3', subtotalCents: subtotalNow }).then((r) => {
+        if (r.ok) {
+          setPromoApplied({
+            code: 'BUNDLE3',
+            discountCents: r.discountCents,
+            description: r.description,
+          })
+        }
+      })
+    } else if (promoApplied?.code === 'BUNDLE3') {
+      setPromoApplied(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, hydrated])
+
   async function applyGift() {
     setGiftError(null)
     if (!giftInput.trim()) return

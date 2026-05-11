@@ -236,6 +236,20 @@ export default function BoutiqueGrid({
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                     loading="lazy"
                   />
+                  {/* Mini-frame hover-effect: 4 hoek-accents + inset shadow
+                      die suggereren dat de foto ingelijst is. Verschijnt
+                      enkel op hover, smooth fade. */}
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{
+                      boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.20), inset 0 0 24px rgba(0,0,0,0.20)',
+                    }}
+                  />
+                  <span aria-hidden className="absolute top-1.5 left-1.5 w-3 h-3 border-l border-t border-white/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <span aria-hidden className="absolute top-1.5 right-1.5 w-3 h-3 border-r border-t border-white/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <span aria-hidden className="absolute bottom-1.5 left-1.5 w-3 h-3 border-l border-b border-white/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <span aria-hidden className="absolute bottom-1.5 right-1.5 w-3 h-3 border-r border-b border-white/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <WishlistButton
                     photoId={p.id}
                     className="absolute top-2 right-2 z-10"

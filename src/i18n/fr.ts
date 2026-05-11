@@ -510,6 +510,8 @@ const dict = {
       subtotal: 'Sous-total',
       shippingNote: 'Frais de port calculés à l\'étape suivante.',
       checkout: 'Passer à la caisse',
+      bundleHint: 'Astuce : ajoutez {{n}} tirage(s) de plus pour bénéficier de −10 % automatiquement.',
+      bundleApplied: 'Set de 3 tirages — économisez 10 %',
     },
     checkout: {
       title: 'Commande',
