@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "scrape": "node --env-file=.env.local scripts/scrape-jp-montreuil.mjs",
-    "scrape:dry": "node --env-file=.env.local scripts/scrape-jp-montreuil.mjs --dry-run"
+    "scrape:dry": "node --env-file=.env.local scripts/scrape-jp-montreuil.mjs --dry-run",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.92.0",
@@ -28,6 +30,7 @@
     "resend": "^6.12.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

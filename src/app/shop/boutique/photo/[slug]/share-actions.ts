@@ -7,29 +7,19 @@ import { shopPhotoUrl } from '@/lib/shop/photo-url'
 import { sendEmail } from '@/lib/email/client'
 import { PreviewShare } from '@/lib/email/templates/PreviewShare'
 import { PUBLIC_BASE_URL } from '@/lib/public-url'
+import { checkRate } from '@/lib/shop/rate-limit'
 
 /**
  * Server-action voor de "Stuur preview"-modal op de fotodetail-pagina.
  * Stuurt een Resend-mail met de foto + huidige configuratie-URL.
  *
- * Anti-misbruik: max 5 emails per slug per IP per uur. Geen DB-tabel
- * nodig — we vertrouwen op Resend's eigen rate-limit als ondergrens.
- * Dit is een lichte client-misuse-rem.
+ * Anti-misbruik: max 5 emails per slug per ontvanger per uur, via de
+ * pluggable checkRate-helper (Upstash KV indien geconfigureerd, anders
+ * in-memory fallback).
  */
 
-// Eenvoudige in-memory rate-limit per (slug+ip) — reset bij server-restart.
 const RATE_LIMIT_MAX = 5
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000 // 1 uur
-const recentSends = new Map<string, number[]>()
-
-function checkRate(key: string): boolean {
-  const now = Date.now()
-  const arr = (recentSends.get(key) ?? []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
-  if (arr.length >= RATE_LIMIT_MAX) return false
-  arr.push(now)
-  recentSends.set(key, arr)
-  return true
-}
+const RATE_LIMIT_WINDOW_SEC = 60 * 60 // 1 uur
 
 const Schema = z.object({
   slug: z.string().min(1).max(120),
@@ -48,8 +38,9 @@ export async function sendPreviewShare(input: unknown): Promise<
   if (!parsed.success) return { ok: false, reason: 'invalid_input' }
   const { slug, toEmail, fromName, message, configUrl, configSummary, locale } = parsed.data
 
-  const key = `${slug}:${toEmail}`
-  if (!checkRate(key)) return { ok: false, reason: 'rate_limited' }
+  const key = `share:${slug}:${toEmail}`
+  const rate = await checkRate(key, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_SEC)
+  if (!rate.ok) return { ok: false, reason: 'rate_limited' }
 
   // Hydrate foto vanuit slug — voorkomt dat een random URL kan worden
   // gemaild. Photo moet bestaan en gepubliceerd zijn.

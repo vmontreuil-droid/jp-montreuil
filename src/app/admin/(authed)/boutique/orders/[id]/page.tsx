@@ -54,7 +54,7 @@ export default async function ShopOrderDetailPage({
         href="/admin/boutique/orders"
         className="inline-flex items-center gap-2 text-sm text-(--color-stone) hover:text-(--color-ink)"
       >
-        <ArrowLeft size={14} /> Bestellingen
+        <ArrowLeft size={14} /> Commandes
       </Link>
 
       <header className="flex items-start justify-between gap-4 flex-wrap">

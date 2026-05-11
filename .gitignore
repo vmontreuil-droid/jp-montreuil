@@ -42,3 +42,8 @@ next-env.d.ts
 /scripts/scrape-cache/
 
 .vercel
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/

@@ -427,6 +427,7 @@ const dict = {
     detailEyebrow: 'Personnaliser',
     relatedTitle: 'Vous aimerez aussi',
     relatedSee: 'Voir',
+    reviewsSeeAll: 'avis',
     searchPlaceholder: 'Rechercher…',
     sortRecent: 'Plus récentes',
     sortOldest: 'Plus anciennes',

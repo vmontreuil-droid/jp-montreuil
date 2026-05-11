@@ -429,6 +429,7 @@ const dict: Dictionary = {
     detailEyebrow: 'Personaliseren',
     relatedTitle: 'Misschien ook iets voor u',
     relatedSee: 'Bekijk',
+    reviewsSeeAll: 'beoordelingen',
     searchPlaceholder: 'Zoeken…',
     sortRecent: 'Nieuwste eerst',
     sortOldest: 'Oudste eerst',

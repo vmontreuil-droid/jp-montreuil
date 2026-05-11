@@ -15,6 +15,7 @@ import {
 import { listApprovedReviewsForPhoto, aggregateReviews } from '@/lib/shop/reviews'
 import { PhotoStage } from '@/components/shop/PhotoStage'
 import ReviewsSection from '@/components/shop/ReviewsSection'
+import { ReviewsBadge } from '@/components/shop/ReviewsBadge'
 import PhotoViewTracker from '@/components/shop/PhotoViewTracker'
 import { getShopLocale } from '@/lib/shop/locale'
 import { getDictionary } from '@/i18n/dictionaries'
@@ -217,6 +218,7 @@ export default async function PhotoConfiguratorPage({
               <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl text-(--color-ink) mb-3">
                 {photo.title ?? photo.slug}
               </h1>
+              <ReviewsBadge aggregate={aggregate} labelSeeAll={t.reviewsSeeAll} />
               {(photo.species || photo.taken_at_location) && (
                 <p className="text-xs text-(--color-stone) mb-3">
                   {[photo.species, photo.taken_at_location].filter(Boolean).join(' · ')}
@@ -231,7 +233,9 @@ export default async function PhotoConfiguratorPage({
       )}
 
       {/* Reviews */}
-      <ReviewsSection photoId={photo.id} reviews={reviews} aggregate={aggregate} />
+      <div id="reviews">
+        <ReviewsSection photoId={photo.id} reviews={reviews} aggregate={aggregate} />
+      </div>
 
       {/* Related */}
       {relatedRaw.length > 0 && (
