@@ -520,6 +520,13 @@ const dict = {
       compositionAdded: 'Ajouté au panier',
       compositionPickerTitle: 'Sélectionnez une œuvre',
       compositionPickerSearch: 'Rechercher…',
+      compositionLayout: 'Disposition',
+      compositionLayoutTriptych: 'Triptyque',
+      compositionLayoutSalon: 'Salon (1+2)',
+      compositionLayoutDiptyque: 'Diptyque',
+      compositionLayoutStack: 'Vertical',
+      compositionSpacing: 'Écart entre cadres',
+      compositionFromWishlist: 'Pré-rempli depuis vos favoris',
     },
     panier: {
       title: 'Mon panier',

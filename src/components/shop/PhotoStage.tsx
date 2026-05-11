@@ -434,6 +434,7 @@ export function PhotoStage({
           fileNameBase={fileNameBase}
           hang={hang}
           onHangChange={setHang}
+          shareSlug={photoSlug}
         />
         <WishlistButton
           photoId={photoId}

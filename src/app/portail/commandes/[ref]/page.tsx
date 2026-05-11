@@ -5,7 +5,9 @@ import { createClient } from '@/lib/supabase/server'
 import {
   getMyShopOrderByReference,
   listMyShopOrderItems,
+  getPhotosByIds,
 } from '@/lib/shop/customer-portal'
+import { shopPhotoUrl } from '@/lib/shop/photo-url'
 import {
   getOrderStatusLabels,
   ORDER_STATUS_COLORS,
@@ -40,6 +42,8 @@ export default async function PortailOrderDetailPage({
   if (!order) notFound()
 
   const items = await listMyShopOrderItems(order.id)
+  const photoIds = items.map((i) => i.photo_id).filter((x): x is string => !!x)
+  const photoMap = await getPhotosByIds(photoIds)
   const statusLabels = getOrderStatusLabels(t)
 
   const intlLoc = locale === 'nl' ? 'nl-BE' : 'fr-BE'
@@ -89,17 +93,31 @@ export default async function PortailOrderDetailPage({
       <section className="bg-(--color-paper) border border-(--color-frame) p-5">
         <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">{t.articles}</h2>
         <ul className="divide-y divide-(--color-frame) text-sm">
-          {items.map((it) => (
-            <li key={it.id} className="py-2 flex justify-between gap-3">
-              <span className="text-(--color-ink)">
-                {it.title}
-                <span className="text-xs text-(--color-stone)"> × {it.quantity}</span>
-              </span>
-              <span className="font-medium tabular-nums text-(--color-ink)">
-                {formatPrice(it.unit_price_cents * it.quantity)}
-              </span>
-            </li>
-          ))}
+          {items.map((it) => {
+            const photo = it.photo_id ? photoMap.get(it.photo_id) : null
+            return (
+              <li key={it.id} className="py-2.5 flex items-start gap-3">
+                {photo ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={shopPhotoUrl(photo.storage_path, photo.bucket)}
+                    alt=""
+                    className="w-12 h-12 object-cover rounded-sm border border-(--color-frame) shrink-0"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-(--color-frame)/40 rounded-sm border border-(--color-frame) shrink-0" aria-hidden />
+                )}
+                <span className="text-(--color-ink) flex-1 min-w-0">
+                  <span className="block">{it.title}</span>
+                  <span className="text-xs text-(--color-stone)">× {it.quantity}</span>
+                </span>
+                <span className="font-medium tabular-nums text-(--color-ink) shrink-0">
+                  {formatPrice(it.unit_price_cents * it.quantity)}
+                </span>
+              </li>
+            )
+          })}
         </ul>
         <div className="border-t border-(--color-frame) mt-3 pt-3 space-y-1 text-sm">
           <div className="flex justify-between text-(--color-stone)">

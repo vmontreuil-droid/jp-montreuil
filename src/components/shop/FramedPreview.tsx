@@ -120,6 +120,7 @@ export function FramedPreview({
   showActions = true,
   hang = 'mid',
   onHangChange,
+  shareSlug,
 }: {
   photoUrl: string
   alt: string
@@ -154,6 +155,10 @@ export function FramedPreview({
   /** Hang-positie binnen de stage (high/mid/low). Default 'mid'. */
   hang?: HangPosition
   onHangChange?: (h: HangPosition) => void
+  /** Foto-slug. Wanneer aanwezig probeert de Share-knop een short-code
+   *  `/s/abc123` aan te maken voor een compactere URL. Valt terug op
+   *  de lange URL als de DB-call faalt. */
+  shareSlug?: string
 }) {
   const dims = parseDimensions(sizeLabel)
   const aspect = dims ? dims.w / dims.h : 1
@@ -319,10 +324,24 @@ export function FramedPreview({
     }
   }, [arBase])
 
-  // Share huidige URL (state zit al in query-params via PhotoStage).
+  // Share huidige URL. Probeert eerst een short-code `/s/abc123` te
+  // maken (mooier in mailings/WhatsApp). Valt terug op de lange URL
+  // wanneer de share_links tabel ontbreekt of de DB-call faalt.
   const onShare = useCallback(async () => {
     try {
-      const url = window.location.href
+      let url = window.location.href
+      if (shareSlug) {
+        try {
+          const sp = new URLSearchParams(window.location.search)
+          const params: Record<string, string> = {}
+          for (const [k, v] of sp.entries()) params[k] = v
+          const { createShareLink } = await import('@/app/shop/boutique/photo/[slug]/share-actions')
+          const r = await createShareLink({ slug: shareSlug, params })
+          if (r.ok) url = r.url
+        } catch {
+          // tabel bestaat nog niet of timeout — val terug op long URL
+        }
+      }
       // Native Web Share API op mobile, fallback naar clipboard
       if (typeof navigator !== 'undefined' && 'share' in navigator) {
         try {
@@ -338,7 +357,7 @@ export function FramedPreview({
     } catch (err) {
       console.error('Share failed', err)
     }
-  }, [])
+  }, [shareSlug])
 
   // Compute frame-afmetingen binnen stage-zone
   const stageMaxW = stageSize.w

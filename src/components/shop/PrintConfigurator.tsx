@@ -167,6 +167,13 @@ export type PrintConfiguratorLabels = {
   compositionAdded: string
   compositionPickerTitle: string
   compositionPickerSearch: string
+  compositionLayout: string
+  compositionLayoutTriptych: string
+  compositionLayoutSalon: string
+  compositionLayoutDiptyque: string
+  compositionLayoutStack: string
+  compositionSpacing: string
+  compositionFromWishlist: string
 }
 
 const DEFAULT_LABELS: PrintConfiguratorLabels = {
@@ -237,6 +244,13 @@ const DEFAULT_LABELS: PrintConfiguratorLabels = {
   compositionAdded: 'Ajouté au panier',
   compositionPickerTitle: 'Sélectionnez une œuvre',
   compositionPickerSearch: 'Rechercher…',
+  compositionLayout: 'Disposition',
+  compositionLayoutTriptych: 'Triptyque',
+  compositionLayoutSalon: 'Salon (1+2)',
+  compositionLayoutDiptyque: 'Diptyque',
+  compositionLayoutStack: 'Vertical',
+  compositionSpacing: 'Écart entre cadres',
+  compositionFromWishlist: 'Pré-rempli depuis vos favoris',
 }
 
 /** Swap "30×45 cm" → "45×30 cm" voor landscape; "S — 30×45 cm" → "S — 45×30 cm". */

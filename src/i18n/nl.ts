@@ -522,6 +522,13 @@ const dict: Dictionary = {
       compositionAdded: 'Toegevoegd aan winkelmandje',
       compositionPickerTitle: 'Selecteer een werk',
       compositionPickerSearch: 'Zoeken…',
+      compositionLayout: 'Indeling',
+      compositionLayoutTriptych: 'Drieluik',
+      compositionLayoutSalon: 'Salon (1+2)',
+      compositionLayoutDiptyque: 'Tweeluik',
+      compositionLayoutStack: 'Verticaal',
+      compositionSpacing: 'Afstand tussen kaders',
+      compositionFromWishlist: 'Voorgevuld vanuit uw favorieten',
     },
     panier: {
       title: 'Mijn winkelmandje',

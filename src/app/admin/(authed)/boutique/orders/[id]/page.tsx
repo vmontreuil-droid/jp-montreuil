@@ -9,6 +9,8 @@ import {
   ORDER_STATUS_COLORS,
   type OrderStatus,
 } from '@/lib/shop/orders'
+import { createShopAdminClient } from '@/lib/shop/supabase'
+import { shopPhotoUrl } from '@/lib/shop/photo-url'
 import { updateOrderStatus, setTracking } from '../actions'
 
 const fmt = new Intl.NumberFormat('fr-BE', {
@@ -36,6 +38,13 @@ export default async function ShopOrderDetailPage({
   if (!order) notFound()
   const items = await listShopOrderItems(order.id)
   const addr = (order.shipping_address ?? {}) as Record<string, string>
+  // Hydrate photo storage_paths voor thumbnails naast elke order-line
+  const photoIds = items.map((i) => i.photo_id).filter((x): x is string => !!x)
+  const shopSb = createShopAdminClient()
+  const { data: photoRows } = photoIds.length
+    ? await shopSb.from('photos').select('id, storage_path, bucket').in('id', photoIds)
+    : { data: [] as Array<{ id: string; storage_path: string; bucket: string }> }
+  const photoById = new Map((photoRows ?? []).map((p) => [p.id, p]))
 
   const transitions = NEXT_STATUS[order.status] ?? []
 
@@ -136,15 +145,29 @@ export default async function ShopOrderDetailPage({
       <section className="bg-(--color-paper) border border-(--color-frame) rounded p-5">
         <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">Articles</h2>
         <ul className="divide-y divide-stone-200 text-sm">
-          {items.map((it) => (
-            <li key={it.id} className="py-2 flex justify-between gap-3">
-              <span>
-                {it.title}
-                <span className="text-xs text-(--color-stone)"> × {it.quantity}</span>
-              </span>
-              <span className="font-medium tabular-nums">{formatPrice(it.unit_price_cents * it.quantity)}</span>
-            </li>
-          ))}
+          {items.map((it) => {
+            const photo = it.photo_id ? photoById.get(it.photo_id) : null
+            return (
+              <li key={it.id} className="py-2.5 flex items-start gap-3">
+                {photo ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={shopPhotoUrl(photo.storage_path, photo.bucket)}
+                    alt=""
+                    className="w-12 h-12 object-cover rounded-sm border border-(--color-frame) shrink-0"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-(--color-frame)/40 rounded-sm border border-(--color-frame) shrink-0" aria-hidden />
+                )}
+                <span className="flex-1 min-w-0">
+                  <span className="block">{it.title}</span>
+                  <span className="text-xs text-(--color-stone)">× {it.quantity}</span>
+                </span>
+                <span className="font-medium tabular-nums shrink-0">{formatPrice(it.unit_price_cents * it.quantity)}</span>
+              </li>
+            )
+          })}
         </ul>
         <div className="border-t border-(--color-frame) mt-3 pt-3 space-y-1 text-sm">
           <div className="flex justify-between text-(--color-stone)">
