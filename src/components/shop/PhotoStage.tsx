@@ -1,9 +1,14 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { WishlistButton } from './WishlistButton'
-import { FramedPreview, type FramedPreviewLabels } from './FramedPreview'
+import {
+  FramedPreview,
+  type FramedPreviewLabels,
+  type WallTheme,
+  type FrameColor,
+} from './FramedPreview'
 import {
   PrintConfigurator,
   flipSizeLabel,
@@ -17,10 +22,12 @@ import {
  * statische metadata (eyebrow / titel / soort / beschrijving) door, die
  * boven de configurator verschijnt.
  *
- * Compare-mode: een toggle in de configurator schakelt over naar een
- * full-width 2-koloms layout waarin twee FramedPreviews naast elkaar
- * verschijnen voor hetzelfde formaat. Configurator + metadata
- * verdwijnen tijdelijk.
+ * State-persistence: na mount worden de URL search-params + localStorage
+ * gelezen om de configurator-keuzes te herstellen. Bij elke wijziging
+ * worden URL en localStorage geupdate. Avoids hydration mismatch door
+ * altijd defaults te SSR-en en pas in useEffect te overrijden.
+ *
+ * Compare-mode: full-width 2-koloms layout met dropdown per cel.
  */
 
 type Orientation = 'portrait' | 'landscape'
@@ -33,6 +40,15 @@ type PriceCell = {
   priceCents: number
   priceFormatted: string
   isAvailable: boolean
+}
+
+const LS_KEY = 'shop:framed-preview:v1'
+
+function isWallTheme(s: string | null | undefined): s is WallTheme {
+  return s === 'beige' || s === 'white' || s === 'dark' || s === 'room'
+}
+function isFrameColor(s: string | null | undefined): s is FrameColor {
+  return s === 'oak' || s === 'black' || s === 'white'
 }
 
 export function PhotoStage({
@@ -74,11 +90,74 @@ export function PhotoStage({
   const [orientation, setOrientation] = useState<Orientation>(
     defaultOrientation === 'landscape' ? 'landscape' : 'portrait',
   )
-  // Compare-mode state. Het tweede materiaal default naar het eerstvolgende
-  // dat verschilt van het primaire materiaal.
+  const [wall, setWall] = useState<WallTheme>('beige')
+  const [frameColor, setFrameColor] = useState<FrameColor>('oak')
+
   const [compareOpen, setCompareOpen] = useState(false)
   const fallbackB = media.find((m) => m.slug !== mediaSlug)?.slug ?? media[0]?.slug ?? null
   const [compareSlugB, setCompareSlugB] = useState<string | null>(fallbackB)
+
+  // ── State persistence: hydrate van URL > localStorage > defaults ──
+  const restoredRef = useRef(false)
+  useEffect(() => {
+    if (restoredRef.current) return
+    restoredRef.current = true
+    try {
+      const sp = new URLSearchParams(window.location.search)
+      const fromUrl = {
+        material: sp.get('material'),
+        size: sp.get('size'),
+        orientation: sp.get('orientation'),
+        wall: sp.get('wall'),
+        frame: sp.get('frame'),
+      }
+      const ls = (() => {
+        try {
+          const raw = window.localStorage.getItem(LS_KEY)
+          return raw ? JSON.parse(raw) as Record<string, string> : {}
+        } catch { return {} as Record<string, string> }
+      })()
+
+      const pick = (key: string): string | null => fromUrl[key as keyof typeof fromUrl] ?? ls[key] ?? null
+      const m = pick('material')
+      const s = pick('size')
+      const o = pick('orientation')
+      const w = pick('wall')
+      const f = pick('frame')
+
+      if (m && media.some((x) => x.slug === m)) setMediaSlug(m)
+      if (s && sizes.some((x) => x.slug === s)) setSizeSlug(s)
+      if (o === 'portrait' || o === 'landscape') setOrientation(o)
+      if (isWallTheme(w)) setWall(w)
+      if (isFrameColor(f)) setFrameColor(f)
+    } catch {
+      // ignore — bv. tijdens SSR / disabled storage
+    }
+  }, [media, sizes])
+
+  // ── Sync wijzigingen naar URL (replaceState) + localStorage ──
+  useEffect(() => {
+    if (!restoredRef.current) return
+    try {
+      const sp = new URLSearchParams(window.location.search)
+      if (mediaSlug) sp.set('material', mediaSlug); else sp.delete('material')
+      if (sizeSlug) sp.set('size', sizeSlug); else sp.delete('size')
+      sp.set('orientation', orientation)
+      sp.set('wall', wall)
+      sp.set('frame', frameColor)
+      const newUrl = `${window.location.pathname}?${sp.toString()}${window.location.hash}`
+      window.history.replaceState(null, '', newUrl)
+      window.localStorage.setItem(LS_KEY, JSON.stringify({
+        material: mediaSlug ?? '',
+        size: sizeSlug ?? '',
+        orientation,
+        wall,
+        frame: frameColor,
+      }))
+    } catch {
+      // ignore
+    }
+  }, [mediaSlug, sizeSlug, orientation, wall, frameColor])
 
   const sizeForLabel = sizes.find((s) => s.slug === sizeSlug)
   const sizeLabel = sizeForLabel
@@ -101,18 +180,26 @@ export function PhotoStage({
     onWall: labels.previewOnWall,
     portrait: labels.portrait,
     paysage: labels.paysage,
+    wallBeige: labels.wallBeige,
+    wallWhite: labels.wallWhite,
+    wallDark: labels.wallDark,
+    wallRoom: labels.wallRoom,
+    save: labels.previewSave,
+    saveDone: labels.previewSaveDone,
+    share: labels.previewShare,
+    shareCopied: labels.previewShareCopied,
   }
 
   const allSlugs = media.map((m) => m.slug)
+  const fileNameBase = `${photoSlug}-${mediaSlug ?? 'preview'}-${sizeSlug ?? ''}`
 
-  // Helper voor prijzen in compare-mode
   function priceFor(matSlug: string | null): string | null {
     if (!matSlug || !sizeSlug) return null
     const cell = prices.find((p) => p.mediaSlug === matSlug && p.sizeSlug === sizeSlug)
     return cell ? cell.priceFormatted : null
   }
 
-  // ── Compare-mode: full-width 2-kolom layout, configurator verborgen ──
+  // ── Compare-mode ──
   if (compareOpen) {
     return (
       <div className="space-y-4">
@@ -132,7 +219,6 @@ export function PhotoStage({
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
-          {/* Materiaal A — gekozen materiaal uit configurator */}
           <CompareCell
             title={labels.previewCompareLeft}
             mediaList={media}
@@ -151,10 +237,13 @@ export function PhotoStage({
               labels={previewLabels}
               availableMaterialSlugs={allSlugs}
               onMaterialCycle={setMediaSlug}
+              wall={wall}
+              frameColor={frameColor}
+              showActions={false}
+              fileNameBase={`${fileNameBase}-A`}
             />
           </CompareCell>
 
-          {/* Materiaal B — vrij in te stellen second-pick */}
           <CompareCell
             title={labels.previewCompareRight}
             mediaList={media}
@@ -173,6 +262,10 @@ export function PhotoStage({
               labels={previewLabels}
               availableMaterialSlugs={allSlugs}
               onMaterialCycle={setCompareSlugB}
+              wall={wall}
+              frameColor={frameColor}
+              showActions={false}
+              fileNameBase={`${fileNameBase}-B`}
             />
           </CompareCell>
         </div>
@@ -180,10 +273,9 @@ export function PhotoStage({
     )
   }
 
-  // ── Standaard layout: preview + configurator naast elkaar ──
+  // ── Standaard layout ──
   return (
     <div className="grid md:grid-cols-2 gap-10">
-      {/* Live preview in gekozen kader */}
       <div className="relative">
         <FramedPreview
           photoUrl={photoUrl}
@@ -196,15 +288,18 @@ export function PhotoStage({
           labels={previewLabels}
           availableMaterialSlugs={allSlugs}
           onMaterialCycle={setMediaSlug}
+          wall={wall}
+          onWallChange={setWall}
+          frameColor={frameColor}
+          fileNameBase={fileNameBase}
         />
         <WishlistButton
           photoId={photoId}
-          className="absolute top-3 right-3 z-10"
+          className="absolute top-3 left-3 z-10"
           size={18}
         />
       </div>
 
-      {/* Rechts: metadata + configurator */}
       <div>
         {rightHeader}
         <PrintConfigurator
@@ -225,6 +320,8 @@ export function PhotoStage({
           onSizeSlugChange={setSizeSlug}
           onOrientationChange={setOrientation}
           onCompareClick={() => setCompareOpen(true)}
+          frameColor={frameColor}
+          onFrameColorChange={setFrameColor}
         />
       </div>
     </div>

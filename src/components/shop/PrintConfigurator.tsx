@@ -3,9 +3,11 @@
 import { useMemo, useState } from 'react'
 import {
   ShoppingBag, Check, RectangleHorizontal, RectangleVertical,
-  Frame, FileImage, Square, Sparkles,
+  Frame, FileImage, Square, Sparkles, Star,
 } from 'lucide-react'
 import { useCart } from './CartProvider'
+
+export type FrameColor = 'oak' | 'black' | 'white'
 
 /** "S — 30×45 cm" → { w: 30, h: 45 }. Voor SizeIndicator-rendering. */
 function parseSizeDims(label: string): { w: number; h: number } | null {
@@ -118,6 +120,19 @@ export type PrintConfiguratorLabels = {
   previewCompareExit: string
   previewCompareLeft: string
   previewCompareRight: string
+  wallBeige: string
+  wallWhite: string
+  wallDark: string
+  wallRoom: string
+  frameColor: string
+  frameOak: string
+  frameBlack: string
+  frameWhite: string
+  previewSave: string
+  previewSaveDone: string
+  previewShare: string
+  previewShareCopied: string
+  popular: string
 }
 
 const DEFAULT_LABELS: PrintConfiguratorLabels = {
@@ -141,6 +156,19 @@ const DEFAULT_LABELS: PrintConfiguratorLabels = {
   previewCompareExit: 'Fermer la comparaison',
   previewCompareLeft: 'Matériau A',
   previewCompareRight: 'Matériau B',
+  wallBeige: 'Beige',
+  wallWhite: 'Galerie',
+  wallDark: 'Sombre',
+  wallRoom: 'Salon',
+  frameColor: 'Cadre',
+  frameOak: 'Chêne',
+  frameBlack: 'Noir',
+  frameWhite: 'Blanc',
+  previewSave: 'Télécharger',
+  previewSaveDone: 'Téléchargé !',
+  previewShare: 'Partager',
+  previewShareCopied: 'Lien copié',
+  popular: 'Populaire',
 }
 
 /** Swap "30×45 cm" → "45×30 cm" voor landscape; "S — 30×45 cm" → "S — 45×30 cm". */
@@ -170,6 +198,10 @@ export function PrintConfigurator({
   onSizeSlugChange,
   onOrientationChange,
   onCompareClick,
+  frameColor = 'oak',
+  onFrameColorChange,
+  popularMaterialSlug = 'canvas',
+  popularSizeSlug = 'm',
 }: {
   photoId: string
   photoSlug: string
@@ -187,10 +219,14 @@ export function PrintConfigurator({
   onMediaSlugChange?: (slug: string) => void
   onSizeSlugChange?: (slug: string) => void
   onOrientationChange?: (o: Orientation) => void
-  /** Optionele callback — wanneer aanwezig wordt een "Vergelijken"-knop
-   *  onder de materiaal-knoppen getoond. PhotoStage gebruikt dit om de
-   *  compare-mode te activeren. */
   onCompareClick?: () => void
+  /** Houtkleur voor fine_art (oak/black/white). Sub-toggle verschijnt
+   *  alleen wanneer fine_art het actieve materiaal is. */
+  frameColor?: FrameColor
+  onFrameColorChange?: (c: FrameColor) => void
+  /** Popular-badges. Default canvas + m (kan overruled worden). */
+  popularMaterialSlug?: string | null
+  popularSizeSlug?: string | null
 }) {
   const { add } = useCart()
 
@@ -269,6 +305,7 @@ export function PrintConfigurator({
         <div className="grid grid-cols-2 gap-2">
           {media.map((m) => {
             const sel = m.slug === mediaSlug
+            const isPopular = m.slug === popularMaterialSlug
             return (
               <div key={m.id} className="relative group">
                 <button
@@ -281,6 +318,16 @@ export function PrintConfigurator({
                   <MaterialIcon slug={m.slug} className="w-4 h-4 shrink-0" />
                   <span className="truncate">{m.name}</span>
                 </button>
+                {isPopular && (
+                  <span
+                    className="absolute -top-2 -right-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[8px] uppercase tracking-[0.15em] bg-(--color-bronze) text-white rounded-full shadow-sm pointer-events-none"
+                    aria-label={labels.popular}
+                    title={labels.popular}
+                  >
+                    <Star className="w-2.5 h-2.5" />
+                    {labels.popular}
+                  </span>
+                )}
                 {m.description && (
                   <div
                     role="tooltip"
@@ -299,6 +346,42 @@ export function PrintConfigurator({
           })}
         </div>
       </div>
+
+      {/* Houtkleur — alleen wanneer fine_art active. */}
+      {mediaSlug === 'fine_art' && onFrameColorChange && (
+        <div>
+          <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">{labels.frameColor}</p>
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                { key: 'oak', lbl: labels.frameOak, swatch: 'linear-gradient(135deg, #2a2622 0%, #1a1815 50%, #2a2622 100%)' },
+                { key: 'black', lbl: labels.frameBlack, swatch: '#0d0d0d' },
+                { key: 'white', lbl: labels.frameWhite, swatch: '#fafafa' },
+              ] as const
+            ).map(({ key, lbl, swatch }) => {
+              const sel = key === frameColor
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onFrameColorChange(key)}
+                  className={`px-3 py-2 text-xs border rounded transition-colors inline-flex items-center gap-2 ${
+                    sel ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 hover:border-stone-500'
+                  }`}
+                  aria-pressed={sel}
+                >
+                  <span
+                    aria-hidden
+                    className="w-3 h-3 rounded-sm border border-stone-300 shrink-0"
+                    style={{ background: swatch }}
+                  />
+                  {lbl}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Orientation */}
       <div>
@@ -345,34 +428,46 @@ export function PrintConfigurator({
               const cell = mediaSlug ? cellMap.get(`${mediaSlug}|${s.slug}`) : null
               const disabled = !cell || !cell.isAvailable
               const displayLabel = orientation === 'landscape' ? flipSizeLabel(s.label) : s.label
+              const isPopular = s.slug === popularSizeSlug && !disabled
               return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => !disabled && setSizeSlug(s.slug)}
-                  disabled={disabled}
-                  className={`px-3 py-2 text-sm border rounded transition-colors text-left inline-flex items-center gap-2 ${
-                    disabled
-                      ? 'border-stone-200 opacity-40 cursor-not-allowed'
-                      : sel
-                        ? 'border-stone-900 bg-stone-900 text-white'
-                        : 'border-stone-300 hover:border-stone-500'
-                  }`}
-                >
-                  <SizeIndicator
-                    label={s.label}
-                    maxLong={maxLong}
-                    selected={sel}
+                <div key={s.id} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => !disabled && setSizeSlug(s.slug)}
                     disabled={disabled}
-                    orientation={orientation}
-                  />
-                  <span className="min-w-0">
-                    <span className="block font-medium truncate">{displayLabel}</span>
-                    <span className="block text-xs opacity-75 mt-0.5">
-                      {cell ? cell.priceFormatted : '—'}
+                    className={`w-full px-3 py-2 text-sm border rounded transition-colors text-left inline-flex items-center gap-2 ${
+                      disabled
+                        ? 'border-stone-200 opacity-40 cursor-not-allowed'
+                        : sel
+                          ? 'border-stone-900 bg-stone-900 text-white'
+                          : 'border-stone-300 hover:border-stone-500'
+                    }`}
+                  >
+                    <SizeIndicator
+                      label={s.label}
+                      maxLong={maxLong}
+                      selected={sel}
+                      disabled={disabled}
+                      orientation={orientation}
+                    />
+                    <span className="min-w-0">
+                      <span className="block font-medium truncate">{displayLabel}</span>
+                      <span className="block text-xs opacity-75 mt-0.5">
+                        {cell ? cell.priceFormatted : '—'}
+                      </span>
                     </span>
-                  </span>
-                </button>
+                  </button>
+                  {isPopular && (
+                    <span
+                      className="absolute -top-2 -right-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[8px] uppercase tracking-[0.15em] bg-(--color-bronze) text-white rounded-full shadow-sm pointer-events-none"
+                      aria-label={labels.popular}
+                      title={labels.popular}
+                    >
+                      <Star className="w-2.5 h-2.5" />
+                      {labels.popular}
+                    </span>
+                  )}
+                </div>
               )
             })
           })()}

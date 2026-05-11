@@ -1,7 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Maximize2, X, AlertTriangle, User, Sun, Square, Moon } from 'lucide-react'
+import {
+  Maximize2, X, AlertTriangle, User, Sun, Square, Moon, Sofa,
+  Download, Share2, Check,
+} from 'lucide-react'
 
 /**
  * In-kader preview voor de shop. Toont de foto binnen een mockup van het
@@ -58,9 +61,18 @@ export type FramedPreviewLabels = {
   onWall: string
   portrait: string
   paysage: string
+  wallBeige: string
+  wallWhite: string
+  wallDark: string
+  wallRoom: string
+  save: string
+  saveDone: string
+  share: string
+  shareCopied: string
 }
 
-type WallTheme = 'beige' | 'white' | 'dark'
+export type WallTheme = 'beige' | 'white' | 'dark' | 'room'
+export type FrameColor = 'oak' | 'black' | 'white'
 
 const WALL_THEMES: Record<WallTheme, { background: string; floor: string; lightSpot: string; ink: string }> = {
   beige: {
@@ -81,6 +93,12 @@ const WALL_THEMES: Record<WallTheme, { background: string; floor: string; lightS
     lightSpot: 'radial-gradient(ellipse at 18% 12%, rgba(255,240,210,0.18) 0%, rgba(0,0,0,0) 60%)',
     ink: '#e8e3da',
   },
+  room: {
+    background: 'linear-gradient(180deg, #ede5d8 0%, #e1d6c4 55%, #c8b89c 100%)',
+    floor: 'linear-gradient(180deg, rgba(74,55,30,0) 0%, rgba(74,55,30,0.55) 100%)',
+    lightSpot: 'radial-gradient(ellipse at 18% 12%, rgba(255,250,235,0.55) 0%, rgba(255,250,235,0) 55%)',
+    ink: '#3a2f22',
+  },
 }
 
 export function FramedPreview({
@@ -94,6 +112,11 @@ export function FramedPreview({
   labels,
   availableMaterialSlugs,
   onMaterialCycle,
+  wall = 'beige',
+  onWallChange,
+  frameColor = 'oak',
+  fileNameBase,
+  showActions = true,
 }: {
   photoUrl: string
   alt: string
@@ -115,6 +138,16 @@ export function FramedPreview({
   /** Callback om de actieve material-slug aan de parent door te geven
    *  (gebruikt door arrow-key cycling). */
   onMaterialCycle?: (slug: string) => void
+  /** Controlled wall-thema. Default 'beige'. */
+  wall?: WallTheme
+  onWallChange?: (w: WallTheme) => void
+  /** Houtkleur voor fine_art (oak/black/white). Default 'oak'. */
+  frameColor?: FrameColor
+  /** Basis-bestandsnaam voor de PNG-export (zonder extensie). */
+  fileNameBase?: string
+  /** Toont save/share/wall-toggle bovenop de stage. Zet uit voor
+   *  compare-mode cellen waar je de actie-knoppen niet wil dupliceren. */
+  showActions?: boolean
 }) {
   const dims = parseDimensions(sizeLabel)
   const aspect = dims ? dims.w / dims.h : 1
@@ -127,8 +160,10 @@ export function FramedPreview({
   const [stageSize, setStageSize] = useState({ w: 380, h: 460 })
   const [parallax, setParallax] = useState({ x: 0, y: 0 })
   const [reducedMotion, setReducedMotion] = useState(false)
-  const [wall, setWall] = useState<WallTheme>('beige')
+  const [savedFlash, setSavedFlash] = useState(false)
+  const [sharedFlash, setSharedFlash] = useState(false)
   const stageRef = useRef<HTMLDivElement | null>(null)
+  const setWall = onWallChange ?? (() => {})
 
   // Detect prefers-reduced-motion
   useEffect(() => {
@@ -171,6 +206,49 @@ export function FramedPreview({
     setParallax({ x, y })
   }, [reducedMotion])
   const resetParallax = useCallback(() => setParallax({ x: 0, y: 0 }), [])
+
+  // Save stage als PNG via dynamic-import van html-to-image (~14kB,
+  // alleen geladen wanneer user effectief klikt).
+  const onSave = useCallback(async () => {
+    if (!stageRef.current) return
+    try {
+      const { toPng } = await import('html-to-image')
+      const dataUrl = await toPng(stageRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: undefined,
+      })
+      const link = document.createElement('a')
+      link.download = `${fileNameBase ?? 'preview'}.png`
+      link.href = dataUrl
+      link.click()
+      setSavedFlash(true)
+      setTimeout(() => setSavedFlash(false), 1500)
+    } catch (err) {
+      console.error('PNG export failed', err)
+    }
+  }, [fileNameBase])
+
+  // Share huidige URL (state zit al in query-params via PhotoStage).
+  const onShare = useCallback(async () => {
+    try {
+      const url = window.location.href
+      // Native Web Share API op mobile, fallback naar clipboard
+      if (typeof navigator !== 'undefined' && 'share' in navigator) {
+        try {
+          await (navigator as unknown as { share: (d: { url: string; title?: string }) => Promise<void> }).share({ url })
+          return
+        } catch {
+          // user cancelde — val terug op clipboard
+        }
+      }
+      await navigator.clipboard.writeText(url)
+      setSharedFlash(true)
+      setTimeout(() => setSharedFlash(false), 1500)
+    } catch (err) {
+      console.error('Share failed', err)
+    }
+  }, [])
 
   // Compute frame-afmetingen binnen stage-zone
   const stageMaxW = stageSize.w
@@ -267,6 +345,9 @@ export function FramedPreview({
           }}
         />
 
+        {/* Room-scene: sofa + side table silhouette wanneer wall === 'room' */}
+        {wall === 'room' && <RoomScene mounted={mounted} />}
+
         {/* Frame — alle 4 material-skins blijven gemount, crossfade via opacity. */}
         <div
           className="absolute left-1/2 top-1/2 cursor-zoom-in"
@@ -292,6 +373,7 @@ export function FramedPreview({
             photoUrl={photoUrl}
             alt={alt}
             sizeWeight={sizeWeight}
+            frameColor={frameColor}
             onLoad={() => setImgLoaded(true)}
             reducedMotion={reducedMotion}
           />
@@ -353,36 +435,94 @@ export function FramedPreview({
           {labels.zoom}
         </button>
 
-        {/* Wall-toggle rechtsboven */}
-        <div
-          className="absolute top-3 right-3 inline-flex gap-1 backdrop-blur-sm rounded p-0.5"
-          style={{
-            background: wall === 'dark' ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.70)',
-          }}
-        >
-          {(['beige', 'white', 'dark'] as const).map((w) => {
-            const Icon = w === 'beige' ? Square : w === 'white' ? Sun : Moon
-            const sel = w === wall
-            return (
-              <button
-                key={w}
-                type="button"
-                onClick={() => setWall(w)}
-                className={`p-1.5 rounded transition-colors ${
-                  sel
-                    ? 'bg-stone-900 text-white'
-                    : wall === 'dark'
-                      ? 'text-stone-200 hover:bg-white/10'
-                      : 'text-stone-600 hover:bg-stone-200'
-                }`}
-                aria-label={`Wall: ${w}`}
-                aria-pressed={sel}
+        {/* Wall-toggle + save + share rechtsboven */}
+        {showActions && (
+          <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
+            {/* Wall-toggle: 4 themes */}
+            {onWallChange && (
+              <div
+                className="inline-flex gap-1 backdrop-blur-sm rounded p-0.5"
+                style={{
+                  background: wall === 'dark' ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.70)',
+                }}
+                role="radiogroup"
+                aria-label={labels.onWall}
               >
-                <Icon className="w-3 h-3" />
+                {(
+                  [
+                    { key: 'beige', Icon: Square, lbl: labels.wallBeige },
+                    { key: 'white', Icon: Sun, lbl: labels.wallWhite },
+                    { key: 'dark',  Icon: Moon, lbl: labels.wallDark },
+                    { key: 'room',  Icon: Sofa, lbl: labels.wallRoom },
+                  ] as const
+                ).map(({ key, Icon, lbl }) => {
+                  const sel = key === wall
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setWall(key)}
+                      className={`p-1.5 rounded transition-colors ${
+                        sel
+                          ? 'bg-stone-900 text-white'
+                          : wall === 'dark'
+                            ? 'text-stone-200 hover:bg-white/10'
+                            : 'text-stone-600 hover:bg-stone-200'
+                      }`}
+                      aria-label={lbl}
+                      aria-pressed={sel}
+                      title={lbl}
+                    >
+                      <Icon className="w-3 h-3" />
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            {/* Save + Share */}
+            <div
+              className="inline-flex gap-1 backdrop-blur-sm rounded p-0.5"
+              style={{
+                background: wall === 'dark' ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.70)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); void onSave() }}
+                className={`inline-flex items-center gap-1 px-2 py-1.5 rounded transition-colors text-[10px] uppercase tracking-[0.18em] ${
+                  wall === 'dark'
+                    ? 'text-stone-200 hover:bg-white/10'
+                    : 'text-stone-600 hover:bg-stone-200'
+                }`}
+                aria-label={labels.save}
+                title={labels.save}
+              >
+                {savedFlash ? <Check className="w-3 h-3" /> : <Download className="w-3 h-3" />}
               </button>
-            )
-          })}
-        </div>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); void onShare() }}
+                className={`inline-flex items-center gap-1 px-2 py-1.5 rounded transition-colors text-[10px] uppercase tracking-[0.18em] ${
+                  wall === 'dark'
+                    ? 'text-stone-200 hover:bg-white/10'
+                    : 'text-stone-600 hover:bg-stone-200'
+                }`}
+                aria-label={labels.share}
+                title={labels.share}
+              >
+                {sharedFlash ? <Check className="w-3 h-3" /> : <Share2 className="w-3 h-3" />}
+              </button>
+            </div>
+            {/* Toast voor save/share feedback */}
+            {(savedFlash || sharedFlash) && (
+              <p
+                className="text-[10px] uppercase tracking-[0.2em] px-2 py-1 rounded bg-stone-900 text-white animate-in fade-in"
+              >
+                {savedFlash ? labels.saveDone : labels.shareCopied}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Crop-hint linksboven */}
         {showCropHint && (
@@ -453,6 +593,7 @@ function CrossfadeFrame({
   photoUrl,
   alt,
   sizeWeight,
+  frameColor,
   onLoad,
   reducedMotion,
 }: {
@@ -460,6 +601,7 @@ function CrossfadeFrame({
   photoUrl: string
   alt: string
   sizeWeight: number
+  frameColor: FrameColor
   onLoad: () => void
   reducedMotion: boolean
 }) {
@@ -477,7 +619,15 @@ function CrossfadeFrame({
           }}
         >
           {v === 'canvas' && <CanvasFrame photoUrl={photoUrl} alt={alt} onLoad={v === variant ? onLoad : undefined} />}
-          {v === 'fine_art' && <FineArtFrame photoUrl={photoUrl} alt={alt} weight={sizeWeight} onLoad={v === variant ? onLoad : undefined} />}
+          {v === 'fine_art' && (
+            <FineArtFrame
+              photoUrl={photoUrl}
+              alt={alt}
+              weight={sizeWeight}
+              color={frameColor}
+              onLoad={v === variant ? onLoad : undefined}
+            />
+          )}
           {v === 'aluminum' && <DibondFrame photoUrl={photoUrl} alt={alt} onLoad={v === variant ? onLoad : undefined} />}
           {v === 'plexi' && <PlexiFrame photoUrl={photoUrl} alt={alt} onLoad={v === variant ? onLoad : undefined} />}
         </div>
@@ -557,19 +707,40 @@ function CanvasFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
 }
 
 function FineArtFrame({
-  photoUrl, alt, weight, onLoad,
-}: { photoUrl: string; alt: string; weight: number; onLoad?: () => void }) {
+  photoUrl, alt, weight, color = 'oak', onLoad,
+}: {
+  photoUrl: string
+  alt: string
+  weight: number
+  color?: FrameColor
+  onLoad?: () => void
+}) {
   const margin = `${6 + weight * 5}%`
+  // Frame styling per kleur — wood-grain texture wordt enkel op de
+  // 'oak' getoond. Black + white krijgen vlakke kleur + subtiele beveled
+  // edge via box-shadow.
+  const frameStyle: React.CSSProperties =
+    color === 'oak'
+      ? {
+          background: '#1a1612',
+          border: '1px solid #0f0c0a',
+          backgroundImage: `url("${TEX_WOOD}")`,
+          backgroundSize: 'auto 100%',
+          backgroundRepeat: 'repeat-x',
+        }
+      : color === 'black'
+        ? {
+            background: '#0d0d0d',
+            border: '1px solid #000',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.5)',
+          }
+        : {
+            background: '#fafafa',
+            border: '1px solid #d8d4cd',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.08)',
+          }
   return (
-    <div
-      className="absolute inset-0 bg-[#1a1612]"
-      style={{
-        border: '1px solid #0f0c0a',
-        backgroundImage: `url("${TEX_WOOD}")`,
-        backgroundSize: 'auto 100%',
-        backgroundRepeat: 'repeat-x',
-      }}
-    >
+    <div className="absolute inset-0" style={frameStyle}>
       <div
         className="absolute bg-white"
         style={{
@@ -654,6 +825,52 @@ function PlexiFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string; 
         style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.55), inset 0 -1px 0 rgba(0,0,0,0.20)' }}
       />
     </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Room-scene: gestileerde sofa + side table onder het kader voor extra
+// woonkamer-context wanneer wall === 'room'.
+// ────────────────────────────────────────────────────────────────────────
+
+function RoomScene({ mounted }: { mounted: boolean }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 400 200"
+      preserveAspectRatio="xMidYMax meet"
+      className="absolute inset-x-0 bottom-0 pointer-events-none"
+      style={{
+        height: '40%',
+        opacity: mounted ? 0.55 : 0,
+        transition: 'opacity 700ms ease-out 200ms',
+      }}
+    >
+      {/* Sofa silhouet */}
+      <g fill="#6b5640">
+        {/* Hoofdblok */}
+        <path d="M60 145 Q60 115 90 115 L290 115 Q320 115 320 145 L320 175 L60 175 Z" />
+        {/* Armleuningen */}
+        <rect x="50" y="120" width="22" height="55" rx="6" />
+        <rect x="308" y="120" width="22" height="55" rx="6" />
+        {/* Kussen-naden */}
+        <line x1="155" y1="118" x2="155" y2="170" stroke="#534332" strokeWidth="1.2" />
+        <line x1="225" y1="118" x2="225" y2="170" stroke="#534332" strokeWidth="1.2" />
+        {/* Pootjes */}
+        <rect x="70" y="175" width="6" height="10" />
+        <rect x="304" y="175" width="6" height="10" />
+      </g>
+      {/* Side table rechts naast sofa */}
+      <g fill="#3e3128">
+        <rect x="345" y="135" width="40" height="8" />
+        <rect x="350" y="143" width="3" height="35" />
+        <rect x="377" y="143" width="3" height="35" />
+        {/* Vaas + sprietje */}
+        <path d="M358 122 Q358 117 362 117 L368 117 Q372 117 372 122 L370 135 L360 135 Z" fill="#8a6f54" />
+        <path d="M365 117 Q368 105 372 100" stroke="#3a5a32" strokeWidth="1.2" fill="none" />
+        <path d="M365 117 Q362 108 358 103" stroke="#3a5a32" strokeWidth="1.2" fill="none" />
+      </g>
+    </svg>
   )
 }
 

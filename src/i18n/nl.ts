@@ -466,6 +466,23 @@ const dict: Dictionary = {
       previewCompareExit: 'Vergelijking sluiten',
       previewCompareLeft: 'Materiaal A',
       previewCompareRight: 'Materiaal B',
+      // Wall thema's
+      wallBeige: 'Beige',
+      wallWhite: 'Galerij',
+      wallDark: 'Donker',
+      wallRoom: 'Salon',
+      // Houtkleur (fine_art)
+      frameColor: 'Lijst',
+      frameOak: 'Eik',
+      frameBlack: 'Zwart',
+      frameWhite: 'Wit',
+      // Save / share
+      previewSave: 'Downloaden',
+      previewSaveDone: 'Gedownload!',
+      previewShare: 'Delen',
+      previewShareCopied: 'Link gekopieerd',
+      // Popular badge
+      popular: 'Populair',
     },
     panier: {
       title: 'Mijn winkelmandje',

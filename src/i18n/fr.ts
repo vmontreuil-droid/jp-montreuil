@@ -464,6 +464,23 @@ const dict = {
       previewCompareExit: 'Fermer la comparaison',
       previewCompareLeft: 'Matériau A',
       previewCompareRight: 'Matériau B',
+      // Wall thema's
+      wallBeige: 'Beige',
+      wallWhite: 'Galerie',
+      wallDark: 'Sombre',
+      wallRoom: 'Salon',
+      // Houtkleur (fine_art)
+      frameColor: 'Cadre',
+      frameOak: 'Chêne',
+      frameBlack: 'Noir',
+      frameWhite: 'Blanc',
+      // Save / share
+      previewSave: 'Télécharger',
+      previewSaveDone: 'Téléchargé !',
+      previewShare: 'Partager',
+      previewShareCopied: 'Lien copié',
+      // Popular badge
+      popular: 'Populaire',
     },
     panier: {
       title: 'Mon panier',
