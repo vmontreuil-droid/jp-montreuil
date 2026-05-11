@@ -481,6 +481,24 @@ const dict = {
       previewShareCopied: 'Lien copié',
       // Popular badge
       popular: 'Populaire',
+      // Hang-positie
+      hangPosition: 'Hauteur',
+      hangHigh: 'Haut',
+      hangMid: 'Centre',
+      hangLow: 'Bas',
+      // Room-aanbevelingen (waar ga je hem ophangen?)
+      roomQuestion: 'Pour quelle pièce ?',
+      roomLiving: 'Salon',
+      roomBedroom: 'Chambre',
+      roomOffice: 'Bureau',
+      roomHallway: 'Couloir',
+      roomSuggest: 'Recommandé pour',
+      // Triptych / wall-arrangement
+      triptychOpen: 'Composition murale',
+      triptychExit: 'Fermer la composition',
+      triptychCenter: 'Au centre',
+      triptychLeft: 'À gauche',
+      triptychRight: 'À droite',
     },
     panier: {
       title: 'Mon panier',

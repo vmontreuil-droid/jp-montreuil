@@ -92,3 +92,46 @@ export async function listAvailablePrices(): Promise<PrintPrice[]> {
   if (error) throw error
   return (data ?? []) as PrintPrice[]
 }
+
+/**
+ * Telt order_items van de laatste N dagen en geeft de meest gekozen
+ * material- en size-slug terug. Wordt gebruikt om "Populair"-badges in
+ * de configurator te tonen op basis van echte aankoop-stats.
+ *
+ * Returnt null voor een veld wanneer er onvoldoende data is — laat de
+ * caller dan een sane default kiezen.
+ */
+export async function getPopularPrintCombo(daysBack = 30): Promise<{
+  materialSlug: string | null
+  sizeSlug: string | null
+  totalSamples: number
+}> {
+  const sb = createShopAdminClient()
+  const sinceIso = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
+  const { data, error } = await sb
+    .from('order_items')
+    .select('print_media_slug, print_size_slug, created_at')
+    .gte('created_at', sinceIso)
+    .not('print_media_slug', 'is', null)
+  if (error || !data) return { materialSlug: null, sizeSlug: null, totalSamples: 0 }
+  const matCount = new Map<string, number>()
+  const sizeCount = new Map<string, number>()
+  for (const row of data) {
+    const m = (row as { print_media_slug: string | null }).print_media_slug
+    const s = (row as { print_size_slug: string | null }).print_size_slug
+    if (m) matCount.set(m, (matCount.get(m) ?? 0) + 1)
+    if (s) sizeCount.set(s, (sizeCount.get(s) ?? 0) + 1)
+  }
+  const topOf = (m: Map<string, number>): string | null => {
+    let best: [string, number] | null = null
+    for (const entry of m.entries()) {
+      if (!best || entry[1] > best[1]) best = entry
+    }
+    return best?.[0] ?? null
+  }
+  return {
+    materialSlug: topOf(matCount),
+    sizeSlug: topOf(sizeCount),
+    totalSamples: data.length,
+  }
+}

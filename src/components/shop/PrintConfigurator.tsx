@@ -133,6 +133,21 @@ export type PrintConfiguratorLabels = {
   previewShare: string
   previewShareCopied: string
   popular: string
+  hangPosition: string
+  hangHigh: string
+  hangMid: string
+  hangLow: string
+  roomQuestion: string
+  roomLiving: string
+  roomBedroom: string
+  roomOffice: string
+  roomHallway: string
+  roomSuggest: string
+  triptychOpen: string
+  triptychExit: string
+  triptychCenter: string
+  triptychLeft: string
+  triptychRight: string
 }
 
 const DEFAULT_LABELS: PrintConfiguratorLabels = {
@@ -169,6 +184,21 @@ const DEFAULT_LABELS: PrintConfiguratorLabels = {
   previewShare: 'Partager',
   previewShareCopied: 'Lien copié',
   popular: 'Populaire',
+  hangPosition: 'Hauteur',
+  hangHigh: 'Haut',
+  hangMid: 'Centre',
+  hangLow: 'Bas',
+  roomQuestion: 'Pour quelle pièce ?',
+  roomLiving: 'Salon',
+  roomBedroom: 'Chambre',
+  roomOffice: 'Bureau',
+  roomHallway: 'Couloir',
+  roomSuggest: 'Recommandé pour',
+  triptychOpen: 'Composition murale',
+  triptychExit: 'Fermer la composition',
+  triptychCenter: 'Au centre',
+  triptychLeft: 'À gauche',
+  triptychRight: 'À droite',
 }
 
 /** Swap "30×45 cm" → "45×30 cm" voor landscape; "S — 30×45 cm" → "S — 45×30 cm". */
@@ -198,6 +228,7 @@ export function PrintConfigurator({
   onSizeSlugChange,
   onOrientationChange,
   onCompareClick,
+  onTriptychClick,
   frameColor = 'oak',
   onFrameColorChange,
   popularMaterialSlug = 'canvas',
@@ -220,6 +251,9 @@ export function PrintConfigurator({
   onSizeSlugChange?: (slug: string) => void
   onOrientationChange?: (o: Orientation) => void
   onCompareClick?: () => void
+  /** Optionele callback — toont een "Composition murale" knop naast de
+   *  vergelijk-knop. PhotoStage gebruikt dit om triptych-mode te openen. */
+  onTriptychClick?: () => void
   /** Houtkleur voor fine_art (oak/black/white). Sub-toggle verschijnt
    *  alleen wanneer fine_art het actieve materiaal is. */
   frameColor?: FrameColor
@@ -292,15 +326,26 @@ export function PrintConfigurator({
       <div>
         <div className="flex items-baseline justify-between mb-2">
           <p className="text-xs uppercase tracking-widest text-stone-500">{labels.material}</p>
-          {onCompareClick && media.length >= 2 && (
-            <button
-              type="button"
-              onClick={onCompareClick}
-              className="text-[10px] uppercase tracking-[0.18em] text-(--color-bronze) hover:text-(--color-bronze-dark) transition-colors"
-            >
-              {labels.previewCompare}
-            </button>
-          )}
+          <span className="inline-flex items-center gap-3">
+            {onTriptychClick && (
+              <button
+                type="button"
+                onClick={onTriptychClick}
+                className="text-[10px] uppercase tracking-[0.18em] text-(--color-bronze) hover:text-(--color-bronze-dark) transition-colors"
+              >
+                {labels.triptychOpen}
+              </button>
+            )}
+            {onCompareClick && media.length >= 2 && (
+              <button
+                type="button"
+                onClick={onCompareClick}
+                className="text-[10px] uppercase tracking-[0.18em] text-(--color-bronze) hover:text-(--color-bronze-dark) transition-colors"
+              >
+                {labels.previewCompare}
+              </button>
+            )}
+          </span>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {media.map((m) => {

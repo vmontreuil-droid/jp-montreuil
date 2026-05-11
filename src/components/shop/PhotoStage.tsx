@@ -1,13 +1,15 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { X } from 'lucide-react'
+import { X, Home, Bed, Briefcase, DoorOpen, Sparkles } from 'lucide-react'
 import { WishlistButton } from './WishlistButton'
 import {
   FramedPreview,
   type FramedPreviewLabels,
   type WallTheme,
   type FrameColor,
+  type HangPosition,
 } from './FramedPreview'
 import {
   PrintConfigurator,
@@ -42,13 +44,26 @@ type PriceCell = {
   isAvailable: boolean
 }
 
+type RelatedPhoto = { id: string; slug: string; url: string; alt: string }
+
 const LS_KEY = 'shop:framed-preview:v1'
+
+type RoomKey = 'living' | 'bedroom' | 'office' | 'hallway'
+const ROOM_TO_MATERIAL: Record<RoomKey, string> = {
+  living: 'canvas',     // warm en groot voor een sofa-muur
+  bedroom: 'fine_art',  // rustig en mat voor een slaapkamer
+  office: 'aluminum',   // strak en modern voor bureau
+  hallway: 'plexi',     // glossy en oogvangend in een gang
+}
 
 function isWallTheme(s: string | null | undefined): s is WallTheme {
   return s === 'beige' || s === 'white' || s === 'dark' || s === 'room'
 }
 function isFrameColor(s: string | null | undefined): s is FrameColor {
   return s === 'oak' || s === 'black' || s === 'white'
+}
+function isHang(s: string | null | undefined): s is HangPosition {
+  return s === 'high' || s === 'mid' || s === 'low'
 }
 
 export function PhotoStage({
@@ -67,6 +82,9 @@ export function PhotoStage({
   prices,
   labels,
   rightHeader,
+  popularMaterialSlug = null,
+  popularSizeSlug = null,
+  relatedPhotos = [],
 }: {
   photoId: string
   photoSlug: string
@@ -83,6 +101,13 @@ export function PhotoStage({
   prices: PriceCell[]
   labels: PrintConfiguratorLabels
   rightHeader: ReactNode
+  /** Echte popular-combos uit order_items. Null = laat
+   *  PrintConfigurator's hardcoded default (canvas + m) gebruiken. */
+  popularMaterialSlug?: string | null
+  popularSizeSlug?: string | null
+  /** 2 related foto's voor triptych-mode (links + rechts van de
+   *  gekozen foto). Optioneel — als < 2 dan is triptych verborgen. */
+  relatedPhotos?: RelatedPhoto[]
 }) {
   const firstAvail = prices.find((p) => p.isAvailable)
   const [mediaSlug, setMediaSlug] = useState<string | null>(firstAvail?.mediaSlug ?? null)
@@ -92,8 +117,11 @@ export function PhotoStage({
   )
   const [wall, setWall] = useState<WallTheme>('beige')
   const [frameColor, setFrameColor] = useState<FrameColor>('oak')
+  const [hang, setHang] = useState<HangPosition>('mid')
+  const [room, setRoom] = useState<RoomKey | null>(null)
 
   const [compareOpen, setCompareOpen] = useState(false)
+  const [triptychOpen, setTriptychOpen] = useState(false)
   const fallbackB = media.find((m) => m.slug !== mediaSlug)?.slug ?? media[0]?.slug ?? null
   const [compareSlugB, setCompareSlugB] = useState<string | null>(fallbackB)
 
@@ -110,6 +138,7 @@ export function PhotoStage({
         orientation: sp.get('orientation'),
         wall: sp.get('wall'),
         frame: sp.get('frame'),
+        hang: sp.get('hang'),
       }
       const ls = (() => {
         try {
@@ -124,12 +153,14 @@ export function PhotoStage({
       const o = pick('orientation')
       const w = pick('wall')
       const f = pick('frame')
+      const h = pick('hang')
 
       if (m && media.some((x) => x.slug === m)) setMediaSlug(m)
       if (s && sizes.some((x) => x.slug === s)) setSizeSlug(s)
       if (o === 'portrait' || o === 'landscape') setOrientation(o)
       if (isWallTheme(w)) setWall(w)
       if (isFrameColor(f)) setFrameColor(f)
+      if (isHang(h)) setHang(h)
     } catch {
       // ignore — bv. tijdens SSR / disabled storage
     }
@@ -145,6 +176,7 @@ export function PhotoStage({
       sp.set('orientation', orientation)
       sp.set('wall', wall)
       sp.set('frame', frameColor)
+      sp.set('hang', hang)
       const newUrl = `${window.location.pathname}?${sp.toString()}${window.location.hash}`
       window.history.replaceState(null, '', newUrl)
       window.localStorage.setItem(LS_KEY, JSON.stringify({
@@ -153,11 +185,12 @@ export function PhotoStage({
         orientation,
         wall,
         frame: frameColor,
+        hang,
       }))
     } catch {
       // ignore
     }
-  }, [mediaSlug, sizeSlug, orientation, wall, frameColor])
+  }, [mediaSlug, sizeSlug, orientation, wall, frameColor, hang])
 
   const sizeForLabel = sizes.find((s) => s.slug === sizeSlug)
   const sizeLabel = sizeForLabel
@@ -197,6 +230,94 @@ export function PhotoStage({
     if (!matSlug || !sizeSlug) return null
     const cell = prices.find((p) => p.mediaSlug === matSlug && p.sizeSlug === sizeSlug)
     return cell ? cell.priceFormatted : null
+  }
+
+  // ── Triptych-mode: 3 frames naast elkaar (related-current-related) ──
+  if (triptychOpen && relatedPhotos.length >= 2) {
+    const left = relatedPhotos[0]
+    const right = relatedPhotos[1]
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <p className="text-xs uppercase tracking-[0.25em] text-(--color-bronze)">
+            {labels.triptychOpen}
+            {mediaName && <span className="ml-3 text-(--color-stone) tracking-widest">· {mediaName}</span>}
+          </p>
+          <button
+            type="button"
+            onClick={() => setTriptychOpen(false)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-(--color-stone) border border-(--color-frame) rounded hover:border-(--color-stone) hover:text-(--color-ink) transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+            {labels.triptychExit}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <TriptychCell
+            title={labels.triptychLeft}
+            href={`/shop/boutique/photo/${left.slug}`}
+          >
+            <FramedPreview
+              photoUrl={left.url}
+              alt={left.alt}
+              mediaSlug={mediaSlug}
+              mediaName={mediaName}
+              sizeLabel={sizeLabel}
+              orientation={orientation}
+              naturalAspect={null}
+              labels={previewLabels}
+              wall={wall}
+              frameColor={frameColor}
+              hang={hang}
+              showActions={false}
+              fileNameBase={`${fileNameBase}-L`}
+            />
+          </TriptychCell>
+          <TriptychCell
+            title={labels.triptychCenter}
+            href={null}
+            highlighted
+          >
+            <FramedPreview
+              photoUrl={photoUrl}
+              alt={photoAlt}
+              mediaSlug={mediaSlug}
+              mediaName={mediaName}
+              sizeLabel={sizeLabel}
+              orientation={orientation}
+              naturalAspect={naturalAspect}
+              labels={previewLabels}
+              wall={wall}
+              frameColor={frameColor}
+              hang={hang}
+              showActions={false}
+              fileNameBase={`${fileNameBase}-C`}
+            />
+          </TriptychCell>
+          <TriptychCell
+            title={labels.triptychRight}
+            href={`/shop/boutique/photo/${right.slug}`}
+          >
+            <FramedPreview
+              photoUrl={right.url}
+              alt={right.alt}
+              mediaSlug={mediaSlug}
+              mediaName={mediaName}
+              sizeLabel={sizeLabel}
+              orientation={orientation}
+              naturalAspect={null}
+              labels={previewLabels}
+              wall={wall}
+              frameColor={frameColor}
+              hang={hang}
+              showActions={false}
+              fileNameBase={`${fileNameBase}-R`}
+            />
+          </TriptychCell>
+        </div>
+      </div>
+    )
   }
 
   // ── Compare-mode ──
@@ -239,6 +360,7 @@ export function PhotoStage({
               onMaterialCycle={setMediaSlug}
               wall={wall}
               frameColor={frameColor}
+              hang={hang}
               showActions={false}
               fileNameBase={`${fileNameBase}-A`}
             />
@@ -264,6 +386,7 @@ export function PhotoStage({
               onMaterialCycle={setCompareSlugB}
               wall={wall}
               frameColor={frameColor}
+              hang={hang}
               showActions={false}
               fileNameBase={`${fileNameBase}-B`}
             />
@@ -292,6 +415,8 @@ export function PhotoStage({
           onWallChange={setWall}
           frameColor={frameColor}
           fileNameBase={fileNameBase}
+          hang={hang}
+          onHangChange={setHang}
         />
         <WishlistButton
           photoId={photoId}
@@ -302,6 +427,16 @@ export function PhotoStage({
 
       <div>
         {rightHeader}
+        <RoomRecommender
+          labels={labels}
+          room={room}
+          onRoomChange={(r) => {
+            setRoom(r)
+            // Stelt automatisch het gesuggereerde materiaal in
+            const suggested = ROOM_TO_MATERIAL[r]
+            if (media.some((m) => m.slug === suggested)) setMediaSlug(suggested)
+          }}
+        />
         <PrintConfigurator
           photoId={photoId}
           photoSlug={photoSlug}
@@ -320,8 +455,11 @@ export function PhotoStage({
           onSizeSlugChange={setSizeSlug}
           onOrientationChange={setOrientation}
           onCompareClick={() => setCompareOpen(true)}
+          onTriptychClick={relatedPhotos.length >= 2 ? () => setTriptychOpen(true) : undefined}
           frameColor={frameColor}
           onFrameColorChange={setFrameColor}
+          popularMaterialSlug={popularMaterialSlug ?? undefined}
+          popularSizeSlug={popularSizeSlug ?? undefined}
         />
       </div>
     </div>
@@ -365,6 +503,89 @@ function CompareCell({
       {price && (
         <p className="text-right text-sm tabular-nums text-(--color-ink) font-medium">
           {price}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/** Triptych-cell: titel + (optioneel klikbaar) frame, midden krijgt
+ *  een gemarkeerde rand zodat de "huidige" foto opvalt. */
+function TriptychCell({
+  title,
+  href,
+  highlighted = false,
+  children,
+}: {
+  title: string
+  href: string | null
+  highlighted?: boolean
+  children: ReactNode
+}) {
+  const inner = (
+    <div className={`space-y-2 ${highlighted ? 'ring-2 ring-(--color-bronze) rounded-sm' : ''}`}>
+      <span className="block text-[10px] uppercase tracking-[0.2em] text-(--color-stone)">
+        {title}
+      </span>
+      <div className="relative">{children}</div>
+    </div>
+  )
+  if (href) {
+    return (
+      <Link href={href} className="block hover:opacity-90 transition-opacity">
+        {inner}
+      </Link>
+    )
+  }
+  return inner
+}
+
+/** Room-recommender: 4 chips ('salon' / 'chambre' / 'bureau' /
+ *  'couloir'). Klik → zet automatisch het aanbevolen materiaal +
+ *  toont een suggestie-zin. */
+function RoomRecommender({
+  labels,
+  room,
+  onRoomChange,
+}: {
+  labels: PrintConfiguratorLabels
+  room: RoomKey | null
+  onRoomChange: (r: RoomKey) => void
+}) {
+  const items: ReadonlyArray<{ key: RoomKey; lbl: string; Icon: typeof Home }> = [
+    { key: 'living',   lbl: labels.roomLiving,   Icon: Home },
+    { key: 'bedroom',  lbl: labels.roomBedroom,  Icon: Bed },
+    { key: 'office',   lbl: labels.roomOffice,   Icon: Briefcase },
+    { key: 'hallway',  lbl: labels.roomHallway,  Icon: DoorOpen },
+  ]
+  return (
+    <div className="mb-5 space-y-2">
+      <p className="text-xs uppercase tracking-widest text-stone-500">
+        {labels.roomQuestion}
+      </p>
+      <div className="grid grid-cols-4 gap-2">
+        {items.map(({ key, lbl, Icon }) => {
+          const sel = key === room
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onRoomChange(key)}
+              className={`px-2 py-2 text-xs border rounded transition-colors inline-flex flex-col items-center gap-1 ${
+                sel ? 'border-(--color-bronze) bg-(--color-bronze)/10 text-(--color-ink)' : 'border-stone-300 text-stone-600 hover:border-stone-500'
+              }`}
+              aria-pressed={sel}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="truncate">{lbl}</span>
+            </button>
+          )
+        })}
+      </div>
+      {room && (
+        <p className="text-[11px] text-(--color-bronze) inline-flex items-center gap-1.5">
+          <Sparkles className="w-3 h-3" />
+          {labels.roomSuggest}: <strong className="font-medium">{ROOM_TO_MATERIAL[room]}</strong>
         </p>
       )}
     </div>

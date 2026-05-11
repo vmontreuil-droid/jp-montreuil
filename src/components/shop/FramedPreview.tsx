@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Maximize2, X, AlertTriangle, User, Sun, Square, Moon, Sofa,
-  Download, Share2, Check,
+  Download, Share2, Check, ArrowUp, ArrowDown, Minus,
 } from 'lucide-react'
 
 /**
@@ -73,6 +73,7 @@ export type FramedPreviewLabels = {
 
 export type WallTheme = 'beige' | 'white' | 'dark' | 'room'
 export type FrameColor = 'oak' | 'black' | 'white'
+export type HangPosition = 'high' | 'mid' | 'low'
 
 const WALL_THEMES: Record<WallTheme, { background: string; floor: string; lightSpot: string; ink: string }> = {
   beige: {
@@ -117,6 +118,8 @@ export function FramedPreview({
   frameColor = 'oak',
   fileNameBase,
   showActions = true,
+  hang = 'mid',
+  onHangChange,
 }: {
   photoUrl: string
   alt: string
@@ -148,6 +151,9 @@ export function FramedPreview({
   /** Toont save/share/wall-toggle bovenop de stage. Zet uit voor
    *  compare-mode cellen waar je de actie-knoppen niet wil dupliceren. */
   showActions?: boolean
+  /** Hang-positie binnen de stage (high/mid/low). Default 'mid'. */
+  hang?: HangPosition
+  onHangChange?: (h: HangPosition) => void
 }) {
   const dims = parseDimensions(sizeLabel)
   const aspect = dims ? dims.w / dims.h : 1
@@ -313,12 +319,15 @@ export function FramedPreview({
   const tiltX = 0.5 + (hovered ? 0.5 : 0) + (reducedMotion ? 0 : parallax.y * 4)
   const lift = hovered ? 12 : 0
   const wallTheme = WALL_THEMES[wall]
+  // Hang-positie: high duwt frame omhoog, low naar beneden. Centerpoint
+  // is op -52% (default). High = -78%, Low = -22% (in vh-relatief).
+  const hangShift = hang === 'high' ? -26 : hang === 'low' ? 30 : 0
 
   return (
     <>
       <div
         ref={stageRef}
-        className="relative w-full overflow-hidden rounded-sm"
+        className="fp-stage relative w-full overflow-hidden rounded-sm"
         style={{
           height: stageSize.h,
           background: wallTheme.background,
@@ -354,7 +363,7 @@ export function FramedPreview({
           style={{
             width: frameW,
             height: frameH,
-            transform: `translate(-50%, -52%) scale(${mounted ? 1 : 0.94}) rotateY(${tiltY}deg) rotateX(${tiltX}deg) translateZ(${lift}px)`,
+            transform: `translate(-50%, calc(-52% + ${hangShift}px)) scale(${mounted ? 1 : 0.94}) rotateY(${tiltY}deg) rotateX(${tiltX}deg) translateZ(${lift}px)`,
             transformStyle: 'preserve-3d',
             filter: `drop-shadow(${shadowOffsetX}px ${shadowOffsetY}px ${shadowBlur}px rgba(0,0,0,${shadowOpacity}))`,
             opacity: mounted ? 1 : 0,
@@ -479,6 +488,46 @@ export function FramedPreview({
                 })}
               </div>
             )}
+            {/* Hang-positie (alleen als parent een setter geeft) */}
+            {onHangChange && (
+              <div
+                className="inline-flex gap-1 backdrop-blur-sm rounded p-0.5"
+                style={{
+                  background: wall === 'dark' ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.70)',
+                }}
+                role="radiogroup"
+                aria-label={labels.share /* fallback aria; wordt door title overschreven */}
+              >
+                {(
+                  [
+                    { key: 'high', Icon: ArrowUp },
+                    { key: 'mid', Icon: Minus },
+                    { key: 'low', Icon: ArrowDown },
+                  ] as const
+                ).map(({ key, Icon }) => {
+                  const sel = key === hang
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => onHangChange(key)}
+                      className={`p-1.5 rounded transition-colors ${
+                        sel
+                          ? 'bg-stone-900 text-white'
+                          : wall === 'dark'
+                            ? 'text-stone-200 hover:bg-white/10'
+                            : 'text-stone-600 hover:bg-stone-200'
+                      }`}
+                      aria-label={`Hang: ${key}`}
+                      aria-pressed={sel}
+                      title={key === 'high' ? 'Haut' : key === 'low' ? 'Bas' : 'Centre'}
+                    >
+                      <Icon className="w-3 h-3" />
+                    </button>
+                  )
+                })}
+              </div>
+            )}
             {/* Save + Share */}
             <div
               className="inline-flex gap-1 backdrop-blur-sm rounded p-0.5"
@@ -532,11 +581,27 @@ export function FramedPreview({
           </div>
         )}
 
-        {/* Shimmer keyframes */}
+        {/* Shimmer + texture entry-keyframes. Reduced-motion override
+            zet alle keyframe-animaties uit zonder extra JS. */}
         <style>{`
           @keyframes fp-shimmer {
             0%   { background-position: 200% 0; }
             100% { background-position: -200% 0; }
+          }
+          @keyframes fp-tex-fade-in {
+            0%   { opacity: 0; }
+            100% { opacity: 0.7; }
+          }
+          @keyframes fp-glare-slide {
+            0%   { opacity: 0; transform: translateX(-30%); }
+            60%  { opacity: 1; }
+            100% { opacity: 1; transform: translateX(0); }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .fp-stage * {
+              animation-duration: 0ms !important;
+              animation-delay: 0ms !important;
+            }
           }
         `}</style>
       </div>
@@ -695,11 +760,14 @@ function CanvasFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
       />
       <div
         aria-hidden
-        className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-70"
+        className="absolute inset-0 pointer-events-none mix-blend-overlay"
         style={{
           backgroundImage: `url("${TEX_CANVAS}")`,
           backgroundSize: '60px 60px',
           backgroundRepeat: 'repeat',
+          // Fade-in na photo-load: opacity 0 → 0.7 in 800ms met 250ms delay
+          animation: 'fp-tex-fade-in 800ms ease-out 250ms forwards',
+          opacity: 0,
         }}
       />
     </div>
@@ -817,6 +885,10 @@ function PlexiFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string; 
           backgroundImage: `url("${TEX_PLEXI}")`,
           backgroundSize: '100% 100%',
           backgroundRepeat: 'no-repeat',
+          // Glare schuift in vanaf links na de photo-load
+          animation: 'fp-glare-slide 900ms cubic-bezier(0.22, 1, 0.36, 1) 200ms forwards',
+          transform: 'translateX(-30%)',
+          opacity: 0,
         }}
       />
       <div

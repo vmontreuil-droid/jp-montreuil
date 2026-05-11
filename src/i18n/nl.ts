@@ -483,6 +483,24 @@ const dict: Dictionary = {
       previewShareCopied: 'Link gekopieerd',
       // Popular badge
       popular: 'Populair',
+      // Hang-positie
+      hangPosition: 'Hoogte',
+      hangHigh: 'Hoog',
+      hangMid: 'Midden',
+      hangLow: 'Laag',
+      // Room-aanbevelingen
+      roomQuestion: 'Voor welke ruimte?',
+      roomLiving: 'Salon',
+      roomBedroom: 'Slaapkamer',
+      roomOffice: 'Bureau',
+      roomHallway: 'Inkomhal',
+      roomSuggest: 'Aanbevolen voor',
+      // Triptych / wall-arrangement
+      triptychOpen: 'Muurcompositie',
+      triptychExit: 'Compositie sluiten',
+      triptychCenter: 'In het midden',
+      triptychLeft: 'Links',
+      triptychRight: 'Rechts',
     },
     panier: {
       title: 'Mijn winkelmandje',

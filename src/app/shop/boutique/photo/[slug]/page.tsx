@@ -7,6 +7,7 @@ import {
   listActiveMedia,
   listActiveSizes,
   listAvailablePrices,
+  getPopularPrintCombo,
   formatEur,
 } from '@/lib/shop/print-shop'
 import { listApprovedReviewsForPhoto, aggregateReviews } from '@/lib/shop/reviews'
@@ -36,7 +37,7 @@ export default async function PhotoConfiguratorPage({
   if (!photoRaw) notFound()
   const photo = photoRaw as Photo
 
-  const [media, sizes, pricesRaw, reviews, relatedRaw] = await Promise.all([
+  const [media, sizes, pricesRaw, reviews, relatedRaw, popular] = await Promise.all([
     listActiveMedia(),
     listActiveSizes(),
     listAvailablePrices(),
@@ -55,6 +56,8 @@ export default async function PhotoConfiguratorPage({
       const others = list.filter((p) => !sameCat.includes(p))
       return [...sameCat, ...others].slice(0, 4)
     })(),
+    // Popular-combo uit echte order_items van laatste 30 dagen
+    getPopularPrintCombo(30).catch(() => ({ materialSlug: null, sizeSlug: null, totalSamples: 0 })),
   ])
 
   const aggregate = aggregateReviews(reviews)
@@ -138,6 +141,14 @@ export default async function PhotoConfiguratorPage({
           sizes={sizeProps}
           prices={prices}
           labels={t.configurator}
+          popularMaterialSlug={popular.materialSlug}
+          popularSizeSlug={popular.sizeSlug}
+          relatedPhotos={relatedRaw.slice(0, 2).map((r) => ({
+            id: r.id,
+            slug: r.slug,
+            url: shopPhotoUrl(r.storage_path, r.bucket),
+            alt: r.alt_text ?? r.title ?? r.slug,
+          }))}
           rightHeader={
             <>
               <p className="text-xs text-(--color-bronze) tracking-[0.3em] uppercase mb-2 inline-flex items-center gap-2">
