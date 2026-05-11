@@ -65,7 +65,7 @@ export default async function ShopAdminPage() {
   // Top photos — meest bekeken in de laatste 30 dagen, op basis van
   // shop_photo_view events. Stilte als analytics nog leeg is.
   let topPhotos: Array<{
-    id: string; slug: string; title: string | null; storage_path: string; views: number
+    id: string; slug: string; title: string | null; storage_path: string; bucket: string; views: number
   }> = []
   try {
     const admin = createAdminClient()
@@ -89,8 +89,8 @@ export default async function ShopAdminPage() {
     if (topIds.length) {
       const shopSb = createShopAdminClient()
       const { data: photos } = await shopSb
-        .from('photos').select('id, slug, title, storage_path').in('id', topIds)
-      const byId = new Map((photos ?? []).map((p: { id: string; slug: string; title: string | null; storage_path: string }) => [p.id, p]))
+        .from('photos').select('id, slug, title, storage_path, bucket').in('id', topIds)
+      const byId = new Map((photos ?? []).map((p: { id: string; slug: string; title: string | null; storage_path: string; bucket: string }) => [p.id, p]))
       topPhotos = topIds
         .map((id) => {
           const p = byId.get(id)
@@ -149,7 +149,7 @@ export default async function ShopAdminPage() {
                   <div className="aspect-square bg-(--color-canvas) overflow-hidden relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={shopPhotoUrl(p.storage_path)}
+                      src={shopPhotoUrl(p.storage_path, p.bucket)}
                       alt={p.title ?? p.slug}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                       loading="lazy"

@@ -159,6 +159,14 @@ export type PrintConfiguratorLabels = {
   triptychCenter: string
   triptychLeft: string
   triptychRight: string
+  compositionTitle: string
+  compositionLead: string
+  compositionPickPhoto: string
+  compositionEmptySlot: string
+  compositionAddAll: string
+  compositionAdded: string
+  compositionPickerTitle: string
+  compositionPickerSearch: string
 }
 
 const DEFAULT_LABELS: PrintConfiguratorLabels = {
@@ -221,6 +229,14 @@ const DEFAULT_LABELS: PrintConfiguratorLabels = {
   triptychCenter: 'Au centre',
   triptychLeft: 'À gauche',
   triptychRight: 'À droite',
+  compositionTitle: 'Composez votre mur',
+  compositionLead: 'Choisissez 3 œuvres et un matériau commun.',
+  compositionPickPhoto: 'Choisissez une œuvre',
+  compositionEmptySlot: 'Vide — cliquez pour choisir',
+  compositionAddAll: 'Tout ajouter au panier',
+  compositionAdded: 'Ajouté au panier',
+  compositionPickerTitle: 'Sélectionnez une œuvre',
+  compositionPickerSearch: 'Rechercher…',
 }
 
 /** Swap "30×45 cm" → "45×30 cm" voor landscape; "S — 30×45 cm" → "S — 45×30 cm". */

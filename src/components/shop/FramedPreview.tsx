@@ -271,24 +271,42 @@ export function FramedPreview({
 
   // AR: open USDZ (iOS) of GLB (Android scene-viewer). Bestanden moeten
   // door JP worden geüpload naar /public/shop/ar/ — formaat is
-  // {material}-{size}.usdz / .glb. Wanneer geen bestand bestaat geeft
-  // de browser een 404 die de gebruiker als "AR niet beschikbaar"
-  // ervaart — we kunnen later een check toevoegen via HEAD-request.
+  // {material}-{size}.usdz / .glb. We doen een HEAD-request voor de
+  // huidige combinatie en verbergen de knop als het bestand ontbreekt
+  // (graceful degradation i.p.v. een 404 in het AR-overlay).
+  const arSizeKey = sizeLabel
+    ? sizeLabel
+        .toLowerCase()
+        .replace(/[\s—–-]+/g, '')
+        .replace(/cm$/, '')
+        .replace(/×/g, 'x')
+    : null
+  const arBase = mediaSlug && arSizeKey ? `/shop/ar/${mediaSlug}-${arSizeKey}` : null
+  const [arAvailable, setArAvailable] = useState(false)
+  useEffect(() => {
+    if (!arBase || typeof window === 'undefined') {
+      setArAvailable(false)
+      return
+    }
+    const ua = navigator.userAgent
+    const isIOS = /iPad|iPhone|iPod/.test(ua)
+    const url = `${arBase}.${isIOS ? 'usdz' : 'glb'}`
+    let cancelled = false
+    fetch(url, { method: 'HEAD' })
+      .then((r) => { if (!cancelled) setArAvailable(r.ok) })
+      .catch(() => { if (!cancelled) setArAvailable(false) })
+    return () => { cancelled = true }
+  }, [arBase])
+
   const onAR = useCallback(() => {
-    if (!mediaSlug || !sizeLabel) return
-    const sizeKey = sizeLabel
-      .toLowerCase()
-      .replace(/[\s—–-]+/g, '')
-      .replace(/cm$/, '')
-      .replace(/×/g, 'x')
-    const base = `/shop/ar/${mediaSlug}-${sizeKey}`
+    if (!arBase) return
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : ''
     const isIOS = /iPad|iPhone|iPod/.test(ua)
     if (isIOS) {
       // iOS Quick Look — anchor met rel="ar" + img/picture binnenin
       const a = document.createElement('a')
       a.setAttribute('rel', 'ar')
-      a.href = `${base}.usdz`
+      a.href = `${arBase}.usdz`
       const img = document.createElement('img')
       a.appendChild(img)
       document.body.appendChild(a)
@@ -296,10 +314,10 @@ export function FramedPreview({
       document.body.removeChild(a)
     } else {
       // Android: Scene Viewer intent
-      const sceneViewer = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(window.location.origin + base + '.glb')}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`
+      const sceneViewer = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(window.location.origin + arBase + '.glb')}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`
       window.location.href = sceneViewer
     }
-  }, [mediaSlug, sizeLabel])
+  }, [arBase])
 
   // Share huidige URL (state zit al in query-params via PhotoStage).
   const onShare = useCallback(async () => {
@@ -688,21 +706,24 @@ export function FramedPreview({
               >
                 {sharedFlash ? <Check className="w-3 h-3" /> : <Share2 className="w-3 h-3" />}
               </button>
-              {/* AR Quick Look — werkt enkel op iOS/Android wanneer JP
-                  USDZ/GLB bestanden uploadt onder /public/shop/ar/. */}
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onAR() }}
-                className={`inline-flex items-center gap-1 px-2 py-1.5 rounded transition-colors text-[10px] uppercase tracking-[0.18em] ${
-                  wall === 'dark'
-                    ? 'text-stone-200 hover:bg-white/10'
-                    : 'text-stone-600 hover:bg-stone-200'
-                }`}
-                aria-label="AR"
-                title="AR (iOS/Android)"
-              >
-                <Box className="w-3 h-3" />
-              </button>
+              {/* AR Quick Look — alleen zichtbaar als de USDZ/GLB voor
+                  de huidige material × size combo aanwezig is in
+                  /public/shop/ar/. HEAD-check gebeurt in een useEffect. */}
+              {arAvailable && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onAR() }}
+                  className={`inline-flex items-center gap-1 px-2 py-1.5 rounded transition-colors text-[10px] uppercase tracking-[0.18em] ${
+                    wall === 'dark'
+                      ? 'text-stone-200 hover:bg-white/10'
+                      : 'text-stone-600 hover:bg-stone-200'
+                  }`}
+                  aria-label="AR"
+                  title="AR (iOS/Android)"
+                >
+                  <Box className="w-3 h-3" />
+                </button>
+              )}
             </div>
             {/* Toast voor save/share feedback */}
             {(savedFlash || sharedFlash) && (
