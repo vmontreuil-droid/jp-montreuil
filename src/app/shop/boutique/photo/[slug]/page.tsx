@@ -10,8 +10,7 @@ import {
   formatEur,
 } from '@/lib/shop/print-shop'
 import { listApprovedReviewsForPhoto, aggregateReviews } from '@/lib/shop/reviews'
-import { PrintConfigurator } from '@/components/shop/PrintConfigurator'
-import { WishlistButton } from '@/components/shop/WishlistButton'
+import { PhotoStage } from '@/components/shop/PhotoStage'
 import ReviewsSection from '@/components/shop/ReviewsSection'
 import PhotoViewTracker from '@/components/shop/PhotoViewTracker'
 import { getShopLocale } from '@/lib/shop/locale'
@@ -95,41 +94,24 @@ export default async function PhotoConfiguratorPage({
         <ArrowLeft size={14} /> {t.backToBoutique}
       </Link>
 
-      <div className="grid md:grid-cols-2 gap-10">
-        {/* Foto met wishlist-knop */}
-        <div className="aspect-square bg-(--color-frame)/40 border border-(--color-frame) overflow-hidden relative">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={photoUrl(photo)}
-            alt={photoAlt(photo)}
-            className="w-full h-full object-cover"
-          />
-          <WishlistButton
-            photoId={photo.id}
-            className="absolute top-3 right-3 z-10"
-            size={18}
-          />
-        </div>
-
-        {/* Configurator */}
-        <div>
-          <p className="text-xs text-(--color-bronze) tracking-[0.3em] uppercase mb-2 inline-flex items-center gap-2">
-            <Sparkles className="w-3 h-3" />
-            {t.detailEyebrow}
-          </p>
-          <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl text-(--color-ink) mb-3">
-            {photo.title ?? photo.slug}
-          </h1>
-          {(photo.species || photo.taken_at_location) && (
-            <p className="text-xs text-(--color-stone) mb-3">
-              {[photo.species, photo.taken_at_location].filter(Boolean).join(' · ')}
+      {media.length === 0 || sizes.length === 0 || prices.length === 0 ? (
+        <div className="grid md:grid-cols-2 gap-10">
+          <div className="aspect-square bg-(--color-frame)/40 border border-(--color-frame) overflow-hidden relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photoUrl(photo)}
+              alt={photoAlt(photo)}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <p className="text-xs text-(--color-bronze) tracking-[0.3em] uppercase mb-2 inline-flex items-center gap-2">
+              <Sparkles className="w-3 h-3" />
+              {t.detailEyebrow}
             </p>
-          )}
-          {photo.description && (
-            <p className="text-sm text-(--color-charcoal) mb-6 leading-relaxed">{photo.description}</p>
-          )}
-
-          {media.length === 0 || sizes.length === 0 || prices.length === 0 ? (
+            <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl text-(--color-ink) mb-3">
+              {photo.title ?? photo.slug}
+            </h1>
             <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded p-4 text-sm">
               {t.configurator.configMissing}{' '}
               <Link href="/admin/boutique/boutique" className="underline">
@@ -137,22 +119,43 @@ export default async function PhotoConfiguratorPage({
               </Link>
               .
             </div>
-          ) : (
-            <PrintConfigurator
-              photoId={photo.id}
-              photoSlug={photo.slug}
-              photoTitle={photo.title ?? photo.slug}
-              photoStoragePath={photo.storage_path}
-              photoBucket={photo.bucket}
-              defaultOrientation={photo.orientation ?? 'portrait'}
-              media={mediaProps}
-              sizes={sizeProps}
-              prices={prices}
-              labels={t.configurator}
-            />
-          )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <PhotoStage
+          photoId={photo.id}
+          photoSlug={photo.slug}
+          photoTitle={photo.title ?? photo.slug}
+          photoUrl={photoUrl(photo)}
+          photoAlt={photoAlt(photo)}
+          photoStoragePath={photo.storage_path}
+          photoBucket={photo.bucket}
+          defaultOrientation={photo.orientation ?? 'portrait'}
+          media={mediaProps}
+          sizes={sizeProps}
+          prices={prices}
+          labels={t.configurator}
+          rightHeader={
+            <>
+              <p className="text-xs text-(--color-bronze) tracking-[0.3em] uppercase mb-2 inline-flex items-center gap-2">
+                <Sparkles className="w-3 h-3" />
+                {t.detailEyebrow}
+              </p>
+              <h1 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl text-(--color-ink) mb-3">
+                {photo.title ?? photo.slug}
+              </h1>
+              {(photo.species || photo.taken_at_location) && (
+                <p className="text-xs text-(--color-stone) mb-3">
+                  {[photo.species, photo.taken_at_location].filter(Boolean).join(' · ')}
+                </p>
+              )}
+              {photo.description && (
+                <p className="text-sm text-(--color-charcoal) mb-6 leading-relaxed">{photo.description}</p>
+              )}
+            </>
+          }
+        />
+      )}
 
       {/* Reviews */}
       <ReviewsSection photoId={photo.id} reviews={reviews} aggregate={aggregate} />

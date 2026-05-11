@@ -54,7 +54,7 @@ const DEFAULT_LABELS: PrintConfiguratorLabels = {
 }
 
 /** Swap "30×45 cm" → "45×30 cm" voor landscape; "S — 30×45 cm" → "S — 45×30 cm". */
-function flipSizeLabel(label: string): string {
+export function flipSizeLabel(label: string): string {
   return label.replace(/(\d+)\s*[×x]\s*(\d+)/, (_, a: string, b: string) => `${b}×${a}`)
 }
 
@@ -69,6 +69,16 @@ export function PrintConfigurator({
   sizes,
   prices,
   labels = DEFAULT_LABELS,
+  // Controlled mode (optioneel) — wanneer een parent als PhotoStage de
+  // selectie ook nodig heeft (bv. voor in-kader preview), kan die de
+  // state hier injecteren. Als deze props ontbreken valt de component
+  // terug op interne state (backwards-compat).
+  controlledMediaSlug,
+  controlledSizeSlug,
+  controlledOrientation,
+  onMediaSlugChange,
+  onSizeSlugChange,
+  onOrientationChange,
 }: {
   photoId: string
   photoSlug: string
@@ -80,15 +90,36 @@ export function PrintConfigurator({
   sizes: Size[]
   prices: PriceCell[]
   labels?: PrintConfiguratorLabels
+  controlledMediaSlug?: string | null
+  controlledSizeSlug?: string | null
+  controlledOrientation?: Orientation
+  onMediaSlugChange?: (slug: string) => void
+  onSizeSlugChange?: (slug: string) => void
+  onOrientationChange?: (o: Orientation) => void
 }) {
   const { add } = useCart()
 
   const firstAvail = prices.find((p) => p.isAvailable)
-  const [mediaSlug, setMediaSlug] = useState<string | null>(firstAvail?.mediaSlug ?? null)
-  const [sizeSlug, setSizeSlug] = useState<string | null>(firstAvail?.sizeSlug ?? null)
-  const [orientation, setOrientation] = useState<Orientation>(
+  const [internalMediaSlug, setInternalMediaSlug] = useState<string | null>(firstAvail?.mediaSlug ?? null)
+  const [internalSizeSlug, setInternalSizeSlug] = useState<string | null>(firstAvail?.sizeSlug ?? null)
+  const [internalOrientation, setInternalOrientation] = useState<Orientation>(
     defaultOrientation === 'landscape' ? 'landscape' : 'portrait',
   )
+  const mediaSlug = controlledMediaSlug !== undefined ? controlledMediaSlug : internalMediaSlug
+  const sizeSlug = controlledSizeSlug !== undefined ? controlledSizeSlug : internalSizeSlug
+  const orientation = controlledOrientation ?? internalOrientation
+  const setMediaSlug = (s: string) => {
+    if (onMediaSlugChange) onMediaSlugChange(s)
+    if (controlledMediaSlug === undefined) setInternalMediaSlug(s)
+  }
+  const setSizeSlug = (s: string) => {
+    if (onSizeSlugChange) onSizeSlugChange(s)
+    if (controlledSizeSlug === undefined) setInternalSizeSlug(s)
+  }
+  const setOrientation = (o: Orientation) => {
+    if (onOrientationChange) onOrientationChange(o)
+    if (controlledOrientation === undefined) setInternalOrientation(o)
+  }
   const [done, setDone] = useState(false)
 
   const cellMap = useMemo(() => {
