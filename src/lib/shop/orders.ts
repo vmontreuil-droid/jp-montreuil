@@ -99,6 +99,29 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   refunded: 'Remboursée',
 }
 
+/**
+ * Locale-aware variant. Pages die `getShopLocale()` lezen geven hier
+ * `t.boutique.commande` aan door zodat NL-klanten Nederlandse labels
+ * zien zonder dat we de oude FR-only constant hoeven aan te passen.
+ */
+export function getOrderStatusLabels(t: {
+  statusPending: string
+  statusPaid: string
+  statusShipped: string
+  statusFulfilled: string
+  statusCanceled: string
+  statusRefunded: string
+}): Record<OrderStatus, string> {
+  return {
+    pending: t.statusPending,
+    paid: t.statusPaid,
+    shipped: t.statusShipped,
+    fulfilled: t.statusFulfilled,
+    canceled: t.statusCanceled,
+    refunded: t.statusRefunded,
+  }
+}
+
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   pending: 'bg-amber-100 text-amber-800',
   paid: 'bg-green-100 text-green-800',

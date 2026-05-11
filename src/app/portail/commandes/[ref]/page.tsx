@@ -7,9 +7,11 @@ import {
   listMyShopOrderItems,
 } from '@/lib/shop/customer-portal'
 import {
-  ORDER_STATUS_LABELS,
+  getOrderStatusLabels,
   ORDER_STATUS_COLORS,
 } from '@/lib/shop/orders'
+import { getShopLocale } from '@/lib/shop/locale'
+import { getDictionary } from '@/i18n/dictionaries'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +27,8 @@ export default async function PortailOrderDetailPage({
   params: Promise<{ ref: string }>
 }) {
   const { ref } = await params
+  const locale = await getShopLocale()
+  const t = getDictionary(locale).boutique.commande
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -36,8 +40,10 @@ export default async function PortailOrderDetailPage({
   if (!order) notFound()
 
   const items = await listMyShopOrderItems(order.id)
+  const statusLabels = getOrderStatusLabels(t)
 
-  const fmtEur = new Intl.NumberFormat('fr-BE', {
+  const intlLoc = locale === 'nl' ? 'nl-BE' : 'fr-BE'
+  const fmtEur = new Intl.NumberFormat(intlLoc, {
     style: 'currency', currency: 'EUR', minimumFractionDigits: 2,
   })
   const formatPrice = (cents: number) => fmtEur.format(cents / 100)
@@ -52,36 +58,36 @@ export default async function PortailOrderDetailPage({
         className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-(--color-stone) hover:text-(--color-ink)"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        Mon espace
+        {t.backLink}
       </Link>
 
       <header>
-        <p className="text-xs text-(--color-stone) uppercase tracking-widest mb-1">Référence</p>
+        <p className="text-xs text-(--color-stone) uppercase tracking-widest mb-1">{t.reference}</p>
         <h1 className="text-3xl font-mono text-(--color-ink)">{order.reference}</h1>
         <p className="text-sm text-(--color-charcoal) mt-2">
-          Commandée le {new Date(order.created_at).toLocaleDateString('fr-BE', { dateStyle: 'long' })}
+          {t.orderedOn} {new Date(order.created_at).toLocaleDateString(intlLoc, { dateStyle: 'long' })}
         </p>
         <span className={`inline-block mt-3 px-2.5 py-1 text-xs ${ORDER_STATUS_COLORS[order.status]}`}>
-          {ORDER_STATUS_LABELS[order.status]}
+          {statusLabels[order.status]}
         </span>
       </header>
 
       {order.status === 'pending' && order.mollie_checkout_url && (
         <div className="bg-amber-50 border border-amber-200 rounded p-4 flex items-center justify-between gap-3 flex-wrap">
           <p className="text-sm text-amber-900">
-            Cette commande n&apos;est pas encore payée.
+            {t.pendingAlert}
           </p>
           <a
             href={order.mollie_checkout_url}
             className="inline-flex items-center gap-2 px-4 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm rounded"
           >
-            <Lock size={14} /> Payer maintenant
+            <Lock size={14} /> {t.payNow}
           </a>
         </div>
       )}
 
       <section className="bg-(--color-paper) border border-(--color-frame) p-5">
-        <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">Articles</h2>
+        <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-3">{t.articles}</h2>
         <ul className="divide-y divide-(--color-frame) text-sm">
           {items.map((it) => (
             <li key={it.id} className="py-2 flex justify-between gap-3">
@@ -97,13 +103,13 @@ export default async function PortailOrderDetailPage({
         </ul>
         <div className="border-t border-(--color-frame) mt-3 pt-3 space-y-1 text-sm">
           <div className="flex justify-between text-(--color-stone)">
-            <span className="inline-flex items-center gap-1.5"><Truck size={12} /> Frais de port</span>
+            <span className="inline-flex items-center gap-1.5"><Truck size={12} /> {t.shippingFees}</span>
             <span className="tabular-nums">
-              {order.shipping_cents > 0 ? formatPrice(order.shipping_cents) : 'gratuit'}
+              {order.shipping_cents > 0 ? formatPrice(order.shipping_cents) : t.free}
             </span>
           </div>
           <div className="flex justify-between pt-2 border-t border-(--color-frame)">
-            <span className="text-sm uppercase tracking-widest text-(--color-stone)">Total</span>
+            <span className="text-sm uppercase tracking-widest text-(--color-stone)">{t.total}</span>
             <span className="text-2xl font-semibold tabular-nums text-(--color-ink)">
               {formatPrice(order.amount_cents)}
             </span>
@@ -114,14 +120,14 @@ export default async function PortailOrderDetailPage({
       {(order.is_b2b || order.company_name || order.vat_number) && (
         <section className="bg-(--color-paper) border border-(--color-frame) p-5 text-sm">
           <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-2">
-            Facturation entreprise
+            {t.b2bSection}
           </h2>
           {order.company_name && <p className="font-medium text-(--color-ink)">{order.company_name}</p>}
           {order.vat_number && (
             <p className="text-(--color-charcoal) font-mono text-xs mt-1">
-              TVA : {order.vat_number}
+              {t.vatLabel} : {order.vat_number}
               {order.vat_validated_at && (
-                <span className="ml-2 text-emerald-700">✓ vérifié VIES</span>
+                <span className="ml-2 text-emerald-700">{t.viesVerified}</span>
               )}
             </p>
           )}
@@ -130,7 +136,7 @@ export default async function PortailOrderDetailPage({
 
       {order.shipping_address && (
         <section className="bg-(--color-paper) border border-(--color-frame) p-5 text-sm">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-2">Livraison</h2>
+          <h2 className="text-sm font-medium uppercase tracking-widest text-(--color-stone) mb-2">{t.shipping}</h2>
           <p className="font-medium text-(--color-ink)">{order.full_name}</p>
           <p className="text-(--color-charcoal)">{order.email}</p>
           <address className="not-italic text-(--color-charcoal) mt-2 leading-relaxed">
@@ -140,7 +146,7 @@ export default async function PortailOrderDetailPage({
           </address>
           {order.tracking_number && (
             <p className="mt-3 text-xs text-(--color-stone)">
-              Suivi : <span className="font-mono text-(--color-ink)">{order.tracking_number}</span>
+              {t.tracking} : <span className="font-mono text-(--color-ink)">{order.tracking_number}</span>
               {order.tracking_carrier && <> ({order.tracking_carrier})</>}
             </p>
           )}
@@ -152,7 +158,7 @@ export default async function PortailOrderDetailPage({
           href={`/portail/commandes/${order.reference}/facture`}
           className="inline-flex items-center gap-2 px-4 py-2 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-sm rounded"
         >
-          <Receipt size={14} /> Voir la facture
+          <Receipt size={14} /> {t.viewInvoice}
         </Link>
       )}
     </main>
