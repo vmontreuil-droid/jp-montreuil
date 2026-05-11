@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" preserveAspectRatio="none">
+  <!-- Plexi reflectie: meerdere overlappende lichtflitsen voor diepte -->
+  <defs>
+    <linearGradient id="mainGlare" x1="0%" y1="0%" x2="60%" y2="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="12%" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="28%" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="48%" stop-color="#ffffff" stop-opacity="0.02"/>
+      <stop offset="65%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="secondaryGlare" x1="100%" y1="100%" x2="60%" y2="60%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="20%" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="40%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="hotSpot" cx="22%" cy="18%" r="35%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="40%" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="diagBand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="38%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="42%" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="46%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="54%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#mainGlare)"/>
+  <rect width="800" height="600" fill="url(#diagBand)"/>
+  <rect width="800" height="600" fill="url(#secondaryGlare)"/>
+  <rect width="800" height="600" fill="url(#hotSpot)"/>
+</svg>

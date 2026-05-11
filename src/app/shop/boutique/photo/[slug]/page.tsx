@@ -80,6 +80,7 @@ export default async function PhotoConfiguratorPage({
     id: m.id,
     slug: m.slug,
     name: locale === 'nl' ? (m.name_nl ?? m.name_fr) : m.name_fr,
+    description: locale === 'nl' ? (m.description_nl ?? m.description_fr) : m.description_fr,
   }))
   const sizeProps = sizes.map((s) => ({ id: s.id, slug: s.slug, label: s.label }))
 

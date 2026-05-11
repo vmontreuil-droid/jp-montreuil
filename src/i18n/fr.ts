@@ -460,6 +460,10 @@ const dict = {
       previewZoom: 'Voir en grand',
       previewClose: 'Fermer',
       previewOnWall: 'Aperçu mural',
+      previewCompare: 'Comparer matériaux',
+      previewCompareExit: 'Fermer la comparaison',
+      previewCompareLeft: 'Matériau A',
+      previewCompareRight: 'Matériau B',
     },
     panier: {
       title: 'Mon panier',

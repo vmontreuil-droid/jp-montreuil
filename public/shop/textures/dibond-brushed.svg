@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Brushed metal: fine verticale streepjes met sub-pixel jitter -->
+  <defs>
+    <pattern id="brush" x="0" y="0" width="4" height="200" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="1" height="200" fill="rgba(255,255,255,0.10)"/>
+      <rect x="1" y="0" width="1" height="200" fill="rgba(0,0,0,0.04)"/>
+      <rect x="2" y="0" width="1" height="200" fill="rgba(255,255,255,0.04)"/>
+      <rect x="3" y="0" width="1" height="200" fill="rgba(0,0,0,0.06)"/>
+    </pattern>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="2" seed="7"/>
+      <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0"/>
+    </filter>
+  </defs>
+  <rect width="200" height="200" fill="url(#brush)"/>
+  <rect width="200" height="200" filter="url(#grain)"/>
+</svg>

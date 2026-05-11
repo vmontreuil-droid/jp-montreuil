@@ -26,7 +26,7 @@ function MaterialIcon({ slug, className }: { slug: string; className?: string })
  * hebben (Next 15+ Server -> Client).
  */
 
-type Medium = { id: string; slug: string; name: string }
+type Medium = { id: string; slug: string; name: string; description?: string | null }
 type Size = { id: string; slug: string; label: string }
 type PriceCell = {
   mediaSlug: string
@@ -56,6 +56,10 @@ export type PrintConfiguratorLabels = {
   previewZoom: string
   previewClose: string
   previewOnWall: string
+  previewCompare: string
+  previewCompareExit: string
+  previewCompareLeft: string
+  previewCompareRight: string
 }
 
 const DEFAULT_LABELS: PrintConfiguratorLabels = {
@@ -75,6 +79,10 @@ const DEFAULT_LABELS: PrintConfiguratorLabels = {
   previewZoom: 'Voir en grand',
   previewClose: 'Fermer',
   previewOnWall: 'Aperçu mural',
+  previewCompare: 'Comparer matériaux',
+  previewCompareExit: 'Fermer la comparaison',
+  previewCompareLeft: 'Matériau A',
+  previewCompareRight: 'Matériau B',
 }
 
 /** Swap "30×45 cm" → "45×30 cm" voor landscape; "S — 30×45 cm" → "S — 45×30 cm". */
@@ -120,6 +128,10 @@ export function PrintConfigurator({
   onMediaSlugChange?: (slug: string) => void
   onSizeSlugChange?: (slug: string) => void
   onOrientationChange?: (o: Orientation) => void
+  /** Optionele callback — wanneer aanwezig wordt een "Vergelijken"-knop
+   *  onder de materiaal-knoppen getoond. PhotoStage gebruikt dit om de
+   *  compare-mode te activeren. */
+  onCompareClick?: () => void
 }) {
   const { add } = useCart()
 
@@ -183,22 +195,47 @@ export function PrintConfigurator({
     <div className="space-y-6">
       {/* Materiaal */}
       <div>
-        <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">{labels.material}</p>
+        <div className="flex items-baseline justify-between mb-2">
+          <p className="text-xs uppercase tracking-widest text-stone-500">{labels.material}</p>
+          {onCompareClick && media.length >= 2 && (
+            <button
+              type="button"
+              onClick={onCompareClick}
+              className="text-[10px] uppercase tracking-[0.18em] text-(--color-bronze) hover:text-(--color-bronze-dark) transition-colors"
+            >
+              {labels.previewCompare}
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-2">
           {media.map((m) => {
             const sel = m.slug === mediaSlug
             return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setMediaSlug(m.slug)}
-                className={`px-3 py-2 text-sm border rounded transition-colors inline-flex items-center gap-2 ${
-                  sel ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 hover:border-stone-500'
-                }`}
-              >
-                <MaterialIcon slug={m.slug} className="w-4 h-4 shrink-0" />
-                <span className="truncate">{m.name}</span>
-              </button>
+              <div key={m.id} className="relative group">
+                <button
+                  type="button"
+                  onClick={() => setMediaSlug(m.slug)}
+                  className={`w-full px-3 py-2 text-sm border rounded transition-colors inline-flex items-center gap-2 ${
+                    sel ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 hover:border-stone-500'
+                  }`}
+                >
+                  <MaterialIcon slug={m.slug} className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{m.name}</span>
+                </button>
+                {m.description && (
+                  <div
+                    role="tooltip"
+                    className="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 z-30 w-60 max-w-[80vw] opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:translate-y-0 transition-all duration-200 bg-stone-900 text-white text-xs leading-snug rounded p-3 shadow-lg"
+                  >
+                    <span className="block font-medium mb-0.5">{m.name}</span>
+                    <span className="block text-stone-300">{m.description}</span>
+                    <span
+                      aria-hidden
+                      className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-stone-900 rotate-45"
+                    />
+                  </div>
+                )}
+              </div>
             )
           })}
         </div>

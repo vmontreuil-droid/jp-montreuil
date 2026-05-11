@@ -1,7 +1,16 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Maximize2, X, AlertTriangle } from 'lucide-react'
+import { Maximize2, X, AlertTriangle, User } from 'lucide-react'
+
+// Echte SVG-texture assets (in /public/shop/textures/) — vervangen de
+// CSS-only patterns voor canvas-vezel, plexi-glare, dibond-brushed,
+// papier-grain en houtnerf.
+const TEX_CANVAS = '/shop/textures/canvas-weave.svg'
+const TEX_PLEXI  = '/shop/textures/plexi-glare.svg'
+const TEX_DIBOND = '/shop/textures/dibond-brushed.svg'
+const TEX_PAPER  = '/shop/textures/paper-grain.svg'
+const TEX_WOOD   = '/shop/textures/wood-grain.svg'
 
 /**
  * In-kader preview voor de shop. Toont de foto binnen een mockup van het
@@ -81,8 +90,15 @@ export function FramedPreview({
   const [zoomOpen, setZoomOpen] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const [hovered, setHovered] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [stageSize, setStageSize] = useState({ w: 380, h: 460 })
   const stageRef = useRef<HTMLDivElement | null>(null)
+
+  // Mount fade-in: één tick na mount triggert de transitie naar opacity 1
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
 
   // Reset loading state wanneer foto-URL wijzigt
   useEffect(() => { setImgLoaded(false) }, [photoUrl])
@@ -192,15 +208,18 @@ export function FramedPreview({
           }}
         />
 
-        {/* Frame — gecentreerd, 3D tilt + scale-aware shadow + hover-lift */}
+        {/* Frame — gecentreerd, 3D tilt + scale-aware shadow + hover-lift +
+            mount fade-in (van opacity 0 + scale 0.94 → 1.0). */}
         <div
-          className="absolute left-1/2 top-1/2 transition-all duration-500 ease-out cursor-zoom-in"
+          className="absolute left-1/2 top-1/2 cursor-zoom-in"
           style={{
             width: frameW,
             height: frameH,
-            transform: `translate(-50%, -52%) rotateY(${hovered ? '-3deg' : '-1.5deg'}) rotateX(${hovered ? '1deg' : '0.5deg'}) translateZ(${hovered ? '12px' : '0'})`,
+            transform: `translate(-50%, -52%) scale(${mounted ? 1 : 0.94}) rotateY(${hovered ? '-3deg' : '-1.5deg'}) rotateX(${hovered ? '1deg' : '0.5deg'}) translateZ(${hovered ? '12px' : '0'})`,
             transformStyle: 'preserve-3d',
             filter: `drop-shadow(${shadowOffsetX}px ${shadowOffsetY}px ${shadowBlur}px rgba(0,0,0,${shadowOpacity}))`,
+            opacity: mounted ? 1 : 0,
+            transition: 'transform 500ms cubic-bezier(0.22, 1, 0.36, 1), opacity 500ms ease-out, filter 500ms ease-out',
           }}
           onClick={() => setZoomOpen(true)}
           role="button"
@@ -227,6 +246,20 @@ export function FramedPreview({
             />
           )}
         </div>
+
+        {/* Schaal-silhouette voor grote formaten — een gestileerd silhouet
+            (170 cm) naast het kader zodat de klant de fysieke grootte
+            voelt. Verschijnt zachtjes wanneer kader >= L (cumulatief
+            ≥120 cm) en er nog horizontale ruimte naast het kader is. */}
+        {dims && dims.w + dims.h >= 120 && stageMaxW - frameW > 50 && (
+          <ScaleSilhouette
+            stageHeight={stageSize.h}
+            frameHeightPx={frameH}
+            frameHeightCm={dims.h}
+            mounted={mounted}
+            label={`${dims.h} cm`}
+          />
+        )}
 
         {/* Caption rechtsonder met formaat + materiaal + oriëntatie */}
         {dims && (
@@ -371,13 +404,15 @@ function CanvasFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
             'inset 4px 4px 10px rgba(0,0,0,0.20), inset -4px -4px 8px rgba(0,0,0,0.14)',
         }}
       />
-      {/* Subtiele canvas-vezel-textuur (cross-hatch) */}
+      {/* Echte canvas-vezel-textuur via SVG-pattern (interwoven fibers
+          + fractalNoise grain) */}
       <div
         aria-hidden
-        className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-40"
+        className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-70"
         style={{
-          backgroundImage:
-            'repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 2px), repeating-linear-gradient(90deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px, transparent 1px, transparent 2px)',
+          backgroundImage: `url("${TEX_CANVAS}")`,
+          backgroundSize: '60px 60px',
+          backgroundRepeat: 'repeat',
         }}
       />
     </div>
@@ -396,14 +431,13 @@ function FineArtFrame({
   const margin = `${6 + weight * 5}%`
   return (
     <div
-      className="absolute inset-0 bg-white"
+      className="absolute inset-0 bg-[#1a1612]"
       style={{
-        border: '1px solid #1f1d1a',
-        // Houtnerf-hint langs de kader-rand
-        backgroundImage:
-          'linear-gradient(135deg, #2a2622 0%, #1a1815 50%, #2a2622 100%)',
-        backgroundSize: '12px 12px',
-        backgroundClip: 'padding-box',
+        border: '1px solid #0f0c0a',
+        // Echte houtnerf via SVG-texture
+        backgroundImage: `url("${TEX_WOOD}")`,
+        backgroundSize: 'auto 100%',
+        backgroundRepeat: 'repeat-x',
       }}
     >
       {/* Wit passe-partout met beveled inner edge */}
@@ -423,14 +457,14 @@ function FineArtFrame({
             className="absolute inset-0 pointer-events-none"
             style={{ boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.22)' }}
           />
-          {/* Subtiel papier-grain */}
+          {/* Echte papier-grain via SVG-texture (warm noise overlay) */}
           <div
             aria-hidden
-            className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-[0.04]"
+            className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-50"
             style={{
-              backgroundImage:
-                'radial-gradient(circle at 30% 20%, rgba(0,0,0,0.5) 0px, transparent 1px), radial-gradient(circle at 70% 60%, rgba(0,0,0,0.5) 0px, transparent 1px)',
-              backgroundSize: '3px 3px, 5px 5px',
+              backgroundImage: `url("${TEX_PAPER}")`,
+              backgroundSize: '120px 120px',
+              backgroundRepeat: 'repeat',
             }}
           />
         </div>
@@ -465,13 +499,14 @@ function DibondFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string;
           }}
         />
       </div>
-      {/* Brushed-metal lijntjes (verticaal) — heel subtiel */}
+      {/* Echte brushed-metal textuur via SVG (verticale streepjes + grain) */}
       <div
         aria-hidden
-        className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-30"
+        className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-50"
         style={{
-          backgroundImage:
-            'repeating-linear-gradient(0deg, rgba(255,255,255,0.10) 0px, rgba(255,255,255,0.10) 1px, transparent 1px, transparent 2px)',
+          backgroundImage: `url("${TEX_DIBOND}")`,
+          backgroundSize: '100px 100%',
+          backgroundRepeat: 'repeat',
         }}
       />
     </div>
@@ -486,30 +521,75 @@ function PlexiFrame({ photoUrl, alt, onLoad }: { photoUrl: string; alt: string; 
   return (
     <div className="absolute inset-0">
       <CoverImg photoUrl={photoUrl} alt={alt} onLoad={onLoad} />
-      {/* Glossy reflectie — diagonale lichtflits in linkerbovenhoek */}
+      {/* Echte plexi-glare via SVG (multi-stop linear + radial hot-spot
+          + diagonale lichtband — schaalt mee met kader-aspect) */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
         style={{
-          background:
-            'linear-gradient(125deg, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.14) 18%, rgba(255,255,255,0.04) 32%, rgba(255,255,255,0) 48%)',
+          backgroundImage: `url("${TEX_PLEXI}")`,
+          backgroundSize: '100% 100%',
+          backgroundRepeat: 'no-repeat',
         }}
       />
-      {/* Tweede subtiele highlight rechts onder voor "diepte" */}
-      <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'linear-gradient(305deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 20%)',
-        }}
-      />
-      {/* Dunne plexi-randhint (witte 1px-glow) */}
+      {/* Dunne plexi-randhint (witte 1px-glow) + zachte zwarte onder-rand
+          voor 3D-effect */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
         style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.55), inset 0 -1px 0 rgba(0,0,0,0.20)' }}
       />
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Schaal-silhouette: gestileerd silhouet (170 cm) naast het kader om de
+// fysieke grootte voelbaar te maken bij L/XL/XXL formaten.
+// ────────────────────────────────────────────────────────────────────────
+
+function ScaleSilhouette({
+  stageHeight,
+  frameHeightPx,
+  frameHeightCm,
+  mounted,
+  label,
+}: {
+  stageHeight: number
+  frameHeightPx: number
+  frameHeightCm: number
+  mounted: boolean
+  label: string
+}) {
+  // Een persoon = 170 cm. Kader-pixels-per-cm = frameHeightPx / frameHeightCm.
+  // Silhouette krijgt dezelfde schaal.
+  const pxPerCm = frameHeightPx / Math.max(1, frameHeightCm)
+  const silhouettePx = Math.round(170 * pxPerCm)
+  // Beperk tot stage-hoogte (laat 30px ruimte voor vloer-hint + label)
+  const maxPx = stageHeight - 50
+  const finalPx = Math.min(silhouettePx, maxPx)
+  // Wat staat-zone met de "vloer" op stage gelijk
+  return (
+    <div
+      aria-hidden
+      className="absolute"
+      style={{
+        right: 12,
+        bottom: 22, // boven vloer-hint
+        height: finalPx,
+        width: 32,
+        opacity: mounted ? 0.55 : 0,
+        transition: 'opacity 700ms ease-out 200ms',
+      }}
+    >
+      <User
+        className="text-stone-700"
+        style={{ width: '100%', height: 'auto' }}
+        strokeWidth={1.4}
+      />
+      <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.2em] text-stone-600 whitespace-nowrap">
+        {label}
+      </span>
     </div>
   )
 }

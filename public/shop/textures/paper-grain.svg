@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Papier baryté grain: fine ruis met warme onder-toon -->
+  <defs>
+    <filter id="paper">
+      <feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="3" seed="12"/>
+      <feColorMatrix values="0 0 0 0 0.10  0 0 0 0 0.08  0 0 0 0 0.06  0 0 0 0.07 0"/>
+    </filter>
+  </defs>
+  <rect width="200" height="200" filter="url(#paper)"/>
+</svg>

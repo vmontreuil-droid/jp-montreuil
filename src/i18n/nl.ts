@@ -462,6 +462,10 @@ const dict: Dictionary = {
       previewZoom: 'Vergroot bekijken',
       previewClose: 'Sluiten',
       previewOnWall: 'Voorvertoning op muur',
+      previewCompare: 'Materialen vergelijken',
+      previewCompareExit: 'Vergelijking sluiten',
+      previewCompareLeft: 'Materiaal A',
+      previewCompareRight: 'Materiaal B',
     },
     panier: {
       title: 'Mijn winkelmandje',
