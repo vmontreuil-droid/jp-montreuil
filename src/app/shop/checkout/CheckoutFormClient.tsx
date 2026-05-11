@@ -14,10 +14,14 @@ import {
   previewGiftCard, captureAbandonedCartAction,
 } from './actions'
 
-const fmt = new Intl.NumberFormat('fr-BE', {
+const fmtFR = new Intl.NumberFormat('fr-BE', {
   style: 'currency', currency: 'EUR', minimumFractionDigits: 2,
 })
-const formatPrice = (cents: number) => fmt.format(cents / 100)
+const fmtNL = new Intl.NumberFormat('nl-BE', {
+  style: 'currency', currency: 'EUR', minimumFractionDigits: 2,
+})
+const makeFormatPrice = (locale: 'fr' | 'nl') => (cents: number) =>
+  (locale === 'nl' ? fmtNL : fmtFR).format(cents / 100)
 
 export type CheckoutPrefill = {
   email: string
@@ -39,13 +43,120 @@ type ViesState =
   | { status: 'invalid'; reason: string }
   | { status: 'unavailable' }
 
+type CheckoutLabels = {
+  title: string
+  lead: string
+  loginCta: string
+  loginBtn: string
+  loggedAs: string
+  coords: string
+  fullName: string
+  email: string
+  phone: string
+  shipping: string
+  street: string
+  postal: string
+  city: string
+  country: string
+  notes: string
+  b2bToggle: string
+  b2bHint: string
+  company: string
+  vat: string
+  summary: string
+  delivery: string
+  free: string
+  total: string
+  promoPlaceholder: string
+  giftPlaceholder: string
+  remove: string
+  submit: string
+  submitting: string
+  payNow: string
+  payByEmail: string
+  thanks: string
+  reference: string
+  goToOrder: string
+  paymentSecure: string
+  countryFr: Record<string, string>
+  freeShippingHint: string
+  viesChecking: string
+  viesValid: string
+  viesInvalid: string
+  viesUnavailable: string
+  subtotal: string
+  emptyCart: string
+  backToBoutique: string
+  removeCode: string
+  removeCard: string
+  codePrefix: string
+  giftCard: string
+  genericError: string
+}
+
+const DEFAULT_LABELS: CheckoutLabels = {
+  title: 'Commande',
+  lead: 'Renseignez vos coordonnées de livraison.',
+  loginCta: 'Déjà client ? Connectez-vous.',
+  loginBtn: 'Se connecter',
+  loggedAs: 'Connecté en tant que',
+  coords: 'Coordonnées',
+  fullName: 'Nom complet',
+  email: 'Email',
+  phone: 'Téléphone',
+  shipping: 'Adresse de livraison',
+  street: 'Rue + numéro',
+  postal: 'Code postal',
+  city: 'Ville',
+  country: 'Pays',
+  notes: 'Remarques (optionnel)',
+  b2bToggle: 'Je commande en tant que professionnel (B2B)',
+  b2bHint: 'Une facture avec votre n° TVA sera générée.',
+  company: "Nom de l'entreprise",
+  vat: 'N° TVA',
+  summary: 'Récapitulatif',
+  delivery: 'Livraison',
+  free: 'gratuit',
+  total: 'Total',
+  promoPlaceholder: 'Code promo',
+  giftPlaceholder: 'Carte-cadeau',
+  remove: 'Retirer',
+  submit: 'Confirmer & payer',
+  submitting: 'Création…',
+  payNow: 'Procéder au paiement (Mollie)',
+  payByEmail: 'Vous recevrez un email avec les instructions de paiement.',
+  thanks: 'Merci pour votre commande !',
+  reference: 'Référence',
+  goToOrder: 'Voir ma commande dans mon espace',
+  paymentSecure: 'Paiement sécurisé via Mollie · Bancontact, carte, Apple Pay, etc.',
+  countryFr: { BE: 'Belgique', FR: 'France', NL: 'Pays-Bas', LU: 'Luxembourg', DE: 'Allemagne', OTHER: 'Autre / International' },
+  freeShippingHint: 'Encore {{amount}} pour la livraison gratuite.',
+  viesChecking: 'Vérification VIES…',
+  viesValid: 'Numéro valide',
+  viesInvalid: 'Numéro non valide',
+  viesUnavailable: 'VIES indisponible — vérifié par le serveur',
+  subtotal: 'Sous-total',
+  emptyCart: 'Votre panier est vide.',
+  backToBoutique: 'Retour à la boutique',
+  removeCode: 'Retirer le code',
+  removeCard: 'Retirer la carte',
+  codePrefix: 'Code',
+  giftCard: 'Carte-cadeau',
+  genericError: 'Erreur',
+}
+
 export function CheckoutFormClient({
   prefill,
   loggedIn,
+  labels = DEFAULT_LABELS,
+  locale = 'fr',
 }: {
   prefill: CheckoutPrefill | null
   loggedIn: boolean
+  labels?: CheckoutLabels
+  locale?: 'fr' | 'nl'
 }) {
+  const formatPrice = makeFormatPrice(locale)
   const { items, hydrated, clear } = useCart()
   const [isPending, startTransition] = useTransition()
   const [result, setResult] = useState<
@@ -135,7 +246,7 @@ export function CheckoutFormClient({
       void captureAbandonedCartAction({
         email: email.trim(),
         fullName: fullName.trim() || undefined,
-        locale: 'fr',
+        locale,
         items: items.map((i) => ({
           title: i.variantLabel ? `${i.title} — ${i.variantLabel}` : i.title,
           unit_price_cents: i.unitPriceCents,
@@ -240,9 +351,9 @@ export function CheckoutFormClient({
   if (items.length === 0 && !result) {
     return (
       <div className="py-16 text-center space-y-4">
-        <p className="text-stone-500">Votre panier est vide.</p>
+        <p className="text-stone-500">{labels.emptyCart}</p>
         <Link href="/shop/boutique" className="inline-block px-5 py-2.5 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded">
-          Retour à la boutique
+          {labels.backToBoutique}
         </Link>
       </div>
     )
@@ -251,19 +362,19 @@ export function CheckoutFormClient({
   if (result?.ok) {
     return (
       <div className="bg-green-50 border border-green-200 rounded p-8 text-center space-y-4">
-        <p className="text-xs text-stone-500 uppercase tracking-widest">Référence</p>
+        <p className="text-xs text-stone-500 uppercase tracking-widest">{labels.reference}</p>
         <p className="font-mono text-2xl">{result.reference}</p>
-        <p className="text-stone-700">Merci pour votre commande !</p>
+        <p className="text-stone-700">{labels.thanks}</p>
         {result.checkoutUrl ? (
           <a
             href={result.checkoutUrl}
             className="inline-flex items-center gap-2 px-6 py-3 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded transition-colors"
           >
-            <Lock size={16} /> Procéder au paiement (Mollie)
+            <Lock size={16} /> {labels.payNow}
           </a>
         ) : (
           <p className="text-sm text-stone-500 italic">
-            Vous recevrez un email avec les instructions de paiement.
+            {labels.payByEmail}
           </p>
         )}
         {loggedIn && (
@@ -272,7 +383,7 @@ export function CheckoutFormClient({
               href={`/portail/commandes/${result.reference}`}
               className="text-stone-700 underline hover:text-stone-900"
             >
-              Voir ma commande dans mon espace
+              {labels.goToOrder}
             </Link>
           </p>
         )}
@@ -304,7 +415,7 @@ export function CheckoutFormClient({
         print_size_slug: i.sizeSlug ?? null,
         print_size_label: i.variantLabel ?? null,
       })),
-      locale: 'fr',
+      locale,
       is_b2b: isB2B,
       company_name: isB2B ? company.trim() : null,
       vat_number: isB2B ? vat.trim() : null,
@@ -320,7 +431,7 @@ export function CheckoutFormClient({
           setTimeout(() => { window.location.href = res.checkoutUrl! }, 800)
         }
       } catch (err) {
-        setResult({ ok: false, msg: err instanceof Error ? err.message : 'Erreur' })
+        setResult({ ok: false, msg: err instanceof Error ? err.message : labels.genericError })
       }
     })
   }
@@ -333,37 +444,37 @@ export function CheckoutFormClient({
   return (
     <form onSubmit={onSubmit} className="grid lg:grid-cols-[1fr_320px] gap-8">
       <div className="bg-white border border-stone-200 rounded p-6 space-y-4">
-        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500">Coordonnées</h2>
-        <Field label="Nom complet *" name="full_name" value={fullName} onChange={setFullName} required autoComplete="name" />
-        <Field label="Email *" name="email" type="email" value={email} onChange={setEmail} required autoComplete="email" />
-        <Field label="Téléphone *" name="phone" type="tel" value={phone} onChange={setPhone} required autoComplete="tel" />
+        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500">{labels.coords}</h2>
+        <Field label={`${labels.fullName} *`} name="full_name" value={fullName} onChange={setFullName} required autoComplete="name" />
+        <Field label={`${labels.email} *`} name="email" type="email" value={email} onChange={setEmail} required autoComplete="email" />
+        <Field label={`${labels.phone} *`} name="phone" type="tel" value={phone} onChange={setPhone} required autoComplete="tel" />
 
-        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 pt-3">Adresse de livraison</h2>
-        <Field label="Rue + numéro *" name="street" value={street} onChange={setStreet} required autoComplete="address-line1" />
+        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500 pt-3">{labels.shipping}</h2>
+        <Field label={`${labels.street} *`} name="street" value={street} onChange={setStreet} required autoComplete="address-line1" />
         <div className="grid grid-cols-3 gap-3">
-          <Field label="Code postal *" name="postal_code" value={postal} onChange={setPostal} required autoComplete="postal-code" />
+          <Field label={`${labels.postal} *`} name="postal_code" value={postal} onChange={setPostal} required autoComplete="postal-code" />
           <div className="col-span-2">
-            <Field label="Ville *" name="city" value={city} onChange={setCity} required autoComplete="address-level2" />
+            <Field label={`${labels.city} *`} name="city" value={city} onChange={setCity} required autoComplete="address-level2" />
           </div>
         </div>
         <label className="block">
-          <span className="text-sm text-stone-700 mb-1 block">Pays *</span>
+          <span className="text-sm text-stone-700 mb-1 block">{labels.country} *</span>
           <select
             value={country}
             onChange={(e) => setCountry(e.target.value)}
             required
             className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm"
           >
-            <option value="BE">Belgique</option>
-            <option value="FR">France</option>
-            <option value="NL">Pays-Bas</option>
-            <option value="LU">Luxembourg</option>
-            <option value="DE">Allemagne</option>
-            <option value="OTHER">Autre / International</option>
+            <option value="BE">{labels.countryFr.BE}</option>
+            <option value="FR">{labels.countryFr.FR}</option>
+            <option value="NL">{labels.countryFr.NL}</option>
+            <option value="LU">{labels.countryFr.LU}</option>
+            <option value="DE">{labels.countryFr.DE}</option>
+            <option value="OTHER">{labels.countryFr.OTHER}</option>
           </select>
         </label>
         <label className="block">
-          <span className="text-sm text-stone-700 mb-1 block">Remarques (optionnel)</span>
+          <span className="text-sm text-stone-700 mb-1 block">{labels.notes}</span>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -384,10 +495,10 @@ export function CheckoutFormClient({
             <span>
               <span className="block text-sm font-medium text-stone-800 inline-flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-stone-600" />
-                Je commande en tant que professionnel (B2B)
+                {labels.b2bToggle}
               </span>
               <span className="block text-xs text-stone-500 mt-0.5">
-                Une facture avec votre n° TVA sera générée.
+                {labels.b2bHint}
               </span>
             </span>
           </label>
@@ -395,7 +506,7 @@ export function CheckoutFormClient({
           {isB2B && (
             <div className="grid sm:grid-cols-2 gap-3">
               <Field
-                label="Nom de l'entreprise *"
+                label={`${labels.company} *`}
                 name="company_name"
                 value={company}
                 onChange={setCompany}
@@ -404,7 +515,7 @@ export function CheckoutFormClient({
               />
               <div>
                 <label className="block">
-                  <span className="text-sm text-stone-700 mb-1 block">N° TVA *</span>
+                  <span className="text-sm text-stone-700 mb-1 block">{labels.vat} *</span>
                   <input
                     type="text"
                     value={vat}
@@ -414,7 +525,7 @@ export function CheckoutFormClient({
                     className="w-full px-3 py-2 bg-white border border-stone-300 rounded text-sm font-mono"
                   />
                 </label>
-                <ViesLine state={vies} />
+                <ViesLine state={vies} labels={labels} />
               </div>
             </div>
           )}
@@ -427,8 +538,8 @@ export function CheckoutFormClient({
         )}
       </div>
 
-      <aside className="bg-white border border-stone-200 rounded p-5 h-fit lg:sticky lg:top-20 space-y-3">
-        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500">Récapitulatif</h2>
+      <aside className="bg-white border border-stone-200 rounded p-5 h-fit lg:sticky lg:top-24 space-y-3">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500">{labels.summary}</h2>
         <ul className="text-sm divide-y divide-stone-200">
           {items.map((it) => (
             <li key={it.key} className="py-2 flex justify-between gap-2">
@@ -446,25 +557,25 @@ export function CheckoutFormClient({
 
         <div className="space-y-1 border-t border-stone-200 pt-3">
           <div className="flex justify-between text-sm">
-            <span className="text-stone-500">Sous-total</span>
+            <span className="text-stone-500">{labels.subtotal}</span>
             <span className="font-medium tabular-nums">{formatPrice(subtotal)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-stone-500 flex items-center gap-1">
-              <Truck size={11} /> Livraison
+              <Truck size={11} /> {labels.delivery}
               {shipping?.zoneName && <span className="text-[10px]">({shipping.zoneName})</span>}
             </span>
             <span className="font-medium tabular-nums">
               {shipping
                 ? shipping.cents === 0
-                  ? <em className="text-green-700 not-italic">gratuit</em>
+                  ? <em className="text-green-700 not-italic">{labels.free}</em>
                   : formatPrice(shipping.cents)
                 : '—'}
             </span>
           </div>
           {shipping?.freeAbove != null && shipping.cents > 0 && subtotal < shipping.freeAbove && (
             <p className="text-[11px] text-stone-500 pt-0.5">
-              Encore {formatPrice(shipping.freeAbove - subtotal)} pour la livraison gratuite.
+              {labels.freeShippingHint.replace('{{amount}}', formatPrice(shipping.freeAbove - subtotal))}
             </p>
           )}
 
@@ -480,7 +591,7 @@ export function CheckoutFormClient({
                 <button
                   type="button"
                   onClick={removePromo}
-                  aria-label="Retirer le code"
+                  aria-label={labels.removeCode}
                   className="text-emerald-700 hover:text-emerald-900"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -493,7 +604,7 @@ export function CheckoutFormClient({
                     type="text"
                     value={promoInput}
                     onChange={(e) => { setPromoInput(e.target.value); setPromoError(null) }}
-                    placeholder="Code promo"
+                    placeholder={labels.promoPlaceholder}
                     className="flex-1 px-3 py-2 bg-white border border-stone-300 rounded text-xs font-mono uppercase"
                   />
                   <button
@@ -513,7 +624,7 @@ export function CheckoutFormClient({
             )}
             {promoApplied && (
               <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Code {promoApplied.code}</span>
+                <span className="text-stone-500">{labels.codePrefix} {promoApplied.code}</span>
                 <span className="font-medium tabular-nums text-emerald-700">
                   −{formatPrice(discount)}
                 </span>
@@ -533,7 +644,7 @@ export function CheckoutFormClient({
                 <button
                   type="button"
                   onClick={removeGift}
-                  aria-label="Retirer la carte"
+                  aria-label={labels.removeCard}
                   className="text-(--color-stone) hover:text-(--color-ink)"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -546,7 +657,7 @@ export function CheckoutFormClient({
                     type="text"
                     value={giftInput}
                     onChange={(e) => { setGiftInput(e.target.value); setGiftError(null) }}
-                    placeholder="Carte-cadeau"
+                    placeholder={labels.giftPlaceholder}
                     className="flex-1 min-w-0 px-3 py-2 bg-white border border-stone-300 rounded text-xs font-mono uppercase"
                   />
                   <button
@@ -566,7 +677,7 @@ export function CheckoutFormClient({
             )}
             {giftApplied && (
               <div className="flex justify-between text-sm">
-                <span className="text-stone-500">Carte-cadeau</span>
+                <span className="text-stone-500">{labels.giftCard}</span>
                 <span className="font-medium tabular-nums text-(--color-bronze)">
                   −{formatPrice(giftAmt)}
                 </span>
@@ -575,7 +686,7 @@ export function CheckoutFormClient({
           </div>
 
           <div className="flex justify-between pt-2 border-t border-stone-200 mt-2">
-            <span className="text-sm uppercase tracking-widest text-stone-500">Total</span>
+            <span className="text-sm uppercase tracking-widest text-stone-500">{labels.total}</span>
             <span className="text-2xl font-semibold tabular-nums">{formatPrice(total)}</span>
           </div>
         </div>
@@ -586,10 +697,10 @@ export function CheckoutFormClient({
           className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-stone-900 text-white hover:bg-stone-800 disabled:opacity-50 text-sm rounded transition-colors"
         >
           <Lock size={16} />
-          {isPending ? 'Création…' : 'Confirmer & payer'}
+          {isPending ? labels.submitting : labels.submit}
         </button>
         <p className="text-[11px] text-stone-400 text-center">
-          Paiement sécurisé via Mollie · Bancontact, carte, Apple Pay, etc.
+          {labels.paymentSecure}
         </p>
       </aside>
     </form>
@@ -618,13 +729,13 @@ function Field({
   )
 }
 
-function ViesLine({ state }: { state: ViesState }) {
+function ViesLine({ state, labels }: { state: ViesState; labels: CheckoutLabels }) {
   if (state.status === 'idle') return null
   if (state.status === 'checking') {
     return (
       <p className="mt-1.5 text-xs text-stone-500 inline-flex items-center gap-1.5">
         <Loader2 className="w-3 h-3 animate-spin" />
-        Vérification VIES…
+        {labels.viesChecking}
       </p>
     )
   }
@@ -632,7 +743,7 @@ function ViesLine({ state }: { state: ViesState }) {
     return (
       <p className="mt-1.5 text-xs text-emerald-700 inline-flex items-center gap-1.5">
         <BadgeCheck className="w-3.5 h-3.5" />
-        Numéro valide
+        {labels.viesValid}
         {state.name && <span className="text-stone-500"> — {state.name}</span>}
       </p>
     )
@@ -641,14 +752,14 @@ function ViesLine({ state }: { state: ViesState }) {
     return (
       <p className="mt-1.5 text-xs text-red-700 inline-flex items-center gap-1.5">
         <AlertCircle className="w-3.5 h-3.5" />
-        Numéro non valide ({state.reason})
+        {labels.viesInvalid} ({state.reason})
       </p>
     )
   }
   return (
     <p className="mt-1.5 text-xs text-amber-700 inline-flex items-center gap-1.5">
       <AlertCircle className="w-3.5 h-3.5" />
-      VIES indisponible — vérifié par le serveur
+      {labels.viesUnavailable}
     </p>
   )
 }

@@ -13,7 +13,19 @@ const fmt = new Intl.NumberFormat('fr-BE', {
 })
 const formatPrice = (cents: number) => fmt.format(cents / 100)
 
-export function CartView() {
+type Labels = {
+  title: string
+  empty: string
+  backToBoutique: string
+  continueShopping: string
+  remove: string
+  quantity: string
+  subtotal: string
+  shippingNote: string
+  checkout: string
+}
+
+export function CartView({ labels }: { labels: Labels }) {
   const { items, hydrated, remove, setQty, clear } = useCart()
 
   if (!hydrated) {
@@ -28,12 +40,12 @@ export function CartView() {
     return (
       <div className="py-16 text-center space-y-4">
         <ShoppingBag size={32} className="mx-auto text-stone-300" />
-        <p className="text-stone-500">Votre panier est vide.</p>
+        <p className="text-stone-500">{labels.empty}</p>
         <Link
           href="/shop/boutique"
           className="inline-block px-5 py-2.5 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded transition-colors"
         >
-          Découvrir la boutique
+          {labels.continueShopping}
         </Link>
       </div>
     )
@@ -67,7 +79,7 @@ export function CartView() {
                   type="button"
                   onClick={() => setQty(it.key, it.quantity - 1)}
                   className="p-1 border border-stone-300 rounded hover:bg-stone-100"
-                  aria-label="Moins"
+                  aria-label="−"
                 >
                   <Minus size={12} />
                 </button>
@@ -76,7 +88,7 @@ export function CartView() {
                   type="button"
                   onClick={() => setQty(it.key, it.quantity + 1)}
                   className="p-1 border border-stone-300 rounded hover:bg-stone-100"
-                  aria-label="Plus"
+                  aria-label="+"
                 >
                   <Plus size={12} />
                 </button>
@@ -84,7 +96,8 @@ export function CartView() {
                   type="button"
                   onClick={() => remove(it.key)}
                   className="ml-auto p-1.5 text-stone-400 hover:text-amber-700"
-                  aria-label="Supprimer"
+                  aria-label={labels.remove}
+                  title={labels.remove}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -103,18 +116,15 @@ export function CartView() {
       </ul>
 
       {/* Sticky summary */}
-      <aside className="bg-white border border-stone-200 rounded p-5 h-fit lg:sticky lg:top-20 space-y-4">
-        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500">Récapitulatif</h2>
+      <aside className="bg-white border border-stone-200 rounded p-5 h-fit lg:sticky lg:top-24 space-y-4">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-stone-500">{labels.subtotal}</h2>
         <div className="flex items-baseline justify-between text-sm">
-          <span className="text-stone-500">Sous-total</span>
+          <span className="text-stone-500">{labels.subtotal}</span>
           <span className="font-medium tabular-nums">{formatPrice(subtotal)}</span>
         </div>
-        <div className="flex items-baseline justify-between text-sm">
-          <span className="text-stone-500">Livraison</span>
-          <span className="text-stone-400 italic">calculée au checkout</span>
-        </div>
+        <p className="text-xs text-stone-400 italic">{labels.shippingNote}</p>
         <div className="flex items-baseline justify-between pt-3 border-t border-stone-200">
-          <span className="text-sm uppercase tracking-widest text-stone-500">Total</span>
+          <span className="text-sm uppercase tracking-widest text-stone-500">{labels.subtotal}</span>
           <span className="text-2xl font-semibold tabular-nums">{formatPrice(subtotal)}</span>
         </div>
         <Link
@@ -122,14 +132,14 @@ export function CartView() {
           className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-stone-900 text-white hover:bg-stone-800 text-sm rounded transition-colors"
         >
           <ShoppingBag size={16} />
-          Vers le checkout
+          {labels.checkout}
         </Link>
         <button
           type="button"
           onClick={clear}
           className="w-full text-xs text-stone-500 hover:text-amber-700 underline"
         >
-          Vider le panier
+          {labels.remove}
         </button>
       </aside>
     </div>
