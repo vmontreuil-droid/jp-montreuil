@@ -455,6 +455,11 @@ const dict = {
       added: 'Ajouté',
       unavailable: 'Combinaison non disponible',
       configMissing: 'Configurateur non disponible — ajoutez d\'abord matériaux, formats et prix via',
+      // Preview / mockup-kader
+      previewCropHint: 'L\'image sera légèrement recadrée pour remplir ce format.',
+      previewZoom: 'Voir en grand',
+      previewClose: 'Fermer',
+      previewOnWall: 'Aperçu mural',
     },
     panier: {
       title: 'Mon panier',

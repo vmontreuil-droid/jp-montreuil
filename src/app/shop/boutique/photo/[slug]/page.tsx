@@ -130,6 +130,8 @@ export default async function PhotoConfiguratorPage({
           photoAlt={photoAlt(photo)}
           photoStoragePath={photo.storage_path}
           photoBucket={photo.bucket}
+          photoNaturalWidth={photo.width}
+          photoNaturalHeight={photo.height}
           defaultOrientation={photo.orientation ?? 'portrait'}
           media={mediaProps}
           sizes={sizeProps}

@@ -36,6 +36,11 @@ export type PrintConfiguratorLabels = {
   added: string
   unavailable: string
   configMissing: string
+  // Preview-overlay labels (gedeeld met FramedPreview / PhotoStage)
+  previewCropHint: string
+  previewZoom: string
+  previewClose: string
+  previewOnWall: string
 }
 
 const DEFAULT_LABELS: PrintConfiguratorLabels = {
@@ -51,6 +56,10 @@ const DEFAULT_LABELS: PrintConfiguratorLabels = {
   added: 'Ajouté',
   unavailable: 'Combinaison non disponible',
   configMissing: 'Configurateur non disponible.',
+  previewCropHint: 'L\'image sera légèrement recadrée pour remplir ce format.',
+  previewZoom: 'Voir en grand',
+  previewClose: 'Fermer',
+  previewOnWall: 'Aperçu mural',
 }
 
 /** Swap "30×45 cm" → "45×30 cm" voor landscape; "S — 30×45 cm" → "S — 45×30 cm". */

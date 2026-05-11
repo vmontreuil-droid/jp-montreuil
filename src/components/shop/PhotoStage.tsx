@@ -37,6 +37,8 @@ export function PhotoStage({
   photoAlt,
   photoStoragePath,
   photoBucket,
+  photoNaturalWidth,
+  photoNaturalHeight,
   defaultOrientation,
   media,
   sizes,
@@ -51,6 +53,10 @@ export function PhotoStage({
   photoAlt: string
   photoStoragePath: string
   photoBucket?: string
+  /** Optioneel — gebruikt om crop-hint te tonen wanneer foto-aspect
+   *  sterk afwijkt van het gekozen kader. */
+  photoNaturalWidth?: number | null
+  photoNaturalHeight?: number | null
   defaultOrientation?: Orientation | 'square'
   media: Medium[]
   sizes: Size[]
@@ -70,6 +76,11 @@ export function PhotoStage({
     ? orientation === 'landscape' ? flipSizeLabel(sizeForLabel.label) : sizeForLabel.label
     : null
 
+  const naturalAspect =
+    photoNaturalWidth && photoNaturalHeight
+      ? photoNaturalWidth / photoNaturalHeight
+      : null
+
   return (
     <div className="grid md:grid-cols-2 gap-10">
       {/* Live preview in gekozen kader */}
@@ -80,6 +91,15 @@ export function PhotoStage({
           mediaSlug={mediaSlug}
           sizeLabel={sizeLabel}
           orientation={orientation}
+          naturalAspect={naturalAspect}
+          labels={{
+            cropHint: labels.previewCropHint,
+            zoom: labels.previewZoom,
+            close: labels.previewClose,
+            onWall: labels.previewOnWall,
+            portrait: labels.portrait,
+            paysage: labels.paysage,
+          }}
         />
         <WishlistButton
           photoId={photoId}

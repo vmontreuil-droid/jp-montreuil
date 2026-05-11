@@ -457,6 +457,11 @@ const dict: Dictionary = {
       added: 'Toegevoegd',
       unavailable: 'Combinatie niet beschikbaar',
       configMissing: 'Configurator niet beschikbaar — voeg eerst materialen, formaten en prijzen toe via',
+      // Preview / mockup-kader
+      previewCropHint: 'De foto wordt licht bijgesneden om dit formaat te vullen.',
+      previewZoom: 'Vergroot bekijken',
+      previewClose: 'Sluiten',
+      previewOnWall: 'Voorvertoning op muur',
     },
     panier: {
       title: 'Mijn winkelmandje',
