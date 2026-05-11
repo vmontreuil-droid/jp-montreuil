@@ -1,6 +1,8 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react'
+import { PUBLIC_BASE_URL } from '@/lib/public-url'
 import { createShopAdminClient } from '@/lib/shop/supabase'
 import { shopPhotoUrl, photoUrl, photoAlt, type Photo } from '@/lib/shop/photos'
 import {
@@ -18,6 +20,62 @@ import { getShopLocale } from '@/lib/shop/locale'
 import { getDictionary } from '@/i18n/dictionaries'
 
 export const dynamic = 'force-dynamic'
+
+/**
+ * OG-image: dynamische mockup-PNG via /api/og/preview met de actuele
+ * configuratie als query-params. Wanneer iemand een share-link in
+ * WhatsApp/Facebook plakt zien ze zo de exacte preview die de
+ * verzender heeft opgesteld.
+ */
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}): Promise<Metadata> {
+  const { slug } = await params
+  const sp = await searchParams
+  const sb = createShopAdminClient()
+  const { data: p } = await sb
+    .from('photos')
+    .select('title, alt_text, slug, description')
+    .eq('slug', slug)
+    .eq('is_published', true)
+    .maybeSingle()
+  if (!p) return {}
+  const photo = p as { title: string | null; slug: string; alt_text: string | null; description: string | null }
+  const title = `${photo.title ?? photo.slug} — Atelier JP Montreuil`
+  const description = photo.description
+    ?? photo.alt_text
+    ?? `Tirage d'art de Jean-Pierre Montreuil — disponible en quatre matériaux et cinq formats.`
+
+  // Bouw OG-image URL met dezelfde configuratie als de pagina
+  const ogParams = new URLSearchParams({ slug })
+  const get = (k: string) => Array.isArray(sp[k]) ? sp[k]?.[0] : sp[k]
+  const material = get('material'); if (material) ogParams.set('material', String(material))
+  const size = get('size'); if (size) ogParams.set('size', String(size))
+  const orientation = get('orientation'); if (orientation) ogParams.set('orientation', String(orientation))
+  const wall = get('wall'); if (wall) ogParams.set('wall', String(wall))
+  const ogUrl = `${PUBLIC_BASE_URL}/api/og/preview?${ogParams.toString()}`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [{ url: ogUrl, width: 1200, height: 630, alt: photo.alt_text ?? title }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogUrl],
+    },
+  }
+}
 
 export default async function PhotoConfiguratorPage({
   params,

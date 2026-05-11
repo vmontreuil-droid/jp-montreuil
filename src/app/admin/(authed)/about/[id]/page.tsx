@@ -34,7 +34,7 @@ export default async function AboutDetailPage({ params }: Props) {
   if (!section) notFound()
 
   return (
-    <div className="p-8 md:p-12 max-w-4xl">
+    <div className="p-8 md:p-12 max-w-7xl">
       <Link
         href="/admin/about"
         className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-(--color-stone) hover:text-(--color-ink) mb-6"

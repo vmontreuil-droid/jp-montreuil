@@ -37,7 +37,7 @@ export default async function EditShopProductPage({
   const createVariantBound = createShopVariant.bind(null, id)
 
   return (
-    <main className="max-w-4xl mx-auto px-6 py-10 space-y-6">
+    <main className="max-w-7xl mx-auto px-6 py-10 space-y-6">
       <Link href="/admin/boutique/products" className="inline-flex items-center gap-2 text-sm text-(--color-stone) hover:text-(--color-ink)">
         <ArrowLeft size={14} /> Retour
       </Link>

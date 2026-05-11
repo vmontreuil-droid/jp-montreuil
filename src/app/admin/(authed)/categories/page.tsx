@@ -45,7 +45,7 @@ export default async function CategoriesAdminPage() {
   const categories = data ?? []
 
   return (
-    <div className="p-8 md:p-12 max-w-5xl">
+    <div className="p-8 md:p-12 max-w-7xl">
       <header className="mb-10 flex items-end justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-2">

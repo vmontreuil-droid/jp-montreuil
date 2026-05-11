@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export default function SignatureAdminPage() {
   const logoUrl = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/logo-dark.png`
   return (
-    <div className="p-8 md:p-12 max-w-5xl">
+    <div className="p-8 md:p-12 max-w-7xl">
       <header className="mb-8">
         <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-2 inline-flex items-center gap-2">
           <PenTool className="w-3.5 h-3.5" />

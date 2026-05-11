@@ -104,7 +104,7 @@ export default async function ShopAdminPage() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-7xl mx-auto px-6 py-10 space-y-8">
       <header>
         <h1 className="font-[family-name:var(--font-display)] text-3xl text-(--color-ink) mb-1 inline-flex items-center gap-2">
           <Settings size={24} />

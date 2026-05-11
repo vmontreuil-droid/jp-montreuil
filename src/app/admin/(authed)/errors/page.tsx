@@ -34,7 +34,7 @@ export default async function ErrorsPage() {
   const acked = errors.filter((e) => e.is_acknowledged)
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-10 space-y-6">
+    <main className="max-w-7xl mx-auto px-6 py-10 space-y-6">
       <header>
         <h1 className="font-[family-name:var(--font-display)] text-3xl text-(--color-ink) inline-flex items-center gap-2">
           <AlertTriangle className="w-6 h-6 text-(--color-bronze)" />

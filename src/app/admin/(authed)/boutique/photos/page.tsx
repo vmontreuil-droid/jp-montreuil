@@ -20,7 +20,7 @@ export default async function ShopPhotosPage() {
   const published = photos.filter((p) => p.is_published).length
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-6">
+    <main className="max-w-7xl mx-auto px-6 py-10 space-y-6">
       <div className="flex items-center gap-2 text-sm">
         <Link href="/admin/boutique" className="text-(--color-stone) hover:text-(--color-ink) inline-flex items-center gap-1">
           <ArrowLeft size={12} /> Admin

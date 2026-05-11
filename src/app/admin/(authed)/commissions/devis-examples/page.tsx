@@ -50,7 +50,7 @@ export default async function DevisExamplesAdminPage() {
   const totalSelected = selectedWorks.length
 
   return (
-    <div className="p-8 md:p-12 max-w-6xl">
+    <div className="p-8 md:p-12 max-w-7xl">
       <div className="mb-6">
         <Link
           href="/admin/commissions"

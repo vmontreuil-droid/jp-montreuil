@@ -99,7 +99,7 @@ export default async function AdminCommissionsPage({ searchParams }: Props) {
   )
 
   return (
-    <div className="p-8 md:p-12 max-w-5xl">
+    <div className="p-8 md:p-12 max-w-7xl">
       <header className="mb-10">
         <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-2">
           Atelier Montreuil

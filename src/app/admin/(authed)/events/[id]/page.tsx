@@ -49,7 +49,7 @@ export default async function AlbumAdminPage({ params }: Props) {
   }
 
   return (
-    <div className="p-8 md:p-12 max-w-6xl">
+    <div className="p-8 md:p-12 max-w-7xl">
       <Link
         href="/admin/events"
         className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-(--color-stone) hover:text-(--color-ink) mb-6"

@@ -28,7 +28,7 @@ export default async function IbookDetailPage({ params }: Props) {
   const qrDataUrl = publicLivreUrl ? await generateQrDataUrl(publicLivreUrl, 320) : ''
 
   return (
-    <div className="p-8 md:p-12 max-w-4xl">
+    <div className="p-8 md:p-12 max-w-7xl">
       <Link
         href="/admin/ibook"
         className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-(--color-stone) hover:text-(--color-ink) mb-6"

@@ -37,7 +37,7 @@ export default async function ExhibitionDetailPage({ params }: Props) {
   if (!ex) notFound()
 
   return (
-    <div className="p-8 md:p-12 max-w-4xl">
+    <div className="p-8 md:p-12 max-w-7xl">
       <Link
         href="/admin/exhibitions"
         className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-(--color-stone) hover:text-(--color-ink) mb-6"

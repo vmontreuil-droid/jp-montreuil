@@ -1,8 +1,9 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { cleanupOldShopKeys, SHOP_LS_KEYS } from '@/lib/shop/storage'
 
-const STORAGE_KEY = 'jp-wishlist-v1'
+const STORAGE_KEY = SHOP_LS_KEYS.wishlist
 
 type WishlistState = {
   ids: Set<string>
@@ -31,6 +32,8 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
+    // Best-effort opkuis van oude key-versies (no-op als alles up-to-date)
+    cleanupOldShopKeys()
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (raw) {

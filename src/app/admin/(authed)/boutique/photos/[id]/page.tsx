@@ -32,7 +32,7 @@ export default async function EditShopPhotoPage({
   const aiAltGeneratedAt = (photo as { ai_alt_generated_at?: string | null }).ai_alt_generated_at ?? null
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-10 space-y-6">
+    <main className="max-w-7xl mx-auto px-6 py-10 space-y-6">
       <Link
         href="/admin/boutique/photos"
         className="inline-flex items-center gap-2 text-sm text-(--color-stone) hover:text-(--color-ink)"

@@ -346,7 +346,7 @@ export default async function CommissionDetailPage({ params, searchParams }: Pro
     : null
 
   return (
-    <div className="p-8 md:p-12 max-w-5xl">
+    <div className="p-8 md:p-12 max-w-7xl">
       <div className="mb-6">
         <Link
           href="/admin/commissions"

@@ -40,7 +40,7 @@ export default async function ExhibitionsAdminPage() {
   const past = all.filter((e) => (e.date_to ?? e.date_from) < todayKey)
 
   return (
-    <div className="p-8 md:p-12 max-w-4xl">
+    <div className="p-8 md:p-12 max-w-7xl">
       <header className="mb-8">
         <p className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-2">
           Atelier Montreuil

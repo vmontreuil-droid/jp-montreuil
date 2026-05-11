@@ -154,7 +154,7 @@ export default async function AdminClientDetailPage({ params }: Props) {
   const unreadMessages = messages.filter((m) => !m.read_at).length
 
   return (
-    <div className="p-8 md:p-12 max-w-5xl">
+    <div className="p-8 md:p-12 max-w-7xl">
       <div className="mb-6">
         <Link
           href="/admin/clients"
