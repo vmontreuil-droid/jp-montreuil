@@ -8,7 +8,7 @@ import { localePath, whatsappHref } from '@/lib/links'
 import { pageMetadata } from '@/lib/og'
 import { getActiveIbooks, ibookUrl } from '@/lib/ibook'
 import { generateQrDataUrl } from '@/lib/qr'
-import IbookViewer from '@/components/site/IbookViewer'
+import IbookViewer from '@/components/site/IbookViewerLazy'
 
 type Props = {
   params: Promise<{ locale: string }>

@@ -440,7 +440,7 @@ export default async function CommentCaMarchePage({
 
       {/* 8 — CTA */}
       <section className="max-w-4xl mx-auto px-6 py-16 md:py-24 text-center">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl text-(--color-ink) mb-4">{c.cta.title}</h2>
+        <h2 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl text-(--color-ink) mb-4" data-cta-title>{c.cta.title}</h2>
         <p className="text-(--color-charcoal) mb-8 max-w-xl mx-auto">{c.cta.body}</p>
         <div className="flex flex-wrap gap-3 justify-center">
           <Link

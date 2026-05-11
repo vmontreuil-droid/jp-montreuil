@@ -6,7 +6,7 @@ import { getDictionary } from '@/i18n/dictionaries'
 import { whatsappHref } from '@/lib/links'
 import { pageMetadata } from '@/lib/og'
 import { getActiveIbooks, ibookUrl } from '@/lib/ibook'
-import IbookViewer from '@/components/site/IbookViewer'
+import IbookViewer from '@/components/site/IbookViewerLazy'
 import ContactForm from './ContactForm'
 
 function FacebookIcon({ className }: { className?: string }) {
