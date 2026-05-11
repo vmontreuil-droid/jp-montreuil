@@ -26,8 +26,8 @@ test.describe('shop public pages', () => {
   test('compositie-builder is bereikbaar', async ({ page }) => {
     const res = await page.goto('/shop/composition')
     expect(res?.status()).toBeLessThan(400)
-    // De 3 default slots moeten gerenderd zijn (lege of gevuld)
-    await expect(page.getByRole('main')).toBeVisible()
+    // Page heeft een h1 met "Composez votre mur" / "Stel uw muur samen"
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   })
 
   test('panier-pagina werkt', async ({ page }) => {
