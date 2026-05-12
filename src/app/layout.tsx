@@ -73,6 +73,17 @@ export async function generateMetadata(): Promise<Metadata> {
       'art animalier',
     ],
     authors: [{ name: 'Jean-Pierre Montreuil' }],
+    // Webmaster verification: plak je code uit Google Search Console /
+    // Bing Webmaster Tools / Yandex in Vercel env-vars en je bent
+    // geverifieerd zonder code-wijziging. Lege strings ⇒ Next.js skipt
+    // de meta-tag, dus geen rare lege tags in HTML.
+    verification: {
+      google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+      yandex: process.env.YANDEX_SITE_VERIFICATION || undefined,
+      other: process.env.BING_SITE_VERIFICATION
+        ? { 'msvalidate.01': process.env.BING_SITE_VERIFICATION }
+        : undefined,
+    },
   }
 }
 
