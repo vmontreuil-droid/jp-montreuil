@@ -18,6 +18,17 @@ type Body = {
   shop_photo_id?: string | null
 }
 
+// Bot/headless filter — voorkomt dat e2e-tests, crawlers en monitoring-pings
+// in de visitor-cijfers terechtkomen. We filteren defensief: bij twijfel wel
+// loggen (bots zonder UA-tell-tale zijn zeldzaam genoeg dat de signal-noise
+// ratio aanvaardbaar blijft).
+const BOT_UA_PATTERN = /headlesschrome|playwright|puppeteer|phantomjs|selenium|webdriver|cypress|lighthouse|chrome-lighthouse|pagespeed|gtmetrix|pingdom|uptimerobot|statuscake|datadog|newrelic|bot\b|crawl|spider|slurp|baiduspider|bingpreview|facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|discordbot|slackbot|google-pagerendererror|googlebot|adsbot/i
+
+function isBot(ua: string): boolean {
+  if (!ua) return true // geen UA = waarschijnlijk bot/script
+  return BOT_UA_PATTERN.test(ua)
+}
+
 function parseUserAgent(ua: string): { device: string; browser: string; os: string } {
   const u = ua.toLowerCase()
   const device = /ipad|tablet/.test(u)
@@ -66,6 +77,12 @@ export async function POST(request: NextRequest) {
   // Country uit Vercel header
   const country = request.headers.get('x-vercel-ip-country') || null
   const ua = body.ua || request.headers.get('user-agent') || ''
+
+  // Bot/headless filter — silent drop met 204 zodat clients niet retry'en
+  if (isBot(ua)) {
+    return new NextResponse(null, { status: 204 })
+  }
+
   const { device, browser, os } = parseUserAgent(ua)
 
   const admin = createAdminClient()

@@ -72,6 +72,70 @@ export async function listAllReviews(opts?: { status?: ReviewStatus }): Promise<
 }
 
 /**
+ * Admin-variant: alle reviews + de gekoppelde foto (slug, title, thumb).
+ * Gebruikt door /admin/boutique/reviews zodat moderator visueel ziet
+ * over welk werk de review gaat.
+ */
+export async function listAllReviewsWithPhoto(): Promise<ReviewWithPhoto[]> {
+  const sb = createShopAdminClient()
+  const { data: reviews, error } = await sb
+    .from('reviews')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error || !reviews) return []
+  const photoIds = [...new Set((reviews as ShopReview[]).map((r) => r.photo_id))]
+  if (photoIds.length === 0) return reviews as ReviewWithPhoto[]
+  const { data: photos } = await sb
+    .from('photos')
+    .select('id, slug, title, storage_path, bucket')
+    .in('id', photoIds)
+  const byId = new Map(
+    ((photos ?? []) as Array<{ id: string; slug: string; title: string | null; storage_path: string; bucket: string }>)
+      .map((p) => [p.id, p]),
+  )
+  return (reviews as ShopReview[]).map((r) => ({
+    ...r,
+    photo: byId.get(r.photo_id) ? {
+      slug: byId.get(r.photo_id)!.slug,
+      title: byId.get(r.photo_id)!.title,
+      storage_path: byId.get(r.photo_id)!.storage_path,
+      bucket: byId.get(r.photo_id)!.bucket,
+    } : null,
+  }))
+}
+
+/**
+ * Admin: pas tekstuele velden + foto-koppeling van een review aan.
+ * Gebruikt door de admin-moderatie om typo's of verkeerde foto-link
+ * te corrigeren zonder de review te wissen.
+ */
+export async function updateReviewContent(
+  id: string,
+  patch: { title?: string | null; body?: string | null; photo_id?: string },
+): Promise<void> {
+  const sb = createShopAdminClient()
+  const update: Record<string, unknown> = {}
+  if (patch.title !== undefined) update.title = patch.title
+  if (patch.body !== undefined) update.body = patch.body
+  if (patch.photo_id !== undefined) update.photo_id = patch.photo_id
+  if (Object.keys(update).length === 0) return
+  const { error } = await sb.from('reviews').update(update).eq('id', id)
+  if (error) throw error
+}
+
+/** Lichte lijst foto's voor de admin-photo-picker. */
+export async function listShopPhotosForPicker(): Promise<Array<{
+  id: string; slug: string; title: string | null; storage_path: string; bucket: string
+}>> {
+  const sb = createShopAdminClient()
+  const { data } = await sb
+    .from('photos')
+    .select('id, slug, title, storage_path, bucket')
+    .order('title', { ascending: true })
+  return (data ?? []) as Array<{ id: string; slug: string; title: string | null; storage_path: string; bucket: string }>
+}
+
+/**
  * Batch-fetch approved reviews voor een lijst foto-IDs en geef per
  * photo_id een aggregate. Gebruikt voor sterren-badges in de
  * boutique-grid (1 query i.p.v. N).

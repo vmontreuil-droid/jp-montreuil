@@ -18,6 +18,21 @@ function getSessionId(): string {
 }
 
 /**
+ * Detecteert headless browsers (Playwright, Puppeteer, Selenium, …) zodat
+ * e2e-tests en crawlers niet meegeteld worden in de visitor-stats.
+ *  - navigator.webdriver = true bij elke gestuurde browser
+ *  - userAgent met "HeadlessChrome" bij default Playwright-build
+ *  - lege plugins-array komt vaak voor bij bots
+ */
+function isHeadlessClient(): boolean {
+  if (typeof navigator === 'undefined') return false
+  if (navigator.webdriver) return true
+  const ua = navigator.userAgent || ''
+  if (/HeadlessChrome|Playwright|puppeteer|Selenium|PhantomJS|Cypress/i.test(ua)) return true
+  return false
+}
+
+/**
  * Stuurt page-view events naar /api/analytics. Anoniem (sessionStorage-id),
  * geen cookies. /admin en /api worden niet getrackt.
  */
@@ -28,6 +43,7 @@ export default function AnalyticsTracker() {
   useEffect(() => {
     if (!pathname) return
     if (pathname.startsWith('/admin') || pathname.startsWith('/api')) return
+    if (isHeadlessClient()) return
     // Voorkom dubbel-tellen bij Strict Mode of snelle re-renders
     if (sentRef.current === pathname) return
     sentRef.current = pathname

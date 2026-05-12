@@ -16,6 +16,13 @@ function getSessionId(): string {
   return id
 }
 
+function isHeadlessClient(): boolean {
+  if (typeof navigator === 'undefined') return false
+  if (navigator.webdriver) return true
+  const ua = navigator.userAgent || ''
+  return /HeadlessChrome|Playwright|puppeteer|Selenium|PhantomJS|Cypress/i.test(ua)
+}
+
 /**
  * Track een shop_photo_view event op /shop/boutique/photo/[slug].
  * Eenmalig per pageload (sentRef voorkomt re-runs in Strict Mode).
@@ -32,6 +39,7 @@ export default function PhotoViewTracker({
   useEffect(() => {
     if (sentRef.current === photoId) return
     sentRef.current = photoId
+    if (isHeadlessClient()) return
     const sid = getSessionId()
     void fetch('/api/analytics', {
       method: 'POST',
