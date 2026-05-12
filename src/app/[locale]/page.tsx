@@ -44,7 +44,8 @@ export default async function HomePage({ params }: Props) {
   // shop-schema nog niet exposed is.
   const [overallReviews, recentReviews] = await Promise.all([
     getOverallReviewsAggregate().catch(() => ({ count: 0, average: null, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } })),
-    listRecentApprovedReviewsWithPhoto(10).catch(() => []),
+    // Locale-filter: enkel quotes in de juiste taal voor de homepage
+    listRecentApprovedReviewsWithPhoto(10, locale as 'fr' | 'nl').catch(() => []),
   ])
 
   // Slides volgen de admin sort_order; categorieën zonder cover overslaan.
@@ -82,6 +83,7 @@ export default async function HomePage({ params }: Props) {
           basedOn: t.home.reviewsBasedOn,
           seeAll: t.home.reviewsSeeAll,
           on: t.home.reviewsOn,
+          leaveReview: t.avis.leaveReview,
         }}
       />
 

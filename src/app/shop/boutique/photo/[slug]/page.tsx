@@ -16,6 +16,7 @@ import { listApprovedReviewsForPhoto, aggregateReviews } from '@/lib/shop/review
 import { PhotoStage } from '@/components/shop/PhotoStage'
 import ReviewsSection from '@/components/shop/ReviewsSection'
 import { ReviewsBadge } from '@/components/shop/ReviewsBadge'
+import { QuickStarRating } from '@/components/shop/QuickStarRating'
 import PhotoViewTracker from '@/components/shop/PhotoViewTracker'
 import { getShopLocale } from '@/lib/shop/locale'
 import { getDictionary } from '@/i18n/dictionaries'
@@ -219,6 +220,19 @@ export default async function PhotoConfiguratorPage({
                 {photo.title ?? photo.slug}
               </h1>
               <ReviewsBadge aggregate={aggregate} labelSeeAll={t.reviewsSeeAll} />
+              <QuickStarRating
+                photoId={photo.id}
+                labels={{
+                  eyebrow: t.quickRateEyebrow,
+                  yourName: t.quickRateName,
+                  submit: t.quickRateSubmit,
+                  sending: t.quickRateSending,
+                  thanks: t.quickRateThanks,
+                  tooShort: t.quickRateNameRequired,
+                  leaveDetail: t.quickRateMore,
+                  leaveDetailLink: t.quickRateMoreLink,
+                }}
+              />
               {(photo.species || photo.taken_at_location) && (
                 <p className="text-xs text-(--color-stone) mb-3">
                   {[photo.species, photo.taken_at_location].filter(Boolean).join(' · ')}

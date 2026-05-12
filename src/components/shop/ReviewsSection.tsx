@@ -130,8 +130,10 @@ function ReviewForm({ photoId }: { photoId: string }) {
     setSuccess(false)
     if (!name.trim()) return setError('Indiquez votre nom.')
     if (rating < 1) return setError('Choisissez une note (1 à 5 étoiles).')
-    if (!body.trim() || body.trim().length < 10) {
-      return setError('Le commentaire doit contenir au moins 10 caractères.')
+    // Body is optioneel — alleen minimum-lengte check als wel ingevuld
+    const trimmedBody = body.trim()
+    if (trimmedBody.length > 0 && trimmedBody.length < 10) {
+      return setError('Le commentaire doit contenir au moins 10 caractères (ou laissez vide).')
     }
     startTransition(async () => {
       const r = await submitReview({
@@ -140,7 +142,7 @@ function ReviewForm({ photoId }: { photoId: string }) {
         email: email.trim() || null,
         rating,
         title: title.trim() || null,
-        body: body.trim(),
+        body: trimmedBody.length > 0 ? trimmedBody : null,
       })
       if (r.ok) {
         setSuccess(true)
@@ -238,14 +240,13 @@ function ReviewForm({ photoId }: { photoId: string }) {
       </label>
 
       <label className="block">
-        <span className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-1.5 block">Commentaire *</span>
+        <span className="text-xs uppercase tracking-[0.2em] text-(--color-stone) mb-1.5 block">Commentaire <span className="text-(--color-stone)/60 normal-case tracking-normal">(optionnel)</span></span>
         <textarea
-          required
           rows={4}
-          minLength={10}
           maxLength={2000}
           value={body}
           onChange={(e) => setBody(e.target.value)}
+          placeholder="Vous pouvez laisser uniquement votre note — un commentaire est facultatif."
           className="w-full px-3 py-2 bg-(--color-canvas) border border-(--color-frame) text-(--color-ink) text-sm focus:border-(--color-bronze) focus:outline-none resize-y"
         />
       </label>

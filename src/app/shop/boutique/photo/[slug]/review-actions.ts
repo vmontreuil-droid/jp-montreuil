@@ -11,7 +11,7 @@ export type SubmitReviewInput = {
   email: string | null
   rating: number
   title: string | null
-  body: string
+  body: string | null
 }
 
 export type SubmitReviewResult = { ok: true } | { ok: false; error: string }
@@ -24,8 +24,12 @@ export async function submitReview(input: SubmitReviewInput): Promise<SubmitRevi
   if (input.rating < 1 || input.rating > 5) {
     return { ok: false, error: 'Note invalide.' }
   }
-  if (!input.body || input.body.trim().length < 10) {
-    return { ok: false, error: 'Commentaire trop court.' }
+  // Body is optioneel — klanten kunnen ook enkel sterren geven.
+  // Wanneer wel ingevuld: minimum 10 tekens om flutter-spam te
+  // verminderen. Lege body = OK.
+  const trimmedBody = input.body?.trim() ?? ''
+  if (trimmedBody.length > 0 && trimmedBody.length < 10) {
+    return { ok: false, error: 'Commentaire trop court (minimum 10 caractères ou laissez vide).' }
   }
 
   // Rate-limit per IP — max 5 reviews per uur (anti-spam)
@@ -59,7 +63,7 @@ export async function submitReview(input: SubmitReviewInput): Promise<SubmitRevi
     email: input.email?.trim().toLowerCase() ?? null,
     rating: input.rating,
     title: input.title?.trim().slice(0, 100) ?? null,
-    body: input.body.trim().slice(0, 2000),
+    body: trimmedBody.length > 0 ? trimmedBody.slice(0, 2000) : null,
     status: 'pending',
     is_verified_purchase: isVerified,
     ip,

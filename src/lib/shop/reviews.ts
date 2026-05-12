@@ -136,19 +136,55 @@ export type ReviewWithPhoto = ShopReview & {
   photo: { slug: string; title: string | null; storage_path: string; bucket: string } | null
 }
 
+/**
+ * Eenvoudige taal-detectie via stopwoorden in body+title. Levert 'fr',
+ * 'nl' of null (te kort/onduidelijk). Pragmatisch — geen DB-kolom
+ * nodig — voldoende voor onze 5-200 reviews. Bij twijfel: null.
+ */
+const FR_WORDS = /\b(le|la|les|est|et|une?|au|du|des|pour|dans|avec|sur|nous|vous|ils?|elles?|c['']est|j['']ai|tirage|qualité|livraison|emballage|cadre|merci|matériau|format|toile|papier|c['']était|très|bien|grand|petit|encore|plus|tout|tous)\b/g
+const NL_WORDS = /\b(de|het|een|is|en|voor|met|door|naar|bij|als|dan|maar|of|wat|wie|hoe|onze|jullie|dat|deze|die|aanrader|levering|verpakking|bedankt|kwaliteit|formaat|werk|werken|nu|goed|geen|ook|nog|alle|hebben|heeft|werd|zijn|haar|hem)\b/g
+
+export function detectReviewLocale(text: string | null | undefined): 'fr' | 'nl' | null {
+  if (!text) return null
+  const lc = text.toLowerCase()
+  const fr = (lc.match(FR_WORDS) ?? []).length
+  const nl = (lc.match(NL_WORDS) ?? []).length
+  if (fr === 0 && nl === 0) return null
+  if (fr === nl) return null
+  return fr > nl ? 'fr' : 'nl'
+}
+
 export async function listRecentApprovedReviewsWithPhoto(
   limit = 20,
+  /** Filter op gedetecteerde taal. Reviews zonder duidelijke taal
+   *  worden ook getoond (fallback). Skip filter als undefined. */
+  locale?: 'fr' | 'nl',
 ): Promise<ReviewWithPhoto[]> {
   const sb = createShopAdminClient()
+  // Bij locale-filter: vraag een ruimere batch (4×) zodat we genoeg
+  // overhouden na taal-filter. Anders: gewoon limit.
+  const fetchLimit = locale ? Math.max(limit * 4, 40) : limit
   const { data: reviews, error } = await sb
     .from('reviews')
     .select('*')
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
-    .limit(limit)
+    .limit(fetchLimit)
   if (error || !reviews) return []
-  const photoIds = (reviews as ShopReview[]).map((r) => r.photo_id)
-  if (photoIds.length === 0) return reviews as ReviewWithPhoto[]
+
+  // Filter op gedetecteerde taal indien gevraagd. Reviews zonder
+  // detecteerbare taal vallen door (matchen elke locale).
+  let filtered = reviews as ShopReview[]
+  if (locale) {
+    filtered = filtered.filter((r) => {
+      const lang = detectReviewLocale(`${r.title ?? ''} ${r.body ?? ''}`)
+      return lang === null || lang === locale
+    })
+  }
+  filtered = filtered.slice(0, limit)
+
+  const photoIds = filtered.map((r) => r.photo_id)
+  if (photoIds.length === 0) return filtered as ReviewWithPhoto[]
   const { data: photos } = await sb
     .from('photos')
     .select('id, slug, title, storage_path, bucket')
@@ -157,7 +193,7 @@ export async function listRecentApprovedReviewsWithPhoto(
     ((photos ?? []) as Array<{ id: string; slug: string; title: string | null; storage_path: string; bucket: string }>)
       .map((p) => [p.id, p]),
   )
-  return (reviews as ShopReview[]).map((r) => ({
+  return filtered.map((r) => ({
     ...r,
     photo: byId.get(r.photo_id) ? {
       slug: byId.get(r.photo_id)!.slug,

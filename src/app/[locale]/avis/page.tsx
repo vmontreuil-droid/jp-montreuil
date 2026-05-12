@@ -34,7 +34,8 @@ export default async function AvisPage({ params }: Props) {
 
   const [overall, reviews] = await Promise.all([
     getOverallReviewsAggregate(),
-    listRecentApprovedReviewsWithPhoto(100),
+    // Locale-filter: standaard tonen we de reviews in de juiste taal
+    listRecentApprovedReviewsWithPhoto(100, locale as 'fr' | 'nl'),
   ])
 
   const dateFmt = new Intl.DateTimeFormat(locale === 'nl' ? 'nl-BE' : 'fr-BE', {
@@ -180,23 +181,67 @@ export default async function AvisPage({ params }: Props) {
           </ul>
         )}
 
-        {reviews.length > 0 && (
-          <div className="mt-12 text-center bg-(--color-paper) border border-(--color-frame) p-6">
-            <p className="font-[family-name:var(--font-display)] text-xl text-(--color-ink) mb-2">
+        {/* "Hoe een review achterlaten" — duidelijke 3-stappen sectie */}
+        <div className="mt-16 bg-(--color-paper) border border-(--color-frame) p-8 md:p-10">
+          <div className="text-center mb-8">
+            <p className="text-xs uppercase tracking-[0.3em] text-(--color-bronze) mb-2 inline-flex items-center gap-2">
+              <Star className="w-3 h-3 fill-(--color-bronze)" />
               {t.leaveReview}
             </p>
-            <p className="text-sm text-(--color-charcoal) mb-4 max-w-md mx-auto">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl md:text-3xl text-(--color-ink) mb-3">
+              {locale === 'fr'
+                ? 'Vous avez reçu un tirage ?'
+                : 'Heeft u een print ontvangen?'}
+            </h2>
+            <p className="text-sm text-(--color-charcoal) max-w-xl mx-auto">
               {t.leaveReviewBody}
             </p>
+          </div>
+
+          <ol className="grid md:grid-cols-3 gap-5 mb-8">
+            {[
+              {
+                step: '1',
+                title: locale === 'fr' ? 'Ouvrez votre œuvre' : 'Open uw werk',
+                body: locale === 'fr'
+                  ? 'Cliquez sur la photo dans la boutique ou sur le lien dans votre e-mail de confirmation.'
+                  : 'Klik op de foto in de boutique of op de link in uw bevestigingsmail.',
+              },
+              {
+                step: '2',
+                title: locale === 'fr' ? 'Descendez à « Avis »' : 'Scroll naar "Avis"',
+                body: locale === 'fr'
+                  ? 'En bas de la page, le formulaire vous attend.'
+                  : 'Onderaan de pagina staat het formulier voor u klaar.',
+              },
+              {
+                step: '3',
+                title: locale === 'fr' ? 'Notez & envoyez' : 'Beoordeel & verstuur',
+                body: locale === 'fr'
+                  ? 'Choisissez vos étoiles, écrivez quelques mots — Jean-Pierre lit chaque avis.'
+                  : 'Kies uw sterren, schrijf enkele woorden — Jean-Pierre leest elke beoordeling.',
+              },
+            ].map((s) => (
+              <li key={s.step} className="bg-(--color-canvas) border border-(--color-frame) p-5 relative">
+                <span className="absolute -top-3 left-5 inline-flex items-center justify-center w-7 h-7 rounded-full bg-(--color-bronze) text-white text-xs font-bold">
+                  {s.step}
+                </span>
+                <h3 className="font-medium text-(--color-ink) mt-2 mb-1.5">{s.title}</h3>
+                <p className="text-xs text-(--color-charcoal) leading-relaxed">{s.body}</p>
+              </li>
+            ))}
+          </ol>
+
+          <div className="text-center">
             <Link
               href="/shop/boutique"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-xs uppercase tracking-[0.2em] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-(--color-bronze) text-white hover:bg-(--color-bronze-dark) text-xs uppercase tracking-[0.2em] transition-colors"
             >
-              <ShoppingBag className="w-3.5 h-3.5" />
-              {locale === 'fr' ? 'Vers la boutique' : 'Naar de boutique'}
+              <ShoppingBag className="w-4 h-4" />
+              {locale === 'fr' ? 'Choisir mon œuvre' : 'Kies mijn werk'}
             </Link>
           </div>
-        )}
+        </div>
       </section>
     </main>
   )
