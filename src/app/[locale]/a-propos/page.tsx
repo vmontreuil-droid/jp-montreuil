@@ -35,6 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? 'Découvrez le parcours et la démarche de Jean-Pierre Montreuil, artiste peintre animalier.'
       : 'Ontdek de loopbaan en werkwijze van Jean-Pierre Montreuil, kunstschilder gespecialiseerd in dierenkunst.',
     imageUrl: imgUrl,
+    path: '/a-propos',
   })
 }
 

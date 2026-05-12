@@ -53,6 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: isFR
       ? "Commandez une œuvre originale réalisée à la main : portraits et scènes sur mesure au crayon, à l'aquarelle ou à l'acrylique."
       : 'Bestel een origineel werk, met de hand gemaakt: portretten en taferelen op maat in potlood, aquarel of acryl.',
+    path: '/devis',
   })
 }
 

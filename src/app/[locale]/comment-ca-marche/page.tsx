@@ -39,6 +39,8 @@ import {
 import { isLocale, type Locale } from '@/i18n/config'
 import { localePath } from '@/lib/links'
 import { pageMetadata } from '@/lib/og'
+import JsonLd from '@/components/seo/JsonLd'
+import { faqJsonLd, breadcrumbJsonLd } from '@/lib/seo/structured-data'
 
 /**
  * /comment-ca-marche — uitgebreide info-pagina voor bezoekers over hoe de
@@ -70,6 +72,7 @@ export async function generateMetadata({
     locale: localeParam as Locale,
     title: c.hero.title,
     description: c.hero.subtitle,
+    path: '/comment-ca-marche',
   })
 }
 
@@ -83,8 +86,18 @@ export default async function CommentCaMarchePage({
   const locale = localeParam as Locale
   const c = content[locale]
 
+  // FAQPage rich-result + Breadcrumb. Met FAQPage toont Google de
+  // vragen direct expandeerbaar onder de search-link → veel hogere CTR.
+  const localePrefix = locale === 'fr' ? '' : '/nl'
+  const faqLd = faqJsonLd(c.faq.items.map((it) => ({ question: it.q, answer: it.a })))
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: locale === 'fr' ? 'Accueil' : 'Home', path: localePrefix || '/' },
+    { name: c.hero.title, path: `${localePrefix}/comment-ca-marche` },
+  ])
+
   return (
     <main className="bg-(--color-canvas)">
+      <JsonLd data={[faqLd, breadcrumbLd]} />
       {/* 1 — Hero */}
       <section className="max-w-4xl mx-auto px-6 pt-12 md:pt-20 pb-12">
         <p className="text-(--color-stone) text-xs tracking-[0.3em] uppercase mb-3 inline-flex items-center gap-2">

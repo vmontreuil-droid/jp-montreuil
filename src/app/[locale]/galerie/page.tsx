@@ -37,6 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? "Découvrez la collection complète de Jean-Pierre Montreuil — chevaux, chiens, portraits et art animalier."
       : 'Ontdek de volledige collectie van Jean-Pierre Montreuil — paarden, honden, portretten en dierenkunst.',
     imageUrl: coverUrl,
+    path: '/galerie',
   })
 }
 

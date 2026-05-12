@@ -23,6 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     locale: locale as Locale,
     title: t.avis.title,
     description: t.avis.lead,
+    path: '/avis',
   })
 }
 

@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: Props) {
     description: locale === 'fr'
       ? 'Documents presse, biographie, photos haute résolution et contact wholesale pour galeries et publications.'
       : 'Persdocumenten, biografie, hoge-resolutie foto\'s en wholesale contact voor galerijen en publicaties.',
+    path: '/presse',
   })
 }
 

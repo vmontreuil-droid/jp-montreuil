@@ -48,6 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? 'Expositions, salons et événements à venir et passés de Jean-Pierre Montreuil.'
       : 'Komende en voorbije tentoonstellingen, beurzen en evenementen van Jean-Pierre Montreuil.',
     imageUrl: imgUrl,
+    path: '/expositions',
   })
 }
 

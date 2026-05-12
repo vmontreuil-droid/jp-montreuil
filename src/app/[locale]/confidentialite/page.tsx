@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { isLocale, type Locale } from '@/i18n/config'
+import { pageMetadata } from '@/lib/og'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -9,9 +10,14 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
   if (!isLocale(locale)) return {}
-  return {
+  return pageMetadata({
+    locale: locale as Locale,
     title: locale === 'fr' ? 'Politique de confidentialité' : 'Privacybeleid',
-  }
+    description: locale === 'fr'
+      ? 'Politique de confidentialité de l\'Atelier Montreuil — gestion des données personnelles et cookies.'
+      : 'Privacybeleid van Atelier Montreuil — verwerking van persoonsgegevens en cookies.',
+    path: '/confidentialite',
+  })
 }
 
 export default async function PrivacyPage({ params }: Props) {

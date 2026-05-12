@@ -40,6 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: isFR
       ? 'Contactez Jean-Pierre Montreuil pour une commande, un portrait ou une exposition.'
       : 'Neem contact op met Jean-Pierre Montreuil voor een opdracht, portret of tentoonstelling.',
+    path: '/contact',
   })
 }
 

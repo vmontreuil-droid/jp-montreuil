@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { isLocale, type Locale } from '@/i18n/config'
+import { pageMetadata } from '@/lib/og'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -9,9 +10,14 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
   if (!isLocale(locale)) return {}
-  return {
+  return pageMetadata({
+    locale: locale as Locale,
     title: locale === 'fr' ? 'Mentions légales' : 'Wettelijke vermeldingen',
-  }
+    description: locale === 'fr'
+      ? 'Mentions légales de l\'Atelier Montreuil — coordonnées, hébergeur et propriété intellectuelle.'
+      : 'Wettelijke vermeldingen van Atelier Montreuil — contactgegevens, hosting en intellectuele eigendom.',
+    path: '/mentions-legales',
+  })
 }
 
 export default async function LegalPage({ params }: Props) {

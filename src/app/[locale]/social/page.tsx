@@ -41,6 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: isFR
       ? 'Suivez Jean-Pierre Montreuil sur Facebook, WhatsApp et découvrez ses publications.'
       : 'Volg Jean-Pierre Montreuil op Facebook, WhatsApp en ontdek zijn publicaties.',
+    path: '/social',
   })
 }
 
