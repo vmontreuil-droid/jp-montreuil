@@ -1,8 +1,12 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Mail, Users, Send, ArrowRight, Clock } from 'lucide-react'
+import { Mail, Users, Send, ArrowRight, Clock, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { countActiveSubscribers, listIssues } from '@/lib/newsletter'
+import {
+  countActiveSubscribers,
+  listIssues,
+  newsletterTablesExist,
+} from '@/lib/newsletter'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +15,7 @@ export default async function NewsletterDashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/admin/login?next=/admin/newsletter')
 
+  const tablesExist = await newsletterTablesExist()
   const [counts, issues] = await Promise.all([
     countActiveSubscribers(),
     listIssues(),
@@ -27,6 +32,30 @@ export default async function NewsletterDashboardPage() {
           Newsletters bilingues vers les abonnés actifs (FR + NL).
         </p>
       </header>
+
+      {!tablesExist && (
+        <div className="bg-amber-50 border border-amber-300 p-5">
+          <p className="font-medium text-amber-900 inline-flex items-center gap-2 mb-1">
+            <AlertTriangle className="w-4 h-4" />
+            Migratie 0009_newsletter nog niet toegepast
+          </p>
+          <p className="text-sm text-amber-900/90 mb-3">
+            De tabellen <code className="bg-amber-100 px-1">newsletter_subscribers</code> en{' '}
+            <code className="bg-amber-100 px-1">newsletter_issues</code> bestaan nog niet in deze database.
+            Plak <code className="bg-amber-100 px-1">supabase/migrations/0009_newsletter.sql</code> in de
+            Supabase SQL Editor en run.
+          </p>
+          <a
+            href="https://supabase.com/dashboard/project/_/sql/new"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-700 text-white hover:bg-amber-800 text-xs uppercase tracking-widest"
+          >
+            Open Supabase SQL Editor
+            <ArrowRight className="w-3 h-3" />
+          </a>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid sm:grid-cols-3 gap-3">

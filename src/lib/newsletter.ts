@@ -48,15 +48,28 @@ export async function listSubscribers(opts?: {
   return (data ?? []) as NewsletterSubscriber[]
 }
 
+/**
+ * Detecteer "table missing" zodat we de admin-UI een nette empty-state
+ * kunnen tonen i.p.v. een 500-error wanneer migratie 0009 nog niet is
+ * toegepast op deze omgeving.
+ */
+function isMissingTable(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false
+  return error.code === 'PGRST205' || /Could not find the table/i.test(error.message ?? '')
+}
+
 export async function countActiveSubscribers(): Promise<{ fr: number; nl: number; total: number }> {
   const sb = createAdminClient()
-  const [{ count: fr }, { count: nl }] = await Promise.all([
+  const [a, b] = await Promise.all([
     sb.from('newsletter_subscribers').select('*', { count: 'exact', head: true })
       .is('unsubscribed_at', null).eq('locale', 'fr'),
     sb.from('newsletter_subscribers').select('*', { count: 'exact', head: true })
       .is('unsubscribed_at', null).eq('locale', 'nl'),
   ])
-  return { fr: fr ?? 0, nl: nl ?? 0, total: (fr ?? 0) + (nl ?? 0) }
+  if (isMissingTable(a.error) || isMissingTable(b.error)) {
+    return { fr: 0, nl: 0, total: 0 }
+  }
+  return { fr: a.count ?? 0, nl: b.count ?? 0, total: (a.count ?? 0) + (b.count ?? 0) }
 }
 
 export async function listIssues(): Promise<NewsletterIssue[]> {
@@ -65,8 +78,20 @@ export async function listIssues(): Promise<NewsletterIssue[]> {
     .from('newsletter_issues')
     .select('*')
     .order('sent_at', { ascending: false })
+  if (isMissingTable(error)) return []
   if (error) throw error
   return (data ?? []) as NewsletterIssue[]
+}
+
+/**
+ * Check of de newsletter-tables bestaan in de DB — gebruikt door de
+ * admin-pagina om een banner te tonen wanneer de migratie nog niet
+ * gedraaid is.
+ */
+export async function newsletterTablesExist(): Promise<boolean> {
+  const sb = createAdminClient()
+  const { error } = await sb.from('newsletter_subscribers').select('id', { head: true, count: 'exact' }).limit(1)
+  return !isMissingTable(error)
 }
 
 export async function getIssue(id: string): Promise<NewsletterIssue | null> {
