@@ -48,7 +48,7 @@ export default async function HomePage({ params }: Props) {
     <>
       <HeroSlideshow
         slides={slides}
-        brandName="Jean-Pierre Montreuil"
+        brandName="JP Montreuil"
         tagline={t.tagline}
         ctaLabel={t.home.seeCollection}
         ctaHref={localePath(locale as Locale, '/galerie')}
