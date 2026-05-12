@@ -56,6 +56,8 @@ export default async function HomePage({ params }: Props) {
         contactHref={localePath(locale as Locale, '/contact')}
         devisLabel={t.nav.devis}
         devisHref={localePath(locale as Locale, '/devis')}
+        boutiqueLabel={t.nav.boutique}
+        boutiqueHref="/shop/boutique"
         indicatorLabel={locale === 'fr' ? 'Découvrir' : 'Bekijk'}
       />
 

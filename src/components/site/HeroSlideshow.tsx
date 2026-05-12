@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, MessageCircle, ChevronDown, Brush } from 'lucide-react'
+import { ArrowRight, MessageCircle, ChevronDown, Brush, ShoppingBag } from 'lucide-react'
 
 export type HeroSlide = {
   src: string
@@ -21,6 +21,8 @@ type Props = {
   contactHref: string
   devisLabel?: string
   devisHref?: string
+  boutiqueLabel?: string
+  boutiqueHref?: string
   indicatorLabel: string
   intervalMs?: number
   fadeMs?: number
@@ -36,6 +38,8 @@ export default function HeroSlideshow({
   contactHref,
   devisLabel,
   devisHref,
+  boutiqueLabel,
+  boutiqueHref,
   indicatorLabel,
   intervalMs = 5000,
   fadeMs = 1500,
@@ -119,6 +123,15 @@ export default function HeroSlideshow({
                   aria-hidden="true"
                   className="absolute -top-1.5 -right-1.5 inline-flex h-3 w-3 rounded-full bg-white"
                 />
+              </Link>
+            )}
+            {boutiqueLabel && boutiqueHref && (
+              <Link
+                href={boutiqueHref}
+                className="inline-flex items-center gap-2 px-6 py-3 border border-white/40 text-white hover:bg-white/10 transition-colors text-sm uppercase tracking-[0.2em]"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                {boutiqueLabel}
               </Link>
             )}
             <Link
