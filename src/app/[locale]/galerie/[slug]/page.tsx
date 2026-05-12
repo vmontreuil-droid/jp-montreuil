@@ -7,10 +7,13 @@ import { isLocale, type Locale } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionaries'
 import { localePath, workImageUrl } from '@/lib/links'
 import { pageMetadata } from '@/lib/og'
+import { PUBLIC_BASE_URL } from '@/lib/public-url'
 import { createClient } from '@/lib/supabase/server'
 import CategoryGallery from '@/components/site/CategoryGallery'
 import type { LightboxWork } from '@/components/site/Lightbox'
 import ShareButtons from '@/components/site/ShareButtons'
+import JsonLd from '@/components/seo/JsonLd'
+import { breadcrumbJsonLd, imageGalleryJsonLd } from '@/lib/seo/structured-data'
 
 type Props = {
   params: Promise<{ locale: string; slug: string }>
@@ -47,6 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     imageUrl: coverUrl,
     ogType: 'article',
+    path: `/galerie/${slug}`,
   })
 }
 
@@ -95,8 +99,30 @@ export default async function CategoryDetailPage({ params }: Props) {
   const label = locale === 'fr' ? category.label_fr : category.label_nl
   const description = locale === 'fr' ? category.description_fr : category.description_nl
 
+  // ──────────────────────────────────────────────────────────────────
+  // JSON-LD: Breadcrumb + ImageGallery (associatedMedia per werk)
+  // ──────────────────────────────────────────────────────────────────
+  const base = PUBLIC_BASE_URL.replace(/\/$/, '')
+  const localePrefix = locale === 'fr' ? '' : '/nl'
+  const galleryUrl = `${base}${localePrefix}/galerie/${slug}`
+  const galleryLd = imageGalleryJsonLd({
+    name: label,
+    description: description ?? `Atelier Montreuil — ${label}`,
+    url: galleryUrl,
+    images: works.slice(0, 50).map((w) => ({
+      url: workImageUrl(w.storage_path),
+      caption: locale === 'fr' ? w.title_fr : w.title_nl,
+    })),
+  })
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: locale === 'fr' ? 'Accueil' : 'Home', path: localePrefix || '/' },
+    { name: locale === 'fr' ? 'Galerie' : 'Galerij', path: `${localePrefix}/galerie` },
+    { name: label, path: `${localePrefix}/galerie/${slug}` },
+  ])
+
   return (
     <>
+      <JsonLd data={[galleryLd, breadcrumbLd]} />
       {/* Banner-header met cover-foto + frosted card */}
       <section className="relative h-[60vh] min-h-[360px] overflow-hidden">
         {category.cover?.storage_path && (

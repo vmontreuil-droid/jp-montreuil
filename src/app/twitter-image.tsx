@@ -1,12 +1,3 @@
-import { ImageResponse } from 'next/og'
-import { OgImageContent } from './og-image-content'
-
-export const alt = 'Atelier Montreuil — Jean-Pierre Montreuil'
-export const size = { width: 1200, height: 630 }
-export const contentType = 'image/png'
-
-export const runtime = 'edge'
-
-export default function Image() {
-  return new ImageResponse(<OgImageContent />, size)
-}
+// Twitter-card image — re-exports identieke generator als opengraph-image.
+// We willen op alle social-platforms dezelfde rijke preview, geen fork.
+export { default, alt, size, contentType, runtime, revalidate } from './opengraph-image'

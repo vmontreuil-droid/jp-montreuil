@@ -13,6 +13,8 @@ import {
   formatEur,
 } from '@/lib/shop/print-shop'
 import { listApprovedReviewsForPhoto, aggregateReviews } from '@/lib/shop/reviews'
+import JsonLd from '@/components/seo/JsonLd'
+import { shopPhotoJsonLd, breadcrumbJsonLd } from '@/lib/seo/structured-data'
 import { PhotoStage } from '@/components/shop/PhotoStage'
 import ReviewsSection from '@/components/shop/ReviewsSection'
 import { ReviewsBadge } from '@/components/shop/ReviewsBadge'
@@ -147,8 +149,43 @@ export default async function PhotoConfiguratorPage({
   }))
   const sizeProps = sizes.map((s) => ({ id: s.id, slug: s.slug, label: s.label }))
 
+  // ──────────────────────────────────────────────────────────────────
+  // JSON-LD: Product + AggregateRating + Review + Breadcrumb
+  // → Google rich-result: ⭐4.8/5 + prijs-range onder de search-link
+  // ──────────────────────────────────────────────────────────────────
+  const priceCents = prices.map((p) => p.priceCents)
+  const lowPrice = priceCents.length > 0 ? Math.min(...priceCents) / 100 : undefined
+  const highPrice = priceCents.length > 0 ? Math.max(...priceCents) / 100 : undefined
+  const photoUrl_ = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/shop/boutique/photo/${photo.slug}`
+  const productJsonLd = shopPhotoJsonLd({
+    name: photo.title ?? photo.slug,
+    description: photo.description ?? photo.alt_text ?? `Tirage d'art de Jean-Pierre Montreuil — ${photo.title ?? photo.slug}.`,
+    image: photoUrl(photo),
+    url: photoUrl_,
+    lowPrice,
+    highPrice,
+    isAvailable: prices.length > 0,
+    reviews: aggregate.count > 0 && aggregate.average != null
+      ? {
+          count: aggregate.count,
+          average: aggregate.average,
+          items: reviews.slice(0, 5).map((r) => ({
+            author: r.name,
+            rating: r.rating,
+            body: r.body,
+            datePublished: r.created_at,
+          })),
+        }
+      : undefined,
+  })
+  const breadcrumbLd = breadcrumbJsonLd([
+    { name: 'Boutique', path: '/shop/boutique' },
+    { name: photo.title ?? photo.slug, path: `/shop/boutique/photo/${photo.slug}` },
+  ])
+
   return (
     <main className="max-w-6xl mx-auto px-6 py-8">
+      <JsonLd data={[productJsonLd, breadcrumbLd]} />
       <PhotoViewTracker photoId={photo.id} path={`/shop/boutique/photo/${photo.slug}`} />
 
       <Link
