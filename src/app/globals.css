@@ -124,6 +124,23 @@
     z-index: 1;
   }
 
+  /* Wide-mode voor admin-pages — overschrijft alle max-w-utilities die
+     een container centreren binnen de canvas. Toggle wordt geregeld
+     door AdminWidthToggle (localStorage). Padding-rechts zodat de
+     floating maximize-knop niet over content valt. */
+  .admin-wide .max-w-7xl,
+  .admin-wide .max-w-6xl,
+  .admin-wide .max-w-5xl,
+  .admin-wide .max-w-4xl,
+  .admin-wide .max-w-3xl,
+  .admin-wide .max-w-2xl {
+    max-width: none !important;
+  }
+  .admin-wide main,
+  .admin-wide > main {
+    padding-right: max(1.5rem, env(safe-area-inset-right));
+  }
+
   /* Sticky sub-footer verbergen wanneer een modal/lightbox open is —
      anders steekt 'ie door de modal heen op sommige schermen. */
   body.modal-open .site-sub-footer {

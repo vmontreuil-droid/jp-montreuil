@@ -6,6 +6,13 @@ import { getDictionary } from '@/i18n/dictionaries'
 import { htmlLang } from '@/i18n/config'
 import { CartProvider } from '@/components/shop/CartProvider'
 import { WishlistProvider } from '@/components/shop/WishlistProvider'
+import JsonLd from '@/components/seo/JsonLd'
+import {
+  personJsonLd,
+  localBusinessJsonLd,
+  webSiteJsonLd,
+} from '@/lib/seo/structured-data'
+import { PUBLIC_BASE_URL } from '@/lib/public-url'
 
 // Megrim — geometrische display-font, zelfde als oude jp.montreuil.be
 const megrim = Megrim({
@@ -82,6 +89,34 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const locale = await getRequestLocale()
+  const t = getDictionary(locale)
+  const base = PUBLIC_BASE_URL.replace(/\/$/, '')
+
+  // Site-wide structured data — verschijnt op elke page. Person en
+  // ProfessionalService voeden de Google Knowledge Panel + Maps; WebSite
+  // is voor sitelinks-search.
+  const siteJsonLd = [
+    personJsonLd({
+      name: 'Jean-Pierre Montreuil',
+      url: base,
+      image: `${base}/opengraph-image`,
+      description: t.tagline,
+      sameAs: ['https://www.facebook.com/jeanpierre.montreuil.3'],
+    }),
+    localBusinessJsonLd({
+      name: t.brand,
+      url: base,
+      image: `${base}/opengraph-image`,
+      telephone: t.contact.phoneValue,
+      email: t.contact.emailValue,
+      street: 'Heuntjesstraat 6',
+      postalCode: '8570',
+      city: 'Anzegem',
+      country: 'BE',
+      description: t.tagline,
+    }),
+    webSiteJsonLd({ name: t.brand, url: base }),
+  ]
 
   return (
     <html lang={htmlLang[locale]} className={`${megrim.variable} ${montserrat.variable}`}>
@@ -93,6 +128,7 @@ export default async function RootLayout({
             __html: `(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light');}catch(e){}})();`,
           }}
         />
+        <JsonLd data={siteJsonLd} />
       </head>
       <body>
         {/* Cart + Wishlist providers globaal — header heeft die counts

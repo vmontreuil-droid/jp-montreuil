@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { SidebarCollapseProvider, useSidebarCollapse } from './SidebarCollapseContext'
+import { AdminWidthProvider, useAdminWidth } from './AdminWidthContext'
+import AdminWidthToggle from './AdminWidthToggle'
 
 type Props = {
   sidebar: React.ReactNode
@@ -22,7 +24,9 @@ type Props = {
 export default function AdminShell({ sidebar, children }: Props) {
   return (
     <SidebarCollapseProvider>
-      <ShellInner sidebar={sidebar}>{children}</ShellInner>
+      <AdminWidthProvider>
+        <ShellInner sidebar={sidebar}>{children}</ShellInner>
+      </AdminWidthProvider>
     </SidebarCollapseProvider>
   )
 }
@@ -30,6 +34,7 @@ export default function AdminShell({ sidebar, children }: Props) {
 function ShellInner({ sidebar, children }: Props) {
   const [open, setOpen] = useState(false)
   const { collapsed } = useSidebarCollapse()
+  const { wide } = useAdminWidth()
 
   // Esc + body scroll-lock zolang drawer open is
   useEffect(() => {
@@ -100,8 +105,14 @@ function ShellInner({ sidebar, children }: Props) {
         {sidebar}
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto bg-(--color-canvas) topo-overlay">
+      {/* Main content. .admin-wide overschrijft max-width-utilities zodat
+          alle pages full-width worden zonder de pages zelf aan te passen. */}
+      <main
+        className={`flex-1 overflow-y-auto bg-(--color-canvas) topo-overlay relative ${
+          wide ? 'admin-wide' : ''
+        }`}
+      >
+        <AdminWidthToggle />
         {children}
       </main>
     </div>
