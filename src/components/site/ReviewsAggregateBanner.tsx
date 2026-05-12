@@ -19,7 +19,7 @@ import type { ReviewAggregate, ReviewWithPhoto } from '@/lib/shop/reviews'
  */
 
 const MIN_REVIEWS_TO_SHOW = 3
-const MIN_REVIEWS_FOR_PAGE_LINK = 10
+const MIN_REVIEWS_FOR_PAGE_LINK = 1
 const ROTATE_INTERVAL_MS = 7000
 
 export function ReviewsAggregateBanner({

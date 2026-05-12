@@ -34,8 +34,10 @@ export default async function AvisPage({ params }: Props) {
 
   const [overall, reviews] = await Promise.all([
     getOverallReviewsAggregate(),
-    // Locale-filter: standaard tonen we de reviews in de juiste taal
-    listRecentApprovedReviewsWithPhoto(100, locale as 'fr' | 'nl'),
+    // Geen locale-filter: alle reviews door elkaar in hun originele
+    // taal. UI-shell van de pagina staat in pagine-locale, maar de
+    // body van een review wordt getoond zoals de klant ze schreef.
+    listRecentApprovedReviewsWithPhoto(100),
   ])
 
   const dateFmt = new Intl.DateTimeFormat(locale === 'nl' ? 'nl-BE' : 'fr-BE', {

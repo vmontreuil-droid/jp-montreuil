@@ -29,10 +29,10 @@ type Props = {
 }
 
 export default async function Footer({ locale, t }: Props) {
-  // Toon /avis-link enkel wanneer er minstens 10 reviews zijn (zinvol
-  // om naar te linken). Anders blijft de link verborgen.
+  // Toon /avis-link zodra er minstens 1 review is — anders is er
+  // niets om te bekijken.
   const reviewsCount = await getApprovedReviewsCount().catch(() => 0)
-  const showAvisLink = reviewsCount >= 10
+  const showAvisLink = reviewsCount >= 1
   const year = new Date().getFullYear()
 
   const navItems = [
