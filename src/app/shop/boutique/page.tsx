@@ -10,6 +10,7 @@ import {
   mediumName,
 } from '@/lib/shop/print-shop'
 import { listShopCategories } from '@/lib/shop/import-works'
+import { aggregatesForPhotos } from '@/lib/shop/reviews'
 import { getDictionary } from '@/i18n/dictionaries'
 import { getShopLocale } from '@/lib/shop/locale'
 import { localePath } from '@/lib/links'
@@ -34,6 +35,12 @@ export default async function ShopBoutiquePage() {
     listFeaturedShopPhotos(6).catch(() => []),
     listShopCategories().catch(() => []),
   ])
+
+  // Reviews-aggregates per foto (1 batch-query) — voor sterren-badges
+  // op de cards. Drempel: ≥1 review → toon badge.
+  const reviewAggregates = await aggregatesForPhotos(
+    photos.map((p) => p.id),
+  ).catch(() => new Map())
 
   const minCents = prices.length > 0 ? Math.min(...prices.map((p) => p.price_cents)) : null
   const cheapestMedium = (() => {
@@ -123,21 +130,26 @@ export default async function ShopBoutiquePage() {
           </div>
         ) : (
           <BoutiqueGrid
-            photos={photos.map((p) => ({
-              id: p.id,
-              slug: p.slug,
-              title: p.title,
-              alt: p.alt_text ?? p.title ?? p.slug,
-              storage_path: p.storage_path,
-              bucket: p.bucket ?? 'shop-photos',
-              species: p.species,
-              taken_at_location: p.taken_at_location,
-              taken_at: p.taken_at,
-              description: p.description,
-              category_slug: p.category_slug,
-              orientation: p.orientation,
-              created_at: p.created_at,
-            }))}
+            photos={photos.map((p) => {
+              const ag = reviewAggregates.get(p.id)
+              return {
+                id: p.id,
+                slug: p.slug,
+                title: p.title,
+                alt: p.alt_text ?? p.title ?? p.slug,
+                storage_path: p.storage_path,
+                bucket: p.bucket ?? 'shop-photos',
+                species: p.species,
+                taken_at_location: p.taken_at_location,
+                taken_at: p.taken_at,
+                description: p.description,
+                category_slug: p.category_slug,
+                orientation: p.orientation,
+                created_at: p.created_at,
+                reviewsCount: ag?.count ?? 0,
+                reviewsAverage: ag?.average ?? null,
+              }
+            })}
             categories={categories}
             labels={{
               singular: t.photoCountSingular,

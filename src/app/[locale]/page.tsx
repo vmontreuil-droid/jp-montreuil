@@ -7,6 +7,11 @@ import { localePath, workImageUrl } from '@/lib/links'
 import { createClient } from '@/lib/supabase/server'
 import HeroSlideshow, { type HeroSlide } from '@/components/site/HeroSlideshow'
 import ShareButtons from '@/components/site/ShareButtons'
+import { ReviewsAggregateBanner } from '@/components/site/ReviewsAggregateBanner'
+import {
+  getOverallReviewsAggregate,
+  listRecentApprovedReviewsWithPhoto,
+} from '@/lib/shop/reviews'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -35,6 +40,13 @@ export default async function HomePage({ params }: Props) {
 
   const categories = data ?? []
 
+  // Reviews voor de aggregate-banner. Best-effort: faalt silent als
+  // shop-schema nog niet exposed is.
+  const [overallReviews, recentReviews] = await Promise.all([
+    getOverallReviewsAggregate().catch(() => ({ count: 0, average: null, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } })),
+    listRecentApprovedReviewsWithPhoto(10).catch(() => []),
+  ])
+
   // Slides volgen de admin sort_order; categorieën zonder cover overslaan.
   const slides: HeroSlide[] = categories
     .filter((c) => c.cover?.storage_path)
@@ -59,6 +71,18 @@ export default async function HomePage({ params }: Props) {
         boutiqueLabel={t.nav.boutique}
         boutiqueHref="/shop/boutique"
         indicatorLabel={locale === 'fr' ? 'Découvrir' : 'Bekijk'}
+      />
+
+      <ReviewsAggregateBanner
+        aggregate={overallReviews}
+        recentReviews={recentReviews}
+        locale={locale as 'fr' | 'nl'}
+        labels={{
+          eyebrow: t.home.reviewsEyebrow,
+          basedOn: t.home.reviewsBasedOn,
+          seeAll: t.home.reviewsSeeAll,
+          on: t.home.reviewsOn,
+        }}
       />
 
       <section className="max-w-3xl mx-auto px-6 py-20 md:py-24 text-center">

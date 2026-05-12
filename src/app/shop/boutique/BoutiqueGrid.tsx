@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { ArrowRight, Search, ArrowDownUp, Heart, X, Eye, Tags } from 'lucide-react'
+import { ArrowRight, Search, ArrowDownUp, Heart, X, Eye, Tags, Star } from 'lucide-react'
 import { WishlistButton } from '@/components/shop/WishlistButton'
 import { useWishlist } from '@/components/shop/WishlistProvider'
 import QuickViewModal from '@/components/shop/QuickViewModal'
@@ -22,6 +22,8 @@ type PhotoMini = {
   category_slug: string | null
   orientation: 'portrait' | 'landscape' | 'square'
   created_at: string
+  reviewsCount?: number
+  reviewsAverage?: number | null
 }
 
 type SortKey = 'recent' | 'oldest' | 'title' | 'favorites'
@@ -268,6 +270,18 @@ export default function BoutiqueGrid({
                   >
                     <Eye className="w-3.5 h-3.5" />
                   </button>
+                  {/* Reviews-badge — drempel ≥ 1 review, verbergt anders */}
+                  {p.reviewsCount && p.reviewsCount > 0 && p.reviewsAverage != null && (
+                    <span
+                      className="absolute bottom-2 left-2 z-10 inline-flex items-center gap-1 px-1.5 py-0.5 bg-(--color-canvas)/85 backdrop-blur-sm text-[10px] text-(--color-ink) rounded shadow-sm"
+                      title={`${p.reviewsAverage.toFixed(1)} / 5 — ${p.reviewsCount} ${p.reviewsCount === 1 ? 'avis' : 'avis'}`}
+                    >
+                      <Star className="w-2.5 h-2.5 text-(--color-bronze) fill-(--color-bronze)" />
+                      <span className="font-medium tabular-nums">{p.reviewsAverage.toFixed(1)}</span>
+                      <span className="text-(--color-stone)">·</span>
+                      <span className="text-(--color-stone)">{p.reviewsCount}</span>
+                    </span>
+                  )}
                 </div>
                 <div className="p-3">
                   <p className="text-sm text-(--color-ink) truncate font-medium">

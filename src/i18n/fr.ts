@@ -17,6 +17,21 @@ const dict = {
     intro:
       "L'artiste Jean-Pierre Montreuil s'inspire surtout du règne animal : les chevaux, les chiens, les chats et les oiseaux constituent les thèmes principaux. Ils font partie de sa vie de tous les jours et reviennent sous différentes formes artistiques. L'artiste peintre commence le plus souvent avec les yeux avant d'approfondir son œuvre. Tout est fait sur mesure.",
     seeCollection: 'Voir la collection',
+    reviewsEyebrow: 'Avis vérifiés',
+    reviewsBasedOn: 'D\'après {{n}} avis clients',
+    reviewsSeeAll: 'Voir tous les avis',
+    reviewsOn: 'sur',
+  },
+
+  avis: {
+    title: 'Avis clients',
+    eyebrow: 'Témoignages vérifiés',
+    lead: 'Tous les avis ci-dessous ont été laissés par des clients ayant reçu leur tirage. Aucun filtre, aucune sélection — sauf modération anti-spam.',
+    empty: 'Pas encore d\'avis. Soyez le premier !',
+    leaveReview: 'Laisser un avis',
+    leaveReviewBody: 'Vous avez reçu un tirage ? Cliquez ci-dessous sur votre œuvre pour laisser un avis.',
+    on: 'sur',
+    verified: 'Achat vérifié',
   },
 
   contact: {

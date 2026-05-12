@@ -1,10 +1,11 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Mail, Phone, MapPin, BookOpen, KeyRound } from 'lucide-react'
+import { Mail, Phone, MapPin, BookOpen, KeyRound, Star } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 import { type Dictionary } from '@/i18n/dictionaries'
 import { localePath, whatsappHref } from '@/lib/links'
 import NewsletterSubscribe from './NewsletterSubscribe'
+import { getApprovedReviewsCount } from '@/lib/shop/reviews'
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -27,7 +28,11 @@ type Props = {
   t: Dictionary
 }
 
-export default function Footer({ locale, t }: Props) {
+export default async function Footer({ locale, t }: Props) {
+  // Toon /avis-link enkel wanneer er minstens 10 reviews zijn (zinvol
+  // om naar te linken). Anders blijft de link verborgen.
+  const reviewsCount = await getApprovedReviewsCount().catch(() => 0)
+  const showAvisLink = reviewsCount >= 10
   const year = new Date().getFullYear()
 
   const navItems = [
@@ -177,6 +182,18 @@ export default function Footer({ locale, t }: Props) {
           >
             {locale === 'fr' ? 'Confidentialité' : 'Privacybeleid'}
           </Link>
+          {showAvisLink && (
+            <>
+              <span aria-hidden="true">·</span>
+              <Link
+                href={localePath(locale, '/avis')}
+                className="inline-flex items-center gap-1 hover:text-(--color-bronze) transition-colors"
+              >
+                <Star className="w-3 h-3 text-(--color-bronze) fill-(--color-bronze)" />
+                {locale === 'fr' ? 'Avis clients' : 'Beoordelingen'}
+              </Link>
+            </>
+          )}
           <span aria-hidden="true">·</span>
           <Link
             href="/admin"

@@ -15,10 +15,25 @@ const dict: Dictionary = {
     commentCaMarche: 'Hoe werkt het',
   },
 
+  avis: {
+    title: 'Klantenbeoordelingen',
+    eyebrow: 'Geverifieerde getuigenissen',
+    lead: 'Alle onderstaande beoordelingen zijn gegeven door klanten die hun print ontvangen hebben. Geen filter, geen selectie — enkel anti-spam moderatie.',
+    empty: 'Nog geen beoordelingen. Wees de eerste!',
+    leaveReview: 'Beoordeling achterlaten',
+    leaveReviewBody: 'Heeft u een print ontvangen? Klik hieronder op uw werk om een beoordeling achter te laten.',
+    on: 'op',
+    verified: 'Geverifieerde aankoop',
+  },
+
   home: {
     intro:
       "De kunstenaar Jean-Pierre Montreuil laat zich vooral inspireren door het dierenrijk: paarden, honden, katten en vogels vormen zijn belangrijkste thema's. Ze maken deel uit van zijn dagelijks leven en komen terug in verschillende artistieke vormen. De schilder begint meestal met de ogen voordat hij zijn werk verder uitwerkt. Alles wordt op maat gemaakt.",
     seeCollection: 'Bekijk de gallerij',
+    reviewsEyebrow: 'Geverifieerde beoordelingen',
+    reviewsBasedOn: 'Gebaseerd op {{n}} klantenbeoordelingen',
+    reviewsSeeAll: 'Alle beoordelingen bekijken',
+    reviewsOn: 'op',
   },
 
   contact: {
