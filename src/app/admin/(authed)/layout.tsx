@@ -246,6 +246,7 @@ export default async function AuthedAdminLayout({
       title: 'Communication',
       icon: 'Send',
       items: [
+        { href: '/admin/journal', label: 'Journal', icon: 'BookOpen' },
         { href: '/admin/newsletter', label: 'Newsletter', icon: 'Newspaper' },
       ],
     },

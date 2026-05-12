@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { listShopPhotos } from '@/lib/shop/photos'
+import { listPublishedPosts } from '@/lib/journal'
 import { PUBLIC_BASE_URL } from '@/lib/public-url'
 
 const BASE = PUBLIC_BASE_URL.replace(/\/$/, '')
@@ -20,6 +21,7 @@ const STATIC_PATHS = [
   { path: '/comment-ca-marche', priority: 0.7 },
   { path: '/presse', priority: 0.6 },
   { path: '/avis', priority: 0.7 },
+  { path: '/journal', priority: 0.85 },
   { path: '/mentions-legales', priority: 0.3 },
   { path: '/confidentialite', priority: 0.3 },
 ]
@@ -95,6 +97,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   } catch {
     // Shop schema niet beschikbaar → skip stille; sitemap moet altijd 200
+  }
+
+  // ──────────────────────────────────────────────────────────────────
+  // Journal posts (FR + NL)
+  // ──────────────────────────────────────────────────────────────────
+  try {
+    const posts = await listPublishedPosts({ limit: 500 })
+    for (const p of posts) {
+      const lastModified = new Date(p.updated_at)
+      entries.push(...bilingualEntries(`/journal/${p.slug}`, 0.7, lastModified, 'monthly'))
+    }
+  } catch {
+    // Migratie 0032 niet toegepast → geen journal posts in sitemap
   }
 
   return entries

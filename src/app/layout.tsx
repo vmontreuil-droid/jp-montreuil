@@ -60,6 +60,11 @@ export async function generateMetadata(): Promise<Metadata> {
         'fr-BE': baseUrl,
         'nl-BE': `${baseUrl}/nl`,
       },
+      types: {
+        // <link rel="alternate" type="application/rss+xml" /> voor
+        // Feedly + browser-extensions die RSS-feeds detecteren
+        'application/rss+xml': `${baseUrl}/journal/rss.xml`,
+      },
     },
     keywords: [
       'Jean-Pierre Montreuil',

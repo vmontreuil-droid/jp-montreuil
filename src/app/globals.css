@@ -141,6 +141,64 @@
     padding-right: max(1.5rem, env(safe-area-inset-right));
   }
 
+  /* Journal-body typografie — pure CSS i.p.v. tailwind/typography
+     plugin om bundle klein te houden. Geldt enkel binnen .journal-body. */
+  .journal-body h2 {
+    font-family: var(--font-display);
+    font-size: 1.875rem;
+    color: var(--color-ink);
+    margin: 2.5rem 0 1rem;
+    line-height: 1.2;
+  }
+  .journal-body h3 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--color-ink);
+    margin: 2rem 0 0.75rem;
+    line-height: 1.3;
+  }
+  .journal-body p { margin: 0 0 1.25rem; line-height: 1.75; }
+  .journal-body strong { color: var(--color-ink); font-weight: 600; }
+  .journal-body em { font-style: italic; color: var(--color-ink); }
+  .journal-body a {
+    color: var(--color-bronze);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .journal-body a:hover { color: var(--color-bronze-dark); }
+  .journal-body blockquote {
+    border-left: 3px solid var(--color-bronze);
+    padding: 0.5rem 0 0.5rem 1.25rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+    color: var(--color-ink);
+  }
+  .journal-body ul, .journal-body ol {
+    margin: 0 0 1.25rem 1.5rem;
+    line-height: 1.75;
+  }
+  .journal-body ul { list-style: disc; }
+  .journal-body ol { list-style: decimal; }
+  .journal-body li { margin: 0.25rem 0; }
+  .journal-body code {
+    background: var(--color-paper);
+    padding: 0.1rem 0.4rem;
+    border: 1px solid var(--color-frame);
+    font-size: 0.9em;
+    border-radius: 2px;
+  }
+  .journal-body img {
+    max-width: 100%;
+    height: auto;
+    margin: 2rem 0;
+  }
+  .journal-body hr {
+    border: 0;
+    border-top: 1px solid var(--color-frame);
+    margin: 2rem 0;
+  }
+
   /* Sticky sub-footer verbergen wanneer een modal/lightbox open is —
      anders steekt 'ie door de modal heen op sommige schermen. */
   body.modal-open .site-sub-footer {

@@ -11,6 +11,7 @@ const dict = {
     devis: 'Commander une œuvre',
     boutique: 'Boutique',
     commentCaMarche: 'Comment ça marche',
+    journal: 'Journal',
   },
 
   home: {

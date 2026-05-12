@@ -13,6 +13,7 @@ const dict: Dictionary = {
     devis: 'Een werk bestellen',
     boutique: 'Boutique',
     commentCaMarche: 'Hoe werkt het',
+    journal: 'Journaal',
   },
 
   avis: {

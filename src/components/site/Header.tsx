@@ -42,6 +42,7 @@ export default async function Header({ locale, t, portailMode = false }: Props) 
   const navItems = [
     { href: localePath(locale, '/galerie'), label: t.nav.collection, iconName: 'collection' as const },
     { href: '/shop/boutique', label: t.nav.boutique, iconName: 'boutique' as const },
+    { href: localePath(locale, '/journal'), label: t.nav.journal, iconName: 'journal' as const },
     { href: localePath(locale, '/comment-ca-marche'), label: t.nav.commentCaMarche, iconName: 'comment' as const },
     { href: localePath(locale, '/a-propos'), label: t.nav.about, iconName: 'about' as const },
     { href: localePath(locale, '/devis'), label: t.nav.devis, iconName: 'devis' as const },
