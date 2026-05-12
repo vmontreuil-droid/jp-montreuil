@@ -92,7 +92,7 @@ export default async function GaleriePage({ params }: Props) {
               {coverPath ? (
                 <Image
                   src={workImageUrl(coverPath)}
-                  alt={label}
+                  alt={`${label} — Jean-Pierre Montreuil`}
                   fill
                   sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                   className="object-cover transition-transform duration-700 group-hover:scale-105"

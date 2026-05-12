@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createShopAdminClient } from '@/lib/shop/supabase'
 import { slugify, getShopPhotoById, SHOP_PHOTOS_BUCKET, shopPhotoUrl } from '@/lib/shop/photos'
-import { generateAltText } from '@/lib/ai-alt'
+import { generateAltText, generateTitleAndAlt } from '@/lib/ai-alt'
 import { importWorksAsShopPhotos, type ImportWorksReport } from '@/lib/shop/import-works'
 
 async function requireAdmin() {
@@ -29,6 +29,55 @@ function intOr(form: FormData, key: string, fallback: number): number {
   if (raw === '') return fallback
   const n = Number(raw)
   return Number.isInteger(n) ? n : fallback
+}
+
+/**
+ * Vult title en alt_text aan via Claude vision wanneer admin ze leeg
+ * heeft gelaten. Roept Claude éénmalig aan voor beide velden tegelijk
+ * — efficiënter en goedkoper dan twee aparte calls.
+ *
+ * Returns een patch-object met enkel de velden die we via AI hebben
+ * ingevuld. Falenmig -> stille fallback (lege patch). Logging zodat
+ * we in de Vercel-logs zien wanneer de AI ge-skippend werd.
+ */
+async function maybeAiFillTitleAlt(input: {
+  storage_path: string
+  bucket?: string
+  hasTitle: boolean
+  hasAlt: boolean
+  species: string | null
+  location: string | null
+  category: string | null
+}): Promise<{ title?: string; alt_text?: string; ai_alt_generated_at?: string }> {
+  if (input.hasTitle && input.hasAlt) return {}
+  const url = shopPhotoUrl(input.storage_path, input.bucket ?? SHOP_PHOTOS_BUCKET)
+  try {
+    if (!input.hasTitle && !input.hasAlt) {
+      const { title, alt } = await generateTitleAndAlt(url, {
+        species: input.species,
+        location: input.location,
+        category: input.category,
+      })
+      return { title, alt_text: alt, ai_alt_generated_at: new Date().toISOString() }
+    }
+    if (!input.hasAlt) {
+      const alt = await generateAltText(url, {
+        species: input.species,
+        location: input.location,
+      })
+      return { alt_text: alt, ai_alt_generated_at: new Date().toISOString() }
+    }
+    // hasTitle=false, hasAlt=true (zeldzaam) — vraag enkel titel via gecombineerde call (eenvoudiger code)
+    const { title } = await generateTitleAndAlt(url, {
+      species: input.species,
+      location: input.location,
+      category: input.category,
+    })
+    return { title }
+  } catch (e) {
+    console.warn('[ai-fill] skipped — ', e instanceof Error ? e.message : 'unknown')
+    return {}
+  }
 }
 
 /**
@@ -70,14 +119,31 @@ export async function uploadShopPhoto(form: FormData) {
   const width = intOr(form, 'width', 0) || null
   const height = intOr(form, 'height', 0) || null
 
+  // Auto-vul title + alt via Claude vision als admin ze leeg heeft
+  // gelaten. Niet-blocking voor SEO maar gebeurt wel synchroon zodat
+  // het meteen klaar is.
+  const titleInput = strOrNull(form, 'title')
+  const speciesInput = strOrNull(form, 'species')
+  const locationInput = strOrNull(form, 'taken_at_location')
+  const aiPatch = await maybeAiFillTitleAlt({
+    storage_path,
+    hasTitle: titleInput !== null,
+    hasAlt: false, // alt_text wordt nooit via dit form ingevuld
+    species: speciesInput,
+    location: locationInput,
+    category: null,
+  })
+
   const { error: insErr } = await sb.from('photos').insert({
     slug: baseSlug,
-    title: strOrNull(form, 'title'),
+    title: titleInput ?? aiPatch.title ?? null,
+    alt_text: aiPatch.alt_text ?? null,
+    ai_alt_generated_at: aiPatch.ai_alt_generated_at ?? null,
     description: strOrNull(form, 'description'),
     storage_path,
     taken_at: strOrNull(form, 'taken_at'),
-    taken_at_location: strOrNull(form, 'taken_at_location'),
-    species: strOrNull(form, 'species'),
+    taken_at_location: locationInput,
+    species: speciesInput,
     width, height,
     is_published: bool(form, 'is_published'),
     sort_order: intOr(form, 'sort_order', 0),
@@ -277,14 +343,28 @@ export async function uploadShopPhotoOne(form: FormData): Promise<BulkUploadFile
       return { ok: false, slug: baseSlug, error: msg }
     }
 
+    const titleInput = strOrNull(form, 'title')
+    const speciesInput = strOrNull(form, 'species')
+    const locationInput = strOrNull(form, 'taken_at_location')
+    const aiPatch = await maybeAiFillTitleAlt({
+      storage_path,
+      hasTitle: titleInput !== null,
+      hasAlt: false,
+      species: speciesInput,
+      location: locationInput,
+      category: null,
+    })
+
     const { error: insErr } = await sb.from('photos').insert({
       slug: baseSlug,
-      title: strOrNull(form, 'title'),
+      title: titleInput ?? aiPatch.title ?? null,
+      alt_text: aiPatch.alt_text ?? null,
+      ai_alt_generated_at: aiPatch.ai_alt_generated_at ?? null,
       description: strOrNull(form, 'description'),
       storage_path,
       taken_at: strOrNull(form, 'taken_at'),
-      taken_at_location: strOrNull(form, 'taken_at_location'),
-      species: strOrNull(form, 'species'),
+      taken_at_location: locationInput,
+      species: speciesInput,
       width: intOr(form, 'width', 0) || null,
       height: intOr(form, 'height', 0) || null,
       is_published: bool(form, 'is_published'),

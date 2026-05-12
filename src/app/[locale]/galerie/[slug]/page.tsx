@@ -182,6 +182,7 @@ export default async function CategoryDetailPage({ params }: Props) {
             year: w.year,
           }))}
           locale={locale as 'fr' | 'nl'}
+          categoryLabel={label}
         />
 
         <div className="mt-16 pt-8 border-t border-(--color-frame) flex justify-center">

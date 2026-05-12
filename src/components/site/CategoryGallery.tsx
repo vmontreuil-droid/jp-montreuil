@@ -8,6 +8,9 @@ import Lightbox, { type LightboxWork } from './Lightbox'
 type Props = {
   works: LightboxWork[]
   locale: 'fr' | 'nl'
+  /** Categorie-naam, gebruikt als fallback voor alt-text wanneer een
+   *  werk geen eigen titel heeft. Cruciaal voor SEO + screen readers. */
+  categoryLabel?: string
 }
 
 const labels = {
@@ -15,9 +18,12 @@ const labels = {
   nl: { prev: 'Vorige',    next: 'Volgende', close: 'Sluiten' },
 }
 
-export default function CategoryGallery({ works, locale }: Props) {
+export default function CategoryGallery({ works, locale, categoryLabel }: Props) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const t = labels[locale]
+  const fallbackPrefix = categoryLabel
+    ? `Jean-Pierre Montreuil — ${categoryLabel}`
+    : 'Jean-Pierre Montreuil'
 
   const blockContext = (e: React.MouseEvent) => e.preventDefault()
 
@@ -29,17 +35,21 @@ export default function CategoryGallery({ works, locale }: Props) {
       >
         {works.map((work, i) => {
           const title = work.title || ''
+          // Sterke alt-text: titel als die er is, anders categorie-naam
+          // + index. Voorkomt lege alt-attributes wat slecht is voor
+          // SEO (Google Images) en accessibility.
+          const altText = title || `${fallbackPrefix} ${String(i + 1).padStart(2, '0')}`
           return (
             <button
               key={work.id}
               type="button"
               onClick={() => setOpenIndex(i)}
               className="group relative aspect-square bg-(--color-paper) overflow-hidden cursor-zoom-in no-save"
-              aria-label={title || `Image ${i + 1}`}
+              aria-label={altText}
             >
               <Image
                 src={workImageUrl(work.storage_path)}
-                alt={title}
+                alt={altText}
                 fill
                 sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
                 draggable={false}
