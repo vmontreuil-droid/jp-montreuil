@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Download, X, Calendar, User, Image as ImageIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, X, Calendar, User, Image as ImageIcon, Loader2 } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
 
 export type ViewerPhoto = {
   id: string
   filename: string | null
+  /** verkleind (600×600) — voor het raster */
+  thumb_url: string
+  /** origineel op volle resolutie — voor de lightbox */
   url: string
   download_url: string
 }
@@ -52,18 +55,22 @@ export default function AlbumViewer({
 }: Props) {
   const t = labels[locale]
   const [openIdx, setOpenIdx] = useState<number | null>(null)
+  // Toont een spinner zolang de volle-resolutie foto in de lightbox laadt.
+  const [hiResLoaded, setHiResLoaded] = useState(false)
 
-  const open = useCallback((i: number) => setOpenIdx(i), [])
+  const open = useCallback((i: number) => {
+    setHiResLoaded(false)
+    setOpenIdx(i)
+  }, [])
   const close = useCallback(() => setOpenIdx(null), [])
-  const next = useCallback(
-    () => setOpenIdx((i) => (i === null ? null : (i + 1) % photos.length)),
-    [photos.length]
-  )
-  const prev = useCallback(
-    () =>
-      setOpenIdx((i) => (i === null ? null : (i - 1 + photos.length) % photos.length)),
-    [photos.length]
-  )
+  const next = useCallback(() => {
+    setHiResLoaded(false)
+    setOpenIdx((i) => (i === null ? null : (i + 1) % photos.length))
+  }, [photos.length])
+  const prev = useCallback(() => {
+    setHiResLoaded(false)
+    setOpenIdx((i) => (i === null ? null : (i - 1 + photos.length) % photos.length))
+  }, [photos.length])
 
   useEffect(() => {
     if (openIdx === null) return
@@ -131,7 +138,7 @@ export default function AlbumViewer({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={p.url}
+                  src={p.thumb_url}
                   alt={p.filename ?? ''}
                   loading="lazy"
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -187,11 +194,21 @@ export default function AlbumViewer({
             className="relative max-w-[92vw] max-h-[80vh] flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Spinner zolang de volle-resolutie foto laadt */}
+            {!hiResLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-10 h-10 text-white/70 animate-spin" />
+              </div>
+            )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              key={active.id}
               src={active.url}
               alt={active.filename ?? ''}
-              className="max-w-full max-h-[80vh] object-contain"
+              onLoad={() => setHiResLoaded(true)}
+              className={`max-w-full max-h-[80vh] object-contain transition-opacity duration-300 ${
+                hiResLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
             />
           </div>
 

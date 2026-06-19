@@ -48,23 +48,31 @@ export default async function AlbumViewerPage({ params }: Props) {
     .eq('album_id', album.id)
     .order('sort_order', { ascending: true })
 
-  const photos: ViewerPhoto[] = []
-  for (const p of photosRaw ?? []) {
-    const { data: signed } = await admin.storage
-      .from('events')
-      .createSignedUrl(p.storage_path, SIGNED_URL_TTL)
-    const { data: signedDl } = await admin.storage
-      .from('events')
-      .createSignedUrl(p.storage_path, SIGNED_URL_TTL, {
-        download: p.filename ?? true,
-      })
-    photos.push({
-      id: p.id,
-      filename: p.filename,
-      url: signed?.signedUrl ?? '',
-      download_url: signedDl?.signedUrl ?? '',
+  // Per foto 3 signed URLs:
+  //  - thumb_url : verkleind (600×600, q65) via Supabase image-transform → snel raster
+  //  - url       : origineel op volle resolutie → lightbox
+  //  - download  : origineel met download-header
+  // Parallel i.p.v. sequentieel zodat grote albums niet traag renderen.
+  const photos: ViewerPhoto[] = await Promise.all(
+    (photosRaw ?? []).map(async (p) => {
+      const [thumb, signed, signedDl] = await Promise.all([
+        admin.storage.from('events').createSignedUrl(p.storage_path, SIGNED_URL_TTL, {
+          transform: { width: 600, height: 600, resize: 'cover', quality: 65 },
+        }),
+        admin.storage.from('events').createSignedUrl(p.storage_path, SIGNED_URL_TTL),
+        admin.storage.from('events').createSignedUrl(p.storage_path, SIGNED_URL_TTL, {
+          download: p.filename ?? true,
+        }),
+      ])
+      return {
+        id: p.id,
+        filename: p.filename,
+        thumb_url: thumb.data?.signedUrl ?? signed.data?.signedUrl ?? '',
+        url: signed.data?.signedUrl ?? '',
+        download_url: signedDl.data?.signedUrl ?? '',
+      }
     })
-  }
+  )
 
   return (
     <AlbumViewer
