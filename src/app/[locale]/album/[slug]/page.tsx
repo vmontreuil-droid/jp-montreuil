@@ -5,8 +5,6 @@ import AlbumViewer, { type ViewerPhoto } from './AlbumViewer'
 
 export const dynamic = 'force-dynamic'
 
-const SIGNED_URL_TTL = 60 * 60 // 1u
-
 type Props = {
   params: Promise<{ locale: string; slug: string }>
 }
@@ -48,31 +46,16 @@ export default async function AlbumViewerPage({ params }: Props) {
     .eq('album_id', album.id)
     .order('sort_order', { ascending: true })
 
-  // Per foto 3 signed URLs:
-  //  - thumb_url : verkleind (600×600, q65) via Supabase image-transform → snel raster
-  //  - url       : origineel op volle resolutie → lightbox
-  //  - download  : origineel met download-header
-  // Parallel i.p.v. sequentieel zodat grote albums niet traag renderen.
-  const photos: ViewerPhoto[] = await Promise.all(
-    (photosRaw ?? []).map(async (p) => {
-      const [thumb, signed, signedDl] = await Promise.all([
-        admin.storage.from('events').createSignedUrl(p.storage_path, SIGNED_URL_TTL, {
-          transform: { width: 600, height: 600, resize: 'cover', quality: 65 },
-        }),
-        admin.storage.from('events').createSignedUrl(p.storage_path, SIGNED_URL_TTL),
-        admin.storage.from('events').createSignedUrl(p.storage_path, SIGNED_URL_TTL, {
-          download: p.filename ?? true,
-        }),
-      ])
-      return {
-        id: p.id,
-        filename: p.filename,
-        thumb_url: thumb.data?.signedUrl ?? signed.data?.signedUrl ?? '',
-        url: signed.data?.signedUrl ?? '',
-        download_url: signedDl.data?.signedUrl ?? '',
-      }
-    })
-  )
+  // Geen signing in de pagina (zou bij 200+ foto's honderden calls geven en de
+  // render blokkeren). We renderen stabiele URLs naar de image-route, die per
+  // foto lazy signt + de thumb edge-cachet.
+  const photos: ViewerPhoto[] = (photosRaw ?? []).map((p) => ({
+    id: p.id,
+    filename: p.filename,
+    thumb_url: `/api/album-photo/${p.id}?v=thumb`,
+    url: `/api/album-photo/${p.id}?v=full`,
+    download_url: `/api/album-photo/${p.id}?dl=1`,
+  }))
 
   return (
     <AlbumViewer
