@@ -81,9 +81,12 @@ export default function AlbumViewer({
     }
     window.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
+    // Verbergt de vaste sub-footer, die anders over de download-balk valt.
+    document.body.classList.add('modal-open')
     return () => {
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
+      document.body.classList.remove('modal-open')
     }
   }, [openIdx, close, next, prev])
 
@@ -127,13 +130,15 @@ export default function AlbumViewer({
         {photos.length === 0 ? (
           <p className="text-(--color-stone) text-center py-20">{t.empty}</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-3">
+          /* Masonry via CSS-kolommen: elke foto behoudt haar eigen verhouding,
+             geen vierkante crop meer. */
+          <div className="columns-2 sm:columns-3 md:columns-4 gap-2 md:gap-3">
             {photos.map((p, i) => (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => open(i)}
-                className="group relative aspect-square bg-(--color-paper) overflow-hidden cursor-zoom-in"
+                className="group relative block w-full mb-2 md:mb-3 break-inside-avoid bg-(--color-paper) overflow-hidden cursor-zoom-in"
                 aria-label={p.filename ?? `Photo ${i + 1}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -141,7 +146,7 @@ export default function AlbumViewer({
                   src={p.thumb_url}
                   alt={p.filename ?? ''}
                   loading="lazy"
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-auto transition-transform duration-500 group-hover:scale-105"
                 />
                 <a
                   href={p.download_url}
@@ -161,7 +166,7 @@ export default function AlbumViewer({
       {/* Lightbox */}
       {active && openIdx !== null && (
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
           onClick={close}
         >
           {/* Close */}
@@ -227,8 +232,11 @@ export default function AlbumViewer({
             </button>
           )}
 
-          {/* Bottom bar */}
-          <div className="absolute bottom-6 left-0 right-0 flex justify-center pointer-events-none">
+          {/* Bottom bar — boven de home-indicator / browserbalk houden */}
+          <div
+            className="absolute left-0 right-0 flex justify-center pointer-events-none"
+            style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+          >
             <div
               className="pointer-events-auto flex items-center gap-3 px-4 py-2 backdrop-blur-md bg-white/10 border border-white/20 text-white text-sm"
               onClick={(e) => e.stopPropagation()}

@@ -35,7 +35,9 @@ export async function GET(
   const options = download
     ? { download: photo.filename ?? true }
     : variant === 'thumb'
-      ? { transform: { width: 600, height: 600, resize: 'cover' as const, quality: 65 } }
+      // 'contain' i.p.v. 'cover': de thumb past binnen 600×600 maar houdt haar
+      // eigen verhouding, zodat het masonry-raster niets afsnijdt.
+      ? { transform: { width: 600, height: 600, resize: 'contain' as const, quality: 65 } }
       : undefined
 
   const { data: signed } = await admin.storage
