@@ -156,30 +156,36 @@ export default function AlbumViewer({
              geen vierkante crop meer. */
           <div className="columns-2 sm:columns-3 md:columns-4 gap-2 md:gap-3">
             {photos.map((p, i) => (
-              <button
+              /* De download-link mag niet ín de knop staan (ongeldige HTML,
+                 de klik gaat dan verloren) — vandaar broer i.p.v. kind. */
+              <div
                 key={p.id}
-                type="button"
-                onClick={() => open(i)}
-                className="group relative block w-full mb-2 md:mb-3 break-inside-avoid bg-(--color-paper) overflow-hidden cursor-zoom-in"
-                aria-label={p.filename ?? `Photo ${i + 1}`}
+                className="group relative mb-2 md:mb-3 break-inside-avoid bg-(--color-paper) overflow-hidden"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={p.thumb_url}
-                  alt={p.filename ?? ''}
-                  loading="lazy"
-                  className="w-full h-auto transition-transform duration-500 group-hover:scale-105"
-                />
+                <button
+                  type="button"
+                  onClick={() => open(i)}
+                  className="block w-full cursor-zoom-in"
+                  aria-label={p.filename ?? `Photo ${i + 1}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.thumb_url}
+                    alt={p.filename ?? ''}
+                    loading="lazy"
+                    className="w-full h-auto transition-transform duration-500 group-hover:scale-105"
+                  />
+                </button>
                 <a
                   href={p.download_url}
-                  onClick={(e) => e.stopPropagation()}
-                  className="absolute bottom-2 right-2 p-2 bg-black/60 hover:bg-(--color-bronze) text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  download={p.filename ?? true}
+                  className="absolute bottom-2 right-2 p-2 bg-black/60 hover:bg-(--color-bronze) text-white transition-opacity md:opacity-0 md:group-hover:opacity-100"
                   aria-label={t.download}
                   title={t.download}
                 >
                   <Download className="w-4 h-4" />
                 </a>
-              </button>
+              </div>
             ))}
           </div>
         )}
@@ -275,6 +281,8 @@ export default function AlbumViewer({
               )}
               <a
                 href={active.download_url}
+                download={active.filename ?? true}
+                onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center gap-1.5 px-3 py-1 bg-(--color-bronze) hover:bg-(--color-bronze-dark) transition-colors"
               >
                 <Download className="w-3.5 h-3.5" />

@@ -48,6 +48,26 @@ export async function GET(
     return new Response('Signing failed', { status: 500 })
   }
 
+  // Downloads streamen we door onze eigen origin i.p.v. te redirecten naar
+  // Supabase: iOS Safari negeert het download-attribuut zodra een link naar
+  // een ander domein springt, en laat de download dan gewoon vallen.
+  if (download) {
+    const upstream = await fetch(signed.signedUrl)
+    if (!upstream.ok || !upstream.body) {
+      return new Response('Download failed', { status: 502 })
+    }
+    const name = photo.filename ?? 'photo.jpg'
+    const asciiName = name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_')
+    const headers = new Headers({
+      'Content-Type': upstream.headers.get('content-type') ?? 'application/octet-stream',
+      'Content-Disposition': `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(name)}`,
+      'Cache-Control': 'private, no-store',
+    })
+    const len = upstream.headers.get('content-length')
+    if (len) headers.set('Content-Length', len)
+    return new Response(upstream.body, { status: 200, headers })
+  }
+
   const res = new Response(null, {
     status: 307,
     headers: { Location: signed.signedUrl },
