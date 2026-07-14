@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, Download, X, Calendar, User, Image as ImageIcon, Loader2 } from 'lucide-react'
 import type { Locale } from '@/i18n/config'
@@ -90,6 +90,28 @@ export default function AlbumViewer({
     }
   }, [openIdx, close, next, prev])
 
+  // Swipe: horizontaal = vorige/volgende, verticaal naar beneden = sluiten.
+  const touchStart = useRef<{ x: number; y: number } | null>(null)
+  const onTouchStart = (e: React.TouchEvent) => {
+    const p = e.touches[0]
+    touchStart.current = { x: p.clientX, y: p.clientY }
+  }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStart.current
+    touchStart.current = null
+    if (!start) return
+    const p = e.changedTouches[0]
+    const dx = p.clientX - start.x
+    const dy = p.clientY - start.y
+    const MIN = 50
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx <= -MIN) next()
+      else if (dx >= MIN) prev()
+    } else if (dy >= 80) {
+      close()
+    }
+  }
+
   const active = openIdx === null ? null : photos[openIdx]
 
   return (
@@ -166,8 +188,10 @@ export default function AlbumViewer({
       {/* Lightbox */}
       {active && openIdx !== null && (
         <div
-          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center touch-pan-y"
           onClick={close}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
         >
           {/* Close */}
           <button
@@ -188,9 +212,9 @@ export default function AlbumViewer({
                 prev()
               }}
               aria-label={t.prev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-2 text-white/80 hover:text-white"
+              className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-10 p-3 md:p-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-colors"
             >
-              <ChevronLeft className="w-8 h-8" />
+              <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" />
             </button>
           )}
 
@@ -226,9 +250,9 @@ export default function AlbumViewer({
                 next()
               }}
               aria-label={t.next}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-2 text-white/80 hover:text-white"
+              className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-10 p-3 md:p-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-colors"
             >
-              <ChevronRight className="w-8 h-8" />
+              <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
             </button>
           )}
 
